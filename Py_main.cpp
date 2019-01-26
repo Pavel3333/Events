@@ -64,6 +64,8 @@ bool isStreamer = false;
 long timerCBID    = NULL;
 long delLabelCBID = NULL;
 
+//HANDLE getEvent = NULL;
+
 uint8_t lastStageID = StagesID.COMPETITION;
 uint8_t lastEventID = EventsID.IN_HANGAR;
 
@@ -383,54 +385,6 @@ uint8_t delModelCoords(uint16_t ID, float* coords) {
 	return 2U;
 }
 
-//threads functions
-
-DWORD WINAPI Thread1_2_3(LPVOID lpParam)
-{
-	wchar_t msgBuf[32];
-
-	PMYDATA_1 pDataArray = (PMYDATA_1)lpParam;
-
-	uint8_t  threadNum  = pDataArray->threadNum;
-	uint32_t databaseID = pDataArray->databaseID;
-	uint32_t map_ID     = pDataArray->map_ID;
-	uint32_t eventID    = pDataArray->eventID;
-
-	//выводим сообщение о том, что поток работает
-
-#if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Thread %d working!\n"), threadNum);
-
-	OutputDebugString(msgBuf);
-#endif
-
-	//рабочая часть
-
-	request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
-
-	//if (_save) Py_BLOCK_THREADS;
-
-	//очищаем память после выполнения рабочего кода
-
-	if (pDataArray != NULL)
-	{
-		HeapFree(GetProcessHeap(), 0, pDataArray);
-		pDataArray = NULL;    // Ensure address is not reused.
-	}
-
-	//закрываем поток
-
-#if debug_log && extended_debug_log
-
-	OutputDebugString(_T("Closing thread...\n"));
-
-#endif
-
-	CloseHandle(threads_1[threadNum].hThread);
-
-	return NULL;
-}
-
 //native methods
 
 uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
@@ -504,12 +458,12 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 	int8_t modelTypeLast = -1;
 	float* coords_res = nullptr;
 
-	for (std::vector<ModelsSection>::iterator it = current_map.modelsSects.begin();
-		it != current_map.modelsSects.end();
+	for (auto it = current_map.modelsSects.cbegin();
+		it != current_map.modelsSects.cend();
 		it++) {
 		if (it->isInitialised) {
-			for (std::vector<float*>::iterator it2 = it->models.begin();
-				it2 != it->models.end();
+			for (auto it2 = it->models.cbegin();
+				it2 != it->models.cend();
 				it2++) {
 				if (*it2 == nullptr) continue;
 
@@ -1265,6 +1219,8 @@ uint8_t create_models(uint8_t eventID) {
 						OutputDebugString(_T("[NY_Event]: creating...\n"));
 #endif
 
+						Py_BEGIN_ALLOW_THREADS;
+
 						models.~vector();
 						lights.~vector();
 
@@ -1294,21 +1250,23 @@ uint8_t create_models(uint8_t eventID) {
 							}
 						}
 
+						Py_END_ALLOW_THREADS;
+
 						uint16_t counter_model = NULL;
 
-						for (std::vector<ModelsSection>::const_iterator it = current_map.modelsSects.cbegin();
+						for (auto it = current_map.modelsSects.cbegin();
 							it != current_map.modelsSects.cend();
 							it++) {
 							if (!it->isInitialised || it->models.empty()) {
 								continue;
 							}
 
-							for (std::vector<float*>::const_iterator it2 = it->models.cbegin();
+							for (auto it2 = it->models.cbegin();
 								it2 != it->models.cend();
 								it2++) {
 								if (*it2 == nullptr) {
 #if debug_log && extended_debug_log && super_extended_debug_log
-									PySys_WriteStdout("NULL, ");
+									OutputDebugString("NULL, ");
 #endif
 
 									counter_model++;
@@ -1316,7 +1274,7 @@ uint8_t create_models(uint8_t eventID) {
 									continue;
 								}
 #if debug_log && extended_debug_log && super_extended_debug_log
-								PySys_WriteStdout("[");
+								OutputDebugString("[");
 #endif
 								models[counter_model] = new ModModel{
 									false,
@@ -1332,12 +1290,12 @@ uint8_t create_models(uint8_t eventID) {
 								counter_model++;
 
 #if debug_log && extended_debug_log && super_extended_debug_log
-								PySys_WriteStdout("], ");
+								OutputDebugString("], ");
 #endif
 							}
 						}
 #if debug_log && extended_debug_log
-						PySys_WriteStdout("], \n");
+						OutputDebugString(_T("], \n"));
 #endif
 
 #if debug_log  && extended_debug_log
@@ -1482,6 +1440,145 @@ uint8_t create_models(uint8_t eventID) {
 	return NULL;
 }
 
+//threads functions
+
+DWORD WINAPI Thread1_2_3(LPVOID lpParam)
+{
+	if (!isInited || !databaseID || battleEnded) {
+		return 1U;
+	}
+
+	wchar_t msgBuf[32];
+
+	PMYDATA_1 pDataArray = (PMYDATA_1)lpParam;
+
+	uint8_t  threadNum = pDataArray->threadNum;
+	uint32_t databaseID = pDataArray->databaseID;
+	uint32_t map_ID = pDataArray->map_ID;
+	uint32_t eventID = pDataArray->eventID;
+
+	//выводим сообщение о том, что поток работает
+
+#if debug_log && extended_debug_log
+	wsprintfW(msgBuf, _T("Thread %d working!\n"), threadNum);
+
+	OutputDebugString(msgBuf);
+#endif
+
+	//рабочая часть
+
+	request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+
+	//включаем GIL для этого потока
+
+	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	//-----------------------------
+
+	if (eventID == EventsID.IN_HANGAR) {
+		if (request) {
+			if (request > 9U) {
+#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+#endif
+
+				GUI_setError(request);
+
+				return 4U;
+			}
+
+#if debug_log && extended_debug_log
+			PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
+#endif
+
+			GUI_setWarning(request);
+
+			return 3U;
+		}
+	}
+	else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
+		if (request) {
+			if (request > 9U) {
+#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - send_token - Error code %d\n", request);
+#endif
+
+				GUI_setError(request);
+
+				return 6U;
+			}
+
+#if debug_log && extended_debug_log
+			PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - send_token - Warning code %d\n", request);
+#endif
+
+			GUI_setWarning(request);
+
+			return 5U;
+		}
+
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
+#endif
+
+		request = create_models(eventID);
+
+		if (request) {
+			if (request > 9U) {
+#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
+#endif
+
+				GUI_setError(request);
+
+				return 4U;
+			}
+
+#if debug_log && extended_debug_log
+			PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - create_models - Warning code %d\n", request);
+#endif
+
+			GUI_setWarning(request);
+
+			return 3U;
+		}
+	}
+
+	//выключаем GIL для этого потока
+
+	PyGILState_Release(gstate);
+
+	//------------------------------
+
+	//if (_save) Py_BLOCK_THREADS;
+
+	//очищаем память после выполнения рабочего кода
+
+	if (pDataArray != NULL)
+	{
+		HeapFree(GetProcessHeap(), 0, pDataArray);
+		pDataArray = NULL;    // Ensure address is not reused.
+	}
+
+	//закрываем поток
+
+#if debug_log && extended_debug_log
+	wsprintfW(msgBuf, _T("Closing thread %d\n"), threads_1[threadNum].ID);
+
+	OutputDebugString(msgBuf);
+#endif
+
+	CloseHandle(threads_1[threadNum].hThread);
+
+	threads_1[threadNum].hThread = NULL;
+
+	threads_1
+
+	return NULL;
+}
+
+//-----------------
+
 uint8_t get(uint8_t map_ID, uint8_t eventID) {
 	if (!isInited || !databaseID || battleEnded) {
 		return 1U;
@@ -1492,24 +1589,38 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 #endif
 
 	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //создаем 1 поток для отправки запроса и обработки
-		_save = NULL;
+		//_save = NULL;
 
-		Py_UNBLOCK_THREADS; //отключаем GIL
+		//Py_UNBLOCK_THREADS; //отключаем GIL
+
+		/*getEvent = CreateEvent(
+			NULL,               // default security attributes
+			TRUE,               // manual-reset event
+			FALSE,              // initial state is nonsignaled
+			TEXT("WriteEvent")  // object name
+		);
+
+		if (getEvent == NULL)
+		{
+			printf("CreateEvent failed (%d)\n", GetLastError());
+
+			return;
+		}*/
 
 		uint8_t threadCount = 1U; //обработку пакетов делаем в 1 потоке
 
 		//HANDLE* hThreads = new HANDLE[threadCount];
 
-		threads_1.resize(threadCount);
+		//threads_1.resize(threads_1.size() + threadCount);
 
-		for (int i = NULL; i < threadCount; i++)
+		for (size_t i = NULL; i < threadCount; i++)
 		{
 			// Allocate memory for thread data.
 
-			threads_1[i].pMyData = (PMYDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+			PMYDATA_1 pMyData = (PMYDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				sizeof(MYDATA_1));
 
-			if (threads_1[i].pMyData == NULL)
+			if (pMyData == NULL)
 			{
 				// If the array allocation fails, the system is out of memory
 				// so there is no point in trying to print an error message.
@@ -1519,14 +1630,18 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 
 			// Generate unique data for each thread to work with.
 
-			threads_1[i].pMyData->threadNum  = i;
-			threads_1[i].pMyData->databaseID = databaseID;
-			threads_1[i].pMyData->map_ID     = map_ID;
-			threads_1[i].pMyData->eventID    = eventID;
+			pMyData->databaseID = databaseID;
+			pMyData->map_ID     = map_ID;
+			pMyData->eventID    = eventID;
 
 			// Create the thread to begin execution on its own.
 
-			threads_1[i].hThread = CreateThread(
+			threads_1.push_back({ 
+				NULL,
+				pMyData
+				});
+
+			*(threads_1.cend()).hThread = CreateThread(
 				NULL,                   // default security attributes
 				0,                      // use default stack size  
 				Thread1_2_3,            // thread function name
@@ -1534,98 +1649,32 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 				0,                      // use default creation flags 
 				&threads_1[i].ID);      // returns the thread identifier 
 
-			// Check the return value for success.
-			// If CreateThread fails, terminate execution. 
-			// This will automatically clean up threads and memory. 
-
 			if (threads_1[i].hThread == NULL)
 			{
-				OutputDebugString(TEXT("CreateThread: error 1"));
+				OutputDebugString(TEXT("CreateThread: error 1\n"));
+
+				if (pMyData != NULL)   //очищаем память
+				{
+					HeapFree(GetProcessHeap(), 0, pMyData);
+					pMyData = NULL;
+				}
+
+				threads_1.pop_back();
 
 				return 1U;
 			}
-
-			WaitForSingleObject(threads_1[i].hThread, INFINITY);
+			//WaitForSingleObject(threads_1[i].hThread, INFINITY);
 		} // End of main thread creation loop.
 
 		//WaitForMultipleObjects(threadCount, hThreads, TRUE, INFINITE);
 
 		//delete[] hThreads;
 
-		if (_save) {
+		/*if (_save) { //включаем GIL
 			Py_BLOCK_THREADS;
 
 			_save = NULL;
-		}
-
-		if (lastEventID == EventsID.IN_HANGAR) {
-			if (request) {
-				if (request > 9U) {
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
-#endif
-
-					GUI_setError(request);
-
-					return 4U;
-				}
-
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
-#endif
-
-				GUI_setWarning(request);
-
-				return 3U;
-			}
-		}
-		else if (lastEventID == EventsID.IN_BATTLE_GET_FULL || lastEventID == EventsID.IN_BATTLE_GET_SYNC) {
-			if (request) {
-				if (request > 9U) {
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - send_token - Error code %d\n", request);
-#endif
-
-					GUI_setError(request);
-
-					return 6U;
-				}
-
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - send_token - Warning code %d\n", request);
-#endif
-
-				GUI_setWarning(request);
-
-				return 5U;
-			}
-
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
-#endif
-
-			request = create_models(lastEventID);
-
-			if (request) {
-				if (request > 9U) {
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
-#endif
-
-					GUI_setError(request);
-
-					return 4U;
-				}
-
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - create_models - Warning code %d\n", request);
-#endif
-
-				GUI_setWarning(request);
-
-				return 3U;
-			}
-		}
+		}*/
 
 		return NULL;
 	}
@@ -1634,13 +1683,13 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 };
 
 static PyObject* event_start(PyObject *self, PyObject *args) {
-	/*if (first_check || !mapID || !databaseID) {
+	if (first_check || !mapID || !databaseID) {
 		first_check = NULL;
 		battleEnded = false;
-		//mapID = 217U;
-		mapID = 115U;
+		mapID = 217U;
+		//mapID = 115U;
 		databaseID = 2274297;
-	}*/
+	}
 
 	if (!isInited || first_check) {
 		return PyInt_FromSize_t(1U);

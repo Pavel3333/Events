@@ -6,7 +6,6 @@
 #include <thread>
 
 std::vector<Thread_1> threads_1;
-std::vector<Thread_2> threads_2;
 
 uint8_t getThreadCount()
 {
