@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="input">
+      <UniqueIdentifier>{87621a00-7a34-4314-a040-744f20882b19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="output">
+      <UniqueIdentifier>{c7fdcb50-dc23-4fdd-ba07-885802eae7d7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="TesterUI.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="input\28_desert.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\29_el_hallouf.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\31_airfield.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\33_fjord.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\34_redshire.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\35_steppes.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\36_fishing_bay.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\37_caucasus.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\38_mannerheim_line.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\47_canada_a.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\63_tundra.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\101_dday.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\115_sweden.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\212_epic_random_valley.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\01_karelia.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\02_malinovka.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\07_lakeville.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\10_hills.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\13_erlenberg.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\18_cliff.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\19_monastery.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="input\23_westfeld.json">
+      <Filter>input</Filter>
+    </None>
+    <None Include="output\10_hills.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\13_erlenberg.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\18_cliff.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\19_monastery.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\23_westfeld.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\28_desert.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\29_el_hallouf.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\31_airfield.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\33_fjord.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\34_redshire.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\35_steppes.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\36_fishing_bay.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\37_caucasus.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\38_mannerheim_line.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\47_canada_a.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\63_tundra.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\101_dday.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\115_sweden.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\212_epic_random_valley.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\01_karelia.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\02_malinovka.bin">
+      <Filter>output</Filter>
+    </None>
+    <None Include="output\07_lakeville.bin">
+      <Filter>output</Filter>
+    </None>
+  </ItemGroup>
+</Project>
