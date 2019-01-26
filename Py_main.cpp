@@ -1494,7 +1494,7 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //создаем 1 поток дл€ отправки запроса и обработки
 		_save = NULL;
 
-		Py_UNBLOCK_THREADS;
+		Py_UNBLOCK_THREADS; //отключаем GIL
 
 		uint8_t threadCount = 1U; //обработку пакетов делаем в 1 потоке
 
@@ -1545,7 +1545,7 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 				return 1U;
 			}
 
-			WaitForSingleObject(threads_1[i].hThread, INFINITY)
+			WaitForSingleObject(threads_1[i].hThread, INFINITY);
 		} // End of main thread creation loop.
 
 		//WaitForMultipleObjects(threadCount, hThreads, TRUE, INFINITE);
