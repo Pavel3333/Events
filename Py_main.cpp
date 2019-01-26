@@ -1452,15 +1452,15 @@ DWORD WINAPI Thread1_2_3(LPVOID lpParam)
 
 	PMYDATA_1 pDataArray = (PMYDATA_1)lpParam;
 
-	uint8_t  threadNum = pDataArray->threadNum;
+	auto threadElement  = pDataArray->threadElement;
 	uint32_t databaseID = pDataArray->databaseID;
-	uint32_t map_ID = pDataArray->map_ID;
-	uint32_t eventID = pDataArray->eventID;
+	uint32_t map_ID     = pDataArray->map_ID;
+	uint32_t eventID    = pDataArray->eventID;
 
 	//выводим сообщение о том, что поток работает
 
 #if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Thread %d working!\n"), threadNum);
+	wsprintfW(msgBuf, _T("Thread %d working!\n"), threadElement->ID);
 
 	OutputDebugString(msgBuf);
 #endif
@@ -1563,16 +1563,14 @@ DWORD WINAPI Thread1_2_3(LPVOID lpParam)
 	//закрываем поток
 
 #if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Closing thread %d\n"), threads_1[threadNum].ID);
+	wsprintfW(msgBuf, _T("Closing thread %d\n"), threadElement->ID);
 
 	OutputDebugString(msgBuf);
 #endif
 
-	CloseHandle(threads_1[threadNum].hThread);
+	CloseHandle(threadElement->hThread);
 
-	threads_1[threadNum].hThread = NULL;
-
-	threads_1
+	threads_1.erase(threadElement);
 
 	return NULL;
 }
@@ -1641,7 +1639,9 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 				pMyData
 				});
 
-			*(threads_1.cend()).hThread = CreateThread(
+			pMyData->threadElement = threads_1.end();
+
+			(*pMyData->threadElement).hThread = CreateThread(
 				NULL,                   // default security attributes
 				0,                      // use default stack size  
 				Thread1_2_3,            // thread function name
@@ -1659,7 +1659,7 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 					pMyData = NULL;
 				}
 
-				threads_1.pop_back();
+				threads_1.pop_back(); //убираем последний поток
 
 				return 1U;
 			}

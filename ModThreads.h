@@ -7,18 +7,19 @@
 // Sample custom data structure for threads to use.
 // This is passed by void pointer so it can be any data type
 // that can be passed using a single void pointer (LPVOID).
+
 typedef struct {
-	std::vector<Thread_1>::iterator threadIterator;
+	HANDLE hThread;
+	LPVOID pMyData;
+	DWORD ID;
+} Thread_1;
+
+typedef struct {
+	std::vector<Thread_1>::iterator threadElement;
 	uint32_t databaseID;
 	uint8_t  map_ID;
 	uint8_t  eventID;
 } MYDATA_1, *PMYDATA_1;
-
-typedef struct {
-	HANDLE hThread;
-	PMYDATA_1 pMyData;
-	DWORD ID;
-} Thread_1;
 
 extern std::vector<Thread_1> threads_1;
 
