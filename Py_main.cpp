@@ -687,7 +687,7 @@ void GUI_setText(char* msg, float time_f=NULL) {
 		PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
 		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = NULL;
-		else delLabelCBID = PyInt_AS_LONG(res2);
+		else delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
 	}
 
 	return;
@@ -1452,7 +1452,8 @@ DWORD WINAPI Thread1_2_3(LPVOID lpParam)
 
 	PMYDATA_1 pDataArray = (PMYDATA_1)lpParam;
 
-	auto threadElement  = pDataArray->threadElement;
+	DWORD ID            = pDataArray->ID;
+
 	uint32_t databaseID = pDataArray->databaseID;
 	uint32_t map_ID     = pDataArray->map_ID;
 	uint32_t eventID    = pDataArray->eventID;
@@ -1460,7 +1461,7 @@ DWORD WINAPI Thread1_2_3(LPVOID lpParam)
 	//выводим сообщение о том, что поток работает
 
 #if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Thread %d working!\n"), threadElement->ID);
+	wsprintfW(msgBuf, _T("Thread %d working!\n"), ID);
 
 	OutputDebugString(msgBuf);
 #endif
@@ -1550,8 +1551,6 @@ DWORD WINAPI Thread1_2_3(LPVOID lpParam)
 
 	//------------------------------
 
-	//if (_save) Py_BLOCK_THREADS;
-
 	//очищаем память после выполнения рабочего кода
 
 	if (pDataArray != NULL)
@@ -1563,14 +1562,12 @@ DWORD WINAPI Thread1_2_3(LPVOID lpParam)
 	//закрываем поток
 
 #if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Closing thread %d\n"), threadElement->ID);
+	wsprintfW(msgBuf, _T("Closing thread %d\n"), ID);
 
 	OutputDebugString(msgBuf);
 #endif
 
-	CloseHandle(threadElement->hThread);
-
-	threads_1.erase(threadElement);
+	ExitThread(NULL); //завершаем поток
 
 	return NULL;
 }
@@ -1634,22 +1631,15 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 
 			// Create the thread to begin execution on its own.
 
-			threads_1.push_back({ 
-				NULL,
-				pMyData
-				});
+			HANDLE hThread = CreateThread(
+				NULL,                                   // default security attributes
+				0,                                      // use default stack size  
+				Thread1_2_3,                            // thread function name
+				pMyData,                                // argument to thread function 
+				0,                                      // use default creation flags 
+				&(pMyData->ID));                        // returns the thread identifier 
 
-			pMyData->threadElement = threads_1.end();
-
-			(*pMyData->threadElement).hThread = CreateThread(
-				NULL,                   // default security attributes
-				0,                      // use default stack size  
-				Thread1_2_3,            // thread function name
-				threads_1[i].pMyData,   // argument to thread function 
-				0,                      // use default creation flags 
-				&threads_1[i].ID);      // returns the thread identifier 
-
-			if (threads_1[i].hThread == NULL)
+			if (hThread == NULL)
 			{
 				OutputDebugString(TEXT("CreateThread: error 1\n"));
 
@@ -1659,14 +1649,9 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 					pMyData = NULL;
 				}
 
-				threads_1.pop_back(); //убираем последний поток
-
 				return 1U;
 			}
-			//WaitForSingleObject(threads_1[i].hThread, INFINITY);
 		} // End of main thread creation loop.
-
-		//WaitForMultipleObjects(threadCount, hThreads, TRUE, INFINITE);
 
 		//delete[] hThreads;
 

@@ -2,10 +2,7 @@
 
 #include "ModThreads.h"
 
-#include <vector>
 #include <thread>
-
-std::vector<Thread_1> threads_1;
 
 uint8_t getThreadCount()
 {
