@@ -1,10 +1,8 @@
 #pragma once
-#include "stdafx.h"
-
-#include "iostream"
+#include <iostream>
 #include <fstream>
 #include <vector>
-#include <windows.h>
+#include <Windows.h>
 
 #define NET_BUFFER_SIZE (16384U)
 #define MARKERS_SIZE 12U

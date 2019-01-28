@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafx.h"
 #include "API_functions.h"
 #include "python2.7/Python.h"
 #include "python2.7/structmember.h"

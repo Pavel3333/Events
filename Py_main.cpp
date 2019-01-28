@@ -1,7 +1,5 @@
 #define CONSOLE_VER1
 
-#include "stdafx.h"
-
 #include "ModThreads.h"
 #include "Py_config.h"
 #include <stdlib.h>

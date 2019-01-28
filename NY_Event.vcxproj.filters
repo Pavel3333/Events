@@ -53,9 +53,6 @@
     <ClCompile Include="Py_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ModThreads.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -65,12 +62,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Py_config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ModThreads.h">
