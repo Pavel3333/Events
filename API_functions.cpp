@@ -1,12 +1,13 @@
-﻿#include "API_functions.h"
+#include "API_functions.h"
 
 #include <math.h>
 #include <io.h>
 #include <sstream>
 #include "curl/curl.h"
+#include "common.h"
+
 #pragma comment(lib,"libcurl.lib")
 
-#define debug_log false
 
 unsigned char wr_buf[NET_BUFFER_SIZE + 1];
 size_t wr_index = NULL;
@@ -440,7 +441,7 @@ uint8_t parse_sync() { // синхронизация
 				if      (modelSectionID == 0U && wr_buf[offset] == 0U) sect = &(sync_map.modelsSects_creating);
 				else if (modelSectionID == 1U && wr_buf[offset] == 1U) sect = &(sync_map.modelsSects_deleting);
 				else {
-					OutputDebugString(_T("[NY_Event]: Found unexpected section while synchronizing!\n"));
+					LOG_debug("[NY_Event]: Found unexpected section while synchronizing!\n");
 
 					break;
 				}
