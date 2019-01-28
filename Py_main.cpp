@@ -4,6 +4,8 @@
 #include "common.h"
 #include "ModThreads.h"
 #include "Py_config.h"
+#include "py_imports.h"
+#include "bw_model.h"
 
 
 typedef struct {
@@ -21,13 +23,6 @@ std::vector<ModModel*> models;
 std::vector<ModLight*> lights;
 
 PyObject* event_module = NULL;
-
-PyObject* BigWorld = NULL;
-PyObject* g_gui = NULL;
-PyObject* g_appLoader = NULL;
-PyObject* json = NULL;
-
-PyObject* modGUI = NULL;
 
 PyObject* tickTimerMethod = NULL;
 PyObject* spaceKey = NULL;
@@ -83,7 +78,7 @@ bool write_data(char* data_path, PyObject* data_p) {
 
 	PyObject* __dumps = PyString_FromStringAndSize("dumps", 5U);
 
-	PyObject* data_json_s = PyObject_CallMethodObjArgs(json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
+	PyObject* data_json_s = PyObject_CallMethodObjArgs(Py::json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
 
 	Py_DECREF(__dumps);
 	Py_DECREF(arg2);
@@ -147,7 +142,7 @@ bool read_data(bool isData) {
 
 		PyObject* __loads = PyString_FromStringAndSize("loads", 5U);
 
-		PyObject* data_json_s = PyObject_CallMethodObjArgs(json, __loads, data_p, NULL);
+		PyObject* data_json_s = PyObject_CallMethodObjArgs(Py::json, __loads, data_p, NULL);
 
 		Py_DECREF(__loads);
 		Py_DECREF(data_p);
@@ -379,7 +374,7 @@ uint8_t delModelCoords(uint16_t ID, float* coords) {
 uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
 	PyObject* __player = PyString_FromStringAndSize("player", 6U);
 
-	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
+	PyObject* player = PyObject_CallMethodObjArgs(Py::BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
@@ -502,7 +497,7 @@ void callback(long* CBID, PyObject* func, float time_f=1.0) {
 
 	//Py_INCREF(func);
 
-	PyObject* res = PyObject_CallMethodObjArgs(BigWorld, __callback_text, time_p, func, NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::BigWorld, __callback_text, time_p, func, NULL);
 
 	Py_DECREF(__callback_text);
 	
@@ -524,7 +519,7 @@ void cancelCallback(long* CBID) {
 
 	PyObject* __cancelCallback = PyString_FromStringAndSize("cancelCallback", 14U);
 
-	PyObject* res = PyObject_CallMethodObjArgs(BigWorld, __cancelCallback, PyInt_FromLong(*CBID), NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::BigWorld, __cancelCallback, PyInt_FromLong(*CBID), NULL);
 
 	Py_DECREF(__cancelCallback);
 	Py_XDECREF(res);
@@ -535,29 +530,29 @@ void cancelCallback(long* CBID) {
 //GUI methods
 
 PyObject* GUI_getAttr(char* attribute) {
-	if (!modGUI) {
+	if (!Py::modGUI) {
 		return NULL;
 	}
 
-	return PyObject_GetAttrString(modGUI, attribute);
+	return PyObject_GetAttrString(Py::modGUI, attribute);
 }
 
 bool GUI_setAttr(char* attribute, PyObject* value) {
-	if (!modGUI) {
+	if (!Py::modGUI) {
 		return false;
 	}
 
-	return PyObject_SetAttrString(modGUI, attribute, value);
+	return PyObject_SetAttrString(Py::modGUI, attribute, value);
 }
 
 void GUI_setWarning(uint8_t warningCode) {
 #if debug_log && extended_debug_log
-	if (!isInited || !modGUI) {
+	if (!isInited || !Py::modGUI) {
 		return;
 	}
 
 	PyObject* __setWarning = PyString_FromStringAndSize("setWarning", 10U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setWarning, PyInt_FromSize_t((size_t)warningCode), NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::modGUI, __setWarning, PyInt_FromSize_t((size_t)warningCode), NULL);
 
 	Py_DECREF(__setWarning);
 	Py_XDECREF(res);
@@ -568,12 +563,12 @@ void GUI_setWarning(uint8_t warningCode) {
 
 void GUI_setError(uint8_t errorCode) {
 #if debug_log && extended_debug_log
-	if (!isInited || !modGUI) {
+	if (!isInited || !Py::modGUI) {
 		return;
 	}
 
 	PyObject* __setError = PyString_FromStringAndSize("setError", 8U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setError, PyInt_FromSize_t((size_t)errorCode), NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::modGUI, __setError, PyInt_FromSize_t((size_t)errorCode), NULL);
 
 	Py_DECREF(__setError);
 	Py_XDECREF(res);
@@ -583,12 +578,12 @@ void GUI_setError(uint8_t errorCode) {
 }
 
 void GUI_setVisible(bool visible) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || battleEnded || !Py::modGUI) {
 		return;
 	}
 
 	PyObject* __setVisible = PyString_FromStringAndSize("setVisible", 10U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setVisible, PyBool_FromLong((long)visible), NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::modGUI, __setVisible, PyBool_FromLong((long)visible), NULL);
 
 	Py_DECREF(__setVisible);
 	Py_XDECREF(res);
@@ -597,12 +592,12 @@ void GUI_setVisible(bool visible) {
 }
 
 void GUI_setTimerVisible(bool visible) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || battleEnded || !Py::modGUI) {
 		return;
 	}
 
 	PyObject* __setTimerVisible = PyString_FromStringAndSize("setTimerVisible", 15U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setTimerVisible, PyBool_FromLong((long)visible), NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::modGUI, __setTimerVisible, PyBool_FromLong((long)visible), NULL);
 
 	Py_DECREF(__setTimerVisible);
 	Py_XDECREF(res);
@@ -611,7 +606,7 @@ void GUI_setTimerVisible(bool visible) {
 }
 
 void GUI_setTime(uint32_t time_preparing) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || battleEnded || !Py::modGUI) {
 		return;
 	}
 
@@ -620,7 +615,7 @@ void GUI_setTime(uint32_t time_preparing) {
 	sprintf_s(new_time, 30U, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
 
 	PyObject* __setTime = PyString_FromStringAndSize("setTime", 7U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setTime, PyString_FromString(new_time), NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::modGUI, __setTime, PyString_FromString(new_time), NULL);
 
 	Py_DECREF(__setTime);
 	Py_XDECREF(res);
@@ -629,13 +624,13 @@ void GUI_setTime(uint32_t time_preparing) {
 }
 
 void GUI_setText(char* msg, float time_f=NULL) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || battleEnded || !Py::modGUI) {
 		return;
 	}
 
 	PyObject* __setText = PyString_FromStringAndSize("setText", 7U);
 
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setText, PyString_FromString(msg), NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::modGUI, __setText, PyString_FromString(msg), NULL);
 
 	Py_DECREF(__setText);
 	Py_XDECREF(res);
@@ -665,7 +660,7 @@ void GUI_setText(char* msg, float time_f=NULL) {
 
 	if (time_f) {
 		PyObject* __clearTextCB = PyString_FromStringAndSize("clearTextCB", 11U);
-		PyObject* res2 = PyObject_CallMethodObjArgs(modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
+		PyObject* res2 = PyObject_CallMethodObjArgs(Py::modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
 
 		Py_DECREF(__clearTextCB);
 
@@ -681,7 +676,7 @@ void GUI_setText(char* msg, float time_f=NULL) {
 }
 
 void GUI_setMsg(uint8_t msgID, uint8_t scoreID = NULL, float time_f = NULL) {
-	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= MESSAGES_COUNT) {
+	if (!isInited || battleEnded || !Py::modGUI || msgID >= MESSAGES_COUNT || scoreID >= MESSAGES_COUNT) {
 		return;
 	}
 
@@ -741,12 +736,12 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID = NULL, float time_f = NULL) {
 }
 
 void GUI_clearText() {
-	if (!isInited || !modGUI) {
+	if (!isInited || !Py::modGUI) {
 		return;
 	}
 
 	PyObject* __clearText = PyString_FromStringAndSize("clearText", 9U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __clearText, NULL);
+	PyObject* res = PyObject_CallMethodObjArgs(Py::modGUI, __clearText, NULL);
 
 	Py_DECREF(__clearText);
 	Py_XDECREF(res);
@@ -796,11 +791,9 @@ static PyObject* event_light(float coords[3]) {
 
 	LOG_super_extended_debug("light creating...\n");
 
-	PyObject* __PyOmniLight = PyString_FromStringAndSize("PyOmniLight", 11U);
+	PyObject* PyOmniLightMethodName = PyString_FromString("PyOmniLight");
 
-	PyObject* Light = PyObject_CallMethodObjArgs(BigWorld, __PyOmniLight, NULL);
-
-	Py_DECREF(__PyOmniLight);
+	PyObject* Light = PyObject_CallMethodObjArgs(Py::BigWorld, PyOmniLightMethodName, NULL);
 
 	if (!Light) {
 		LOG_super_extended_debug("PyOmniLight creating FAILED\n");
@@ -810,54 +803,42 @@ static PyObject* event_light(float coords[3]) {
 
 	//---------inner radius---------
 
-	PyObject* __innerRadius = PyString_FromStringAndSize("innerRadius", 11U);
 	PyObject* innerRadius = PyFloat_FromDouble(0.75);
 
-	if (PyObject_SetAttr(Light, __innerRadius, innerRadius)) {
+	if (PyObject_SetAttrString(Light, "innerRadius", innerRadius)) {
 		LOG_super_extended_debug("PyOmniLight innerRadius setting FAILED\n");
 
-		Py_DECREF(__innerRadius);
 		Py_DECREF(innerRadius);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
 
-	Py_DECREF(__innerRadius);
-
 	//---------outer radius---------
 
-	PyObject* __outerRadius = PyString_FromStringAndSize("outerRadius", 11U);
 	PyObject* outerRadius = PyFloat_FromDouble(1.5);
 
-	if (PyObject_SetAttr(Light, __outerRadius, outerRadius)) {
+	if (PyObject_SetAttrString(Light, "outerRadius", outerRadius)) {
 		LOG_super_extended_debug("PyOmniLight outerRadius setting FAILED\n");
 
 		Py_DECREF(outerRadius);
-		Py_DECREF(__outerRadius);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
-
-	Py_DECREF(__outerRadius);
 
 	//----------multiplier----------
 
-	PyObject* __multiplier = PyString_FromStringAndSize("multiplier", 10U);
 	PyObject* multiplier = PyFloat_FromDouble(500.0);
 
-	if (PyObject_SetAttr(Light, __multiplier, multiplier)) {
+	if (PyObject_SetAttrString(Light, "multiplier", multiplier)) {
 		LOG_super_extended_debug("PyOmniLight multiplier setting FAILED\n");
 
 		Py_DECREF(multiplier);
-		Py_DECREF(__multiplier);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
-
-	Py_DECREF(__multiplier);
 
 	//-----------position-----------
 
@@ -880,19 +861,14 @@ static PyObject* event_light(float coords[3]) {
 		}
 	}
 
-	PyObject* __position = PyString_FromStringAndSize("position", 8U);
-
-	if (PyObject_SetAttr(Light, __position, coords_p)) {
+	if (PyObject_SetAttrString(Light, "position", coords_p)) {
 		LOG_super_extended_debug("PyOmniLight coords setting FAILED\n");
 
-		Py_DECREF(__position);
 		Py_DECREF(coords_p);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
-
-	Py_DECREF(__position);
 
 	//------------colour------------
 
@@ -919,19 +895,14 @@ static PyObject* event_light(float coords[3]) {
 
 	//------------------------------
 
-	PyObject* __colour = PyString_FromStringAndSize("colour", 6U);
-
-	if (PyObject_SetAttr(Light, __colour, colour_p)) {
+	if (PyObject_SetAttrString(Light, "colour", colour_p)) {
 		LOG_super_extended_debug("PyOmniLight colour setting FAILED\n");
 
-		Py_DECREF(__colour);
 		Py_DECREF(colour_p);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
-
-	Py_DECREF(__colour);
 
 	LOG_super_extended_debug("light creating OK!\n");
 
@@ -945,11 +916,8 @@ static PyObject* event_model(char* path, float coords[3]) {
 
 	LOG_super_extended_debug("model creating...\n");
 
-	PyObject* __Model = PyString_FromStringAndSize("Model", 5U);
-
-	PyObject* Model = PyObject_CallMethodObjArgs(BigWorld, __Model, PyString_FromString(path), NULL);
-
-	Py_DECREF(__Model);
+	static PyObject* ModelMethodName = PyString_FromString("Model");
+	PyObject* Model = PyObject_CallMethodObjArgs(Py::BigWorld, ModelMethodName, PyString_FromString(path), NULL);
 
 	if (!Model) {
 		return NULL;
@@ -966,17 +934,13 @@ static PyObject* event_model(char* path, float coords[3]) {
 		PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
 	}
 
-	PyObject* __position = PyString_FromStringAndSize("position", 8U);
-
-	if (PyObject_SetAttr(Model, __position, coords_p)) {
-		Py_DECREF(__position);
+	static PyObject* positionAttrName = PyString_FromString("position");
+	if (PyObject_SetAttr(Model, positionAttrName, coords_p)) {
 		Py_DECREF(coords_p);
 		Py_DECREF(Model);
 
 		return NULL;
 	}
-
-	Py_DECREF(__position);
 
 	LOG_super_extended_debug("model creating OK!\n");
 
@@ -1010,11 +974,8 @@ uint8_t init_models() {
 
 		LOG_super_extended_debug("[NY_Event]: addModel debug 2.1\n");
 
-		PyObject* __addModel = PyString_FromStringAndSize("addModel", 8U);
-
-		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __addModel, models[i]->model, NULL);
-
-		Py_DECREF(__addModel);
+		static PyObject* addModelMethodName = PyString_FromString("addModel");
+		PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, addModelMethodName, models[i]->model, NULL);
 
 		LOG_super_extended_debug("[NY_Event]: addModel debug 2.2\n");
 
@@ -1067,11 +1028,8 @@ uint8_t set_visible(bool isVisible) {
 			continue;
 		}
 
-		PyObject* __visible = PyString_FromStringAndSize("visible", 7U);
-
-		PyObject_SetAttr(models[i]->model, __visible, py_visible);
-
-		Py_DECREF(__visible);
+		static PyObject* visibleAttrName = PyString_FromString("visible");
+		PyObject_SetAttr(models[i]->model, visibleAttrName, py_visible);
 	}
 
 	Py_DECREF(py_visible);
@@ -1621,11 +1579,8 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 		return PyInt_FromSize_t(1U);
 	}
 
-	PyObject* __player = PyString_FromStringAndSize("player", 6U);
-
-	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
-
-	Py_DECREF(__player);
+	static PyObject* playerMethodName = PyString_FromString("player");
+	PyObject* player = PyObject_CallMethodObjArgs(Py::BigWorld, playerMethodName, NULL);
 
 	isModelsAlreadyCreated = false;
 
@@ -1633,10 +1588,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 		return PyInt_FromSize_t(2U);
 	}
 
-	PyObject* __arena = PyString_FromStringAndSize("arena", 5U);
-	PyObject* arena = PyObject_GetAttr(player, __arena);
-
-	Py_DECREF(__arena);
+	PyObject* arena = PyObject_GetAttrString(player, "arena");
 
 	Py_DECREF(player);
 
@@ -1644,20 +1596,16 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 		return PyInt_FromSize_t(3U);
 	}
 
-	PyObject* __arenaType = PyString_FromStringAndSize("arenaType", 9U);
-	PyObject* arenaType = PyObject_GetAttr(arena, __arenaType);
+	PyObject* arenaType = PyObject_GetAttrString(arena, "arenaType");
 
-	Py_DECREF(__arenaType);
 	Py_DECREF(arena);
 
 	if (!arenaType) {
 		return PyInt_FromSize_t(4U);
 	}
 
-	PyObject* __geometryName = PyString_FromStringAndSize("geometryName", 12U);
-	PyObject* map_PS = PyObject_GetAttr(arenaType, __geometryName);
+	PyObject* map_PS = PyObject_GetAttrString(arenaType, "geometryName");
 
-	Py_DECREF(__geometryName);
 	Py_DECREF(arenaType);
 
 	if (!map_PS) return PyInt_FromSize_t(5U);
@@ -1734,11 +1682,8 @@ uint8_t del_models() {
 
 		LOG_super_extended_debug("[NY_Event]: del debug 1.1\n");
 
-		PyObject* __delModel = PyString_FromStringAndSize("delModel", 8U);
-
-		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __delModel, (*it_model)->model, NULL);
-
-		Py_DECREF(__delModel);
+		static PyObject* delModelMethodName = PyString_FromString("delModel");
+		PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, delModelMethodName, (*it_model)->model, NULL);
 
 		if (result) {
 			Py_DECREF(result);
@@ -1942,19 +1887,15 @@ static PyObject* event_сheck(PyObject *self, PyObject *args) {
 
 	LOG_extended_debug("[NY_Event]: checking...\n");
 
-	PyObject* __player = PyString_FromStringAndSize("player", 6U);
-	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
-
-	Py_DECREF(__player);
+	static PyObject* playerMethodName = PyString_FromString("player");
+	PyObject* player = PyObject_CallMethodObjArgs(Py::BigWorld, playerMethodName, NULL);
 
 	if (!player) {
 		return PyInt_FromSize_t(2U);
 	}
 
-	PyObject* __databaseID = PyString_FromStringAndSize("databaseID", 10U);
-	PyObject* DBID_string = PyObject_GetAttr(player, __databaseID);
+	PyObject* DBID_string = PyObject_GetAttrString(player, "databaseID");
 
-	Py_DECREF(__databaseID);
 	Py_DECREF(player);
 
 	if (!DBID_string) {
@@ -2000,20 +1941,19 @@ static PyObject* event_init(PyObject *self, PyObject *args) {
 		return PyInt_FromSize_t(2U);
 	}
 
-	if (g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) {
+	if (Py::g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) {
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
-		PyObject* __register = PyString_FromStringAndSize("register", 8U);
-		PyObject* result = PyObject_CallMethodObjArgs(g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
+		static PyObject* registerMethodName = PyString_FromString("register");
+		PyObject* result = PyObject_CallMethodObjArgs(Py::g_gui, registerMethodName, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
 
 		Py_XDECREF(result);
-		Py_DECREF(__register);
 		Py_DECREF(apply);
 		Py_DECREF(template_);
 	}
 
-	if (!g_gui && PyCallable_Check(byteify)) {
+	if (!Py::g_gui && PyCallable_Check(byteify)) {
 		Py_INCREF(byteify);
 
 		PyObject* args1 = PyTuple_New(1U);
@@ -2044,28 +1984,19 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted_Space = NULL;
 
-	if (g_gui) {
-		PyObject* __get_key = PyString_FromStringAndSize("get_key", 7U);
-		
-		isKeyGetted_Space = PyObject_CallMethodObjArgs(g_gui, __get_key, spaceKey, NULL);
-
-		Py_DECREF(__get_key);
+	if (Py::g_gui) {
+		static PyObject* get_keyMethodName = PyString_FromString("get_key");
+		isKeyGetted_Space = PyObject_CallMethodObjArgs(Py::g_gui, get_keyMethodName, spaceKey, NULL);
 	}
 	else {
-		PyObject* __key = PyString_FromStringAndSize("key", 3U);
-		PyObject* key = PyObject_GetAttr(event_, __key);
-
-		Py_DECREF(__key);
+		PyObject* key = PyObject_GetAttrString(event_, "key");
 
 		if (!key) {
 			Py_RETURN_NONE;
 		}
 
-		PyObject* ____contains__ = PyString_FromStringAndSize("__contains__", 12U);
-
-		isKeyGetted_Space = PyObject_CallMethodObjArgs(spaceKey, ____contains__, key, NULL);
-
-		Py_DECREF(____contains__);
+		static PyObject* __contains__MethodName = PyString_FromString("__contains__");
+		isKeyGetted_Space = PyObject_CallMethodObjArgs(spaceKey, __contains__MethodName, key, NULL);
 	}
 
 	if (isKeyGetted_Space == Py_True) {
@@ -2167,34 +2098,12 @@ PyDoc_STRVAR(event_methods__doc__,
 
 PyMODINIT_FUNC initevent(void)
 {
-	BigWorld = PyImport_AddModule("BigWorld");
-
-	if (!BigWorld) return;
-
-	PyObject* appLoader = PyImport_ImportModule("gui.app_loader");
-
-	if (!appLoader) return;
-
-	PyObject* __g_appLoader = PyString_FromStringAndSize("g_appLoader", 11U);
-
-	g_appLoader = PyObject_GetAttr(appLoader, __g_appLoader);
-
-	Py_DECREF(__g_appLoader);
-	Py_DECREF(appLoader);
-
-	if (!g_appLoader) return;
-
-	json = PyImport_ImportModule("json");
-
-	if (!json) {
-		Py_DECREF(g_appLoader);
-		return;
-	}
+	Py::init_imports();
 
 	LOG_debug("Config init...\n");
 
 	if (PyType_Ready(&Config_p)) {
-		Py_DECREF(g_appLoader);
+		Py_DECREF(Py::g_appLoader);
 		return;
 	}
 
@@ -2207,7 +2116,7 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(&Config_p);
 
 	if (!g_config) {
-		Py_DECREF(g_appLoader);
+		Py_DECREF(Py::g_appLoader);
 		return;
 	}
 
@@ -2216,12 +2125,12 @@ PyMODINIT_FUNC initevent(void)
 		event_methods__doc__);
 
 	if (!event_module) {
-		Py_DECREF(g_appLoader);
+		Py_DECREF(Py::g_appLoader);
 		return;
 	}
 
 	if (PyModule_AddObject(event_module, "l", g_config)) {
-		Py_DECREF(g_appLoader);
+		Py_DECREF(Py::g_appLoader);
 		return;
 	}
 
@@ -2241,69 +2150,15 @@ PyMODINIT_FUNC initevent(void)
 		PyList_SET_ITEM(spaceKey, 0U, PyInt_FromSize_t(57U));
 	}
 
-	//---------
-
-	LOG_debug("Mod_GUI module loading...\n");
-
-	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
-
-	if (!mGUI_module) {
-		Py_DECREF(g_appLoader);
-		return;
-	}
-
-	LOG_debug("Mod_GUI class loading...\n");
-
-	PyObject* __Mod_GUI = PyString_FromStringAndSize("Mod_GUI", 7U);
-
-	modGUI = PyObject_CallMethodObjArgs(mGUI_module, __Mod_GUI, NULL);
-	
-	Py_DECREF(__Mod_GUI);
-	Py_DECREF(mGUI_module);
-
-	if (!modGUI) {
-		Py_DECREF(g_appLoader);
-		return;
-	}
-
-	LOG_debug("Mod_GUI class loaded OK!\n");
-
-	LOG_debug("g_gui module loading...\n");
-
-	PyObject* mod_mods_gui = PyImport_ImportModule("gui.mods.mod_mods_gui");
-
-	if (!mod_mods_gui) {
-		PyErr_Clear();
-		g_gui = NULL;
-
-		LOG_debug("mod_mods_gui is NULL!\n");
-	}
-	else {
-		PyObject* __g_gui = PyString_FromStringAndSize("g_gui", 5U);
-
-		g_gui = PyObject_GetAttr(mod_mods_gui, __g_gui);
-
-		Py_DECREF(__g_gui);
-		Py_DECREF(mod_mods_gui);
-
-		if (!g_gui) {
-			Py_DECREF(g_appLoader);
-			Py_DECREF(modGUI);
-			return;
-		}
-
-		LOG_debug("mod_mods_gui loaded OK!\n");
-	}
-
-	if (!g_gui) {
+	if (!Py::g_gui) {
 		_mkdir("mods/configs");
 		_mkdir("mods/configs/pavel3333");
 		_mkdir("mods/configs/pavel3333/NY_Event");
 		_mkdir("mods/configs/pavel3333/NY_Event/i18n");
 
 		if (!read_data(true) || !read_data(false)) {
-			Py_DECREF(g_appLoader);
-			Py_DECREF(modGUI);
+			Py_DECREF(Py::g_appLoader);
+			Py_DECREF(Py::modGUI);
 			return;
 		}
 	}
@@ -2311,24 +2166,24 @@ PyMODINIT_FUNC initevent(void)
 		PyObject* ids = PyString_FromString(g_self->ids);
 
 		if (!ids) {
-			Py_DECREF(g_appLoader);
-			Py_DECREF(modGUI);
-			Py_DECREF(g_gui);
+			Py_DECREF(Py::g_appLoader);
+			Py_DECREF(Py::modGUI);
+			Py_DECREF(Py::g_gui);
 			return;
 		}
 
 		PyObject* __register_data = PyString_FromStringAndSize("register_data", 13U);
 		PyObject* __pavel3333 = PyString_FromStringAndSize("pavel3333", 9U);
-		PyObject* data_i18n = PyObject_CallMethodObjArgs(g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
+		PyObject* data_i18n = PyObject_CallMethodObjArgs(Py::g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
 
 		Py_DECREF(__pavel3333);
 		Py_DECREF(__register_data);
 		Py_DECREF(ids);
 
 		if (!data_i18n) {
-			Py_DECREF(g_appLoader);
-			Py_DECREF(modGUI);
-			Py_DECREF(g_gui);
+			Py_DECREF(Py::g_appLoader);
+			Py_DECREF(Py::modGUI);
+			Py_DECREF(Py::g_gui);
 			Py_DECREF(ids);
 			return;
 		}
