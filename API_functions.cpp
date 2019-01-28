@@ -169,54 +169,47 @@ void curl_clean() {
 
 //getting token in pre-auth step
 static uint8_t get_token(std::string input) {
-	memset(wr_buf, NULL, NET_BUFFER_SIZE + 1U); // filling buffer by NULL
-	wr_index = NULL;
-
-	if (curl_handle)
-	{
-		//xor_it(user_agent, 21);
-		char user_agent[] = "NY_Event";
-
-		//std::cout << "user_agent: " << user_agent << std::endl;
-
-		size_t length = input.length();
-
-		char* url = new char[47 + length + 1];
-
-		char url_[48] = "http://api.pavel3333.ru/events/index.php?token=";
-
-		memcpy(url, url_, 47U);
-		memcpy(&url[47], input.c_str(), length);
-		url[47 + length] = NULL;
-
-#if debug_log
-		std::ofstream fil("url_pos.txt", std::ios::binary);
-
-		fil << url;
-
-		fil.close();
-#endif
-
-		//setting user agent
-		curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, user_agent);
-		// setting url
-		curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-		//setting function for write data
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
-		//setting buffer
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, wr_buf);
-		//setting max buffer size
-		curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, 32768U);
-		// requesting
-		CURLcode res = curl_easy_perform(curl_handle);
-
-		memset(url, NULL, 47U + length);
-		delete[] url;
-
-		return res;
+	if (!curl_handle) {
+		return 1U;
 	}
 
-	return 1U;
+	char user_agent[] = "NY_Event";
+
+	size_t length = input.length();
+
+	char* url = new char[47 + length + 1];
+
+	char url_[48] = "http://api.pavel3333.ru/events/index.php?token=";
+
+	memcpy(url, url_, 47U);
+	memcpy(&url[47], input.c_str(), length);
+	url[47 + length] = NULL;
+
+#if debug_log
+	std::ofstream fil("url_pos.txt", std::ios::binary);
+
+	fil << url;
+
+	fil.close();
+#endif
+
+	//setting user agent
+	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, user_agent);
+	// setting url
+	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+	//setting function for write data
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
+	//setting buffer
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, wr_buf);
+	//setting max buffer size
+	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, 32768U);
+	// requesting
+	CURLcode res = curl_easy_perform(curl_handle);
+
+	memset(url, NULL, 47U + length);
+	delete[] url;
+
+	return res;
 }
 
 uint8_t parse_config() { // при входе в бой

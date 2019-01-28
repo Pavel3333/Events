@@ -39,7 +39,7 @@ PyObject* modGUI = NULL;
 PyObject* tickTimerMethod = NULL;
 PyObject* spaceKey = NULL;
 
-PyThreadState* _save = NULL;
+HANDLE getEvent = NULL;
 
 uint8_t first_check = 100U;
 uint8_t mapID = NULL;
@@ -1442,7 +1442,7 @@ uint8_t create_models(uint8_t eventID) {
 
 //threads functions
 
-DWORD WINAPI Thread1_2_3(LPVOID lpParam)
+DWORD WINAPI SecondThread(LPVOID lpParam)
 {
 	if (!isInited || !databaseID || battleEnded) {
 		return 1U;
@@ -1603,10 +1603,6 @@ uint8_t get(uint8_t map_ID, uint8_t eventID) {
 		}*/
 
 		uint8_t threadCount = 1U; //обработку пакетов делаем в 1 потоке
-
-		//HANDLE* hThreads = new HANDLE[threadCount];
-
-		//threads_1.resize(threads_1.size() + threadCount);
 
 		for (size_t i = NULL; i < threadCount; i++)
 		{
