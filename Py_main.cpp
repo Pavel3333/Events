@@ -39,11 +39,9 @@ PyObject* modGUI = NULL;
 PyObject* tickTimerMethod = NULL;
 PyObject* spaceKey = NULL;
 
-HANDLE getEvent = NULL;
-
-uint8_t first_check = 100U;
-uint8_t mapID = NULL;
-uint32_t request = NULL;
+uint8_t  first_check = 100U;
+uint32_t request = 100U;
+uint8_t  mapID = NULL;
 uint32_t databaseID = NULL;
 
 extern EVENT_ID EventsID;
@@ -64,7 +62,12 @@ bool isStreamer = false;
 long timerCBID    = NULL;
 long delLabelCBID = NULL;
 
-//HANDLE getEvent = NULL;
+HANDLE hTimer         = NULL;
+HANDLE hSecondThread  = NULL;
+DWORD  secondThreadID = NULL;
+
+PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
+PEVENTDATA_1 EVENT_START_TIMER = NULL;
 
 uint8_t lastStageID = StagesID.COMPETITION;
 uint8_t lastEventID = EventsID.IN_HANGAR;
@@ -778,8 +781,8 @@ void GUI_tickTimer() {
 		return;
 	}
 
-	if(isModelsAlreadyCreated && isModelsAlreadyInited) request = get(mapID, EventsID.IN_BATTLE_GET_SYNC);
-	else                                                request = get(mapID, EventsID.IN_BATTLE_GET_FULL);
+	if(isModelsAlreadyCreated && isModelsAlreadyInited) request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_SYNC);
+	else                                                request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
 
 	if (request) {
 #if debug_log
@@ -1139,7 +1142,7 @@ uint8_t create_models(uint8_t eventID) {
 	Py_END_ALLOW_THREADS
 
 	if (parsing_result) {
-#if debug_log && extended_debug_log && super_extended_debug_log
+#if debug_log && extended_debug_log
 		PySys_WriteStdout("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
 #endif
 
@@ -1149,8 +1152,8 @@ uint8_t create_models(uint8_t eventID) {
 	}
 
 
-#if debug_log  && extended_debug_log
-		OutputDebugString(_T("[NY_Event]: parsing OK!\n"));
+#if debug_log && extended_debug_log && super_extended_debug_log
+	OutputDebugString(_T("[NY_Event]: parsing OK!\n"));
 #endif
 	
 	if (current_map.time_preparing)  //выводим время
@@ -1165,12 +1168,6 @@ uint8_t create_models(uint8_t eventID) {
 			current_map.stageID == StagesID.END_BY_COUNT ||
 			current_map.stageID == StagesID.STREAMER_MODE
 			) {
-			if (!isTimerStarted) {
-				isTimerStarted = true;
-
-				GUI_tickTimer();
-			}
-
 			if (lastStageID != StagesID.GET_SCORE && lastStageID != StagesID.ITEMS_NOT_EXISTS) GUI_setMsg(current_map.stageID);
 
 			if(current_map.stageID == StagesID.END_BY_TIME || current_map.stageID == StagesID.END_BY_COUNT) {
@@ -1189,7 +1186,7 @@ uint8_t create_models(uint8_t eventID) {
 				uint8_t event_result = event_fini();
 
 				if (event_result) {
-#if debug_log
+#if debug_log && extended_debug_log
 					PySys_WriteStdout("[NY_Event]: Warning - create_models - event_fini - Error code %d\n", event_result);
 #endif
 
@@ -1442,31 +1439,25 @@ uint8_t create_models(uint8_t eventID) {
 
 //threads functions
 
-DWORD WINAPI SecondThread(LPVOID lpParam)
+VOID CALLBACK TimerAPCProc(
+	LPVOID lpArg,               // Data value
+	DWORD dwTimerLowValue,      // Timer low value
+	DWORD dwTimerHighValue)    // Timer high value
+
 {
-	if (!isInited || !databaseID || battleEnded) {
-		return 1U;
+	// Formal parameters not used in this example.
+	UNREFERENCED_PARAMETER(lpArg);
+
+	UNREFERENCED_PARAMETER(dwTimerLowValue);
+	UNREFERENCED_PARAMETER(dwTimerHighValue);
+
+	uint32_t databaseID = EVENT_START_TIMER->databaseID;
+	uint32_t map_ID     = EVENT_START_TIMER->map_ID;
+	uint32_t eventID    = EVENT_START_TIMER->eventID;
+
+	if (!isTimerStarted) {
+		isTimerStarted = true;
 	}
-
-	wchar_t msgBuf[32];
-
-	PMYDATA_1 pDataArray = (PMYDATA_1)lpParam;
-
-	DWORD ID            = pDataArray->ID;
-
-	uint32_t databaseID = pDataArray->databaseID;
-	uint32_t map_ID     = pDataArray->map_ID;
-	uint32_t eventID    = pDataArray->eventID;
-
-	//выводим сообщение о том, что поток работает
-
-#if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Thread %d working!\n"), ID);
-
-	OutputDebugString(msgBuf);
-#endif
-
-	//рабочая часть
 
 	request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 
@@ -1476,73 +1467,50 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 
 	//-----------------------------
 
-	if (eventID == EventsID.IN_HANGAR) {
-		if (request) {
-			if (request > 9U) {
+	if (request) {
+		if (request > 9U) {
 #if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+			PySys_WriteStdout("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
 #endif
 
-				GUI_setError(request);
+			GUI_setError(request);
 
-				return 4U;
-			}
-
-#if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
-#endif
-
-			GUI_setWarning(request);
-
-			return 3U;
+			return;
 		}
+
+#if debug_log && extended_debug_log
+		PySys_WriteStdout("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
+#endif
+
+		GUI_setWarning(request);
+
+		return;
 	}
-	else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
-		if (request) {
-			if (request > 9U) {
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - send_token - Error code %d\n", request);
+
+#if debug_log && extended_debug_log && super_extended_debug_log
+	OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
 #endif
 
-				GUI_setError(request);
+	request = create_models(eventID);
 
-				return 6U;
-			}
-
+	if (request) {
+		if (request > 9U) {
 #if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - send_token - Warning code %d\n", request);
+			PySys_WriteStdout("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
 #endif
 
-			GUI_setWarning(request);
+			GUI_setError(request);
 
-			return 5U;
+			return;
 		}
 
 #if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
+		PySys_WriteStdout("[NY_Event][WARNING]: TIMER - create_models - Warning code %d\n", request);
 #endif
 
-		request = create_models(eventID);
+		GUI_setWarning(request);
 
-		if (request) {
-			if (request > 9U) {
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
-#endif
-
-				GUI_setError(request);
-
-				return 4U;
-			}
-
-#if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - create_models - Warning code %d\n", request);
-#endif
-
-			GUI_setWarning(request);
-
-			return 3U;
-		}
+		return;
 	}
 
 	//выключаем GIL для этого потока
@@ -1550,19 +1518,332 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 	PyGILState_Release(gstate);
 
 	//------------------------------
+}
 
-	//очищаем память после выполнения рабочего кода
+DWORD WINAPI SecondThread(LPVOID lpParam)
+{
+	UNREFERENCED_PARAMETER(lpParam);
 
-	if (pDataArray != NULL)
-	{
-		HeapFree(GetProcessHeap(), 0, pDataArray);
-		pDataArray = NULL;    // Ensure address is not reused.
+	if (!isInited) {
+		return 1U;
+	}
+
+	wchar_t msgBuf[32];
+
+	do {
+		uint32_t databaseID;
+		uint8_t  map_ID;
+		uint8_t  eventID;
+
+		PyGILState_STATE gstate;
+
+		DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
+			EVENT_IN_HANGAR->hEvent, // event handle
+			INFINITE);               // indefinite wait
+
+		switch (EVENT_IN_HANGAR_WaitResult)
+		{
+			// Event object was signaled
+		case WAIT_OBJECT_0:
+#if debug_log
+			OutputDebugString(_T("HangarEvent was signaled!\n"));
+#endif
+
+			//место для рабочего кода
+
+			databaseID = EVENT_IN_HANGAR->databaseID;
+			map_ID     = EVENT_IN_HANGAR->map_ID;
+			eventID    = EVENT_IN_HANGAR->eventID;
+
+			if (eventID != EventsID.IN_HANGAR) {
+				ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+
+#if debug_log && extended_debug_log
+				OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n"));
+#endif
+
+				return 2U;
+			}
+
+			//рабочая часть
+
+			request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+
+			//включаем GIL для этого потока
+
+			gstate = PyGILState_Ensure();
+
+			//-----------------------------
+
+			if (request) {
+				if (request > 9U) {
+#if debug_log && extended_debug_log
+					PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+#endif
+
+					GUI_setError(request);
+
+					return 5U;
+				}
+
+#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
+#endif
+
+				GUI_setWarning(request);
+
+				return 4U;
+			}
+
+			//выключаем GIL для этого потока
+
+			PyGILState_Release(gstate);
+
+			//------------------------------
+
+			//очищаем ивент
+
+			ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+			break;
+
+			// An error occurred
+		default:
+			ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
+#endif
+
+			return 3U;
+		}
+	}
+	while (first_check);
+
+	/*do {
+		DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
+			EVENT_IN_HANGAR->hEvent, // event handle
+			INFINITE);               // indefinite wait
+
+		switch (EVENT_IN_HANGAR_WaitResult)
+		{
+			// Event object was signaled
+		case WAIT_OBJECT_0:
+#if debug_log
+			OutputDebugString(_T("HangarEvent was signaled!\n"));
+#endif
+
+			//место для рабочего кода
+
+			databaseID = EVENT_IN_HANGAR->databaseID;
+			map_ID = EVENT_IN_HANGAR->map_ID;
+			eventID = EVENT_IN_HANGAR->eventID;
+
+			if (eventID != EventsID.IN_HANGAR) {
+				ResetEvent(EVENT_IN_HANGAR);
+
+				return 2U;
+			}
+
+			//рабочая часть
+
+			request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+
+			//включаем GIL для этого потока
+
+			gstate = PyGILState_Ensure();
+
+			//-----------------------------
+
+			if (eventID == EventsID.IN_HANGAR) {
+				if (request) {
+					if (request > 9U) {
+#if debug_log && extended_debug_log
+						PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+#endif
+
+						GUI_setError(request);
+
+						return 4U;
+					}
+
+#if debug_log && extended_debug_log
+					PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
+#endif
+
+					GUI_setWarning(request);
+
+					return 3U;
+				}
+			}
+			/*else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
+				if (request) {
+					if (request > 9U) {
+	#if debug_log && extended_debug_log
+						PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - send_token - Error code %d\n", request);
+	#endif
+
+						GUI_setError(request);
+
+						return 6U;
+					}
+
+	#if debug_log && extended_debug_log
+					PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - send_token - Warning code %d\n", request);
+	#endif
+
+					GUI_setWarning(request);
+
+					return 5U;
+				}
+
+	#if debug_log && extended_debug_log
+				OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
+	#endif
+
+				request = create_models(eventID);
+
+				if (request) {
+					if (request > 9U) {
+	#if debug_log && extended_debug_log
+						PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
+	#endif
+
+						GUI_setError(request);
+
+						return 4U;
+					}
+
+	#if debug_log && extended_debug_log
+					PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - create_models - Warning code %d\n", request);
+	#endif
+
+					GUI_setWarning(request);
+
+					return 3U;
+				}
+			}
+			
+
+			//выключаем GIL для этого потока
+
+			PyGILState_Release(gstate);
+
+			//------------------------------
+
+			//очищаем ивент
+
+			ResetEvent(EVENT_IN_HANGAR);
+
+			break;
+
+			// An error occurred
+		default:
+			return NULL;
+		}
+	} //запускаем таймер
+	while (request || !battleEnded);*/
+	
+	if (!request && !battleEnded) { //инициализация таймера для получения полного списка моделей и синхронизации
+		BOOL            bSuccess;
+		__int64         qwDueTime;
+		LARGE_INTEGER   liDueTime;
+
+		DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
+			EVENT_START_TIMER->hEvent, // event handle
+			INFINITE);               // indefinite wait
+
+		switch (EVENT_START_TIMER_WaitResult)
+		{
+			// Event object was signaled
+		case WAIT_OBJECT_0:
+#if debug_log
+			OutputDebugString(_T("STEvent was signaled!\n"));
+#endif
+
+			//место для рабочего кода
+
+			if (EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_SYNC) {
+				ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+
+#if debug_log && extended_debug_log
+				OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n"));
+#endif
+
+				return 2U;
+			}
+
+			//рабочая часть
+
+			hTimer = CreateWaitableTimer(
+				NULL,                   // Default security attributes
+				FALSE,                  // Create auto-reset timer
+				TEXT("BattleTimer"));   // Name of waitable timer
+
+			if (hTimer != NULL)
+			{
+				__try
+				{
+					qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
+
+					// Copy the relative time into a LARGE_INTEGER.
+					liDueTime.LowPart  = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
+					liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
+
+					bSuccess = SetWaitableTimer(
+						hTimer,           // Handle to the timer object
+						&liDueTime,       // When timer will become signaled
+						1000,             // Periodic timer interval of 1 seconds
+						TimerAPCProc,     // Completion routine
+						NULL,             // Argument to the completion routine
+						FALSE);           // Do not restore a suspended system
+
+					if (bSuccess)
+					{
+						while (!first_check && !battleEnded)
+						{
+							SleepEx(
+								INFINITE,     // Wait forever
+								TRUE);        // Put thread in an alertable state
+						}
+					}
+					else
+					{
+						printf("SetWaitableTimer failed with error %d\n", GetLastError());
+					}
+				}
+				__finally
+				{
+					CloseHandle(hTimer);
+				}
+			}
+			else
+			{
+				printf("CreateWaitableTimer failed with error %d\n", GetLastError());
+			}
+
+			//очищаем ивент
+
+			ResetEvent(EVENT_START_TIMER->hEvent);
+
+			break;
+
+			// An error occurred
+		default:
+			ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n"));
+#endif
+
+			return 3U;
+		}
 	}
 
 	//закрываем поток
 
 #if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Closing thread %d\n"), ID);
+	wsprintfW(msgBuf, _T("Closing thread %d\n"), secondThreadID);
 
 	OutputDebugString(msgBuf);
 #endif
@@ -1574,88 +1855,40 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 
 //-----------------
 
-uint8_t get(uint8_t map_ID, uint8_t eventID) {
+uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) {
 	if (!isInited || !databaseID || battleEnded) {
 		return 1U;
 	}
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: generating token...\n"));
+	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //посылаем ивент и обрабатываем в треде
+		if      (eventID == EventsID.IN_HANGAR) {
+			EVENT_IN_HANGAR->databaseID = databaseID; //заполняем буфер для ангара
+			EVENT_IN_HANGAR->map_ID = map_ID;
+			EVENT_IN_HANGAR->eventID = eventID;
+
+			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
+			{
+#if debug_log
+				OutputDebugString(_T("HangarEvent not setted!\n"));
 #endif
 
-	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //создаем 1 поток для отправки запроса и обработки
-		//_save = NULL;
-
-		//Py_UNBLOCK_THREADS; //отключаем GIL
-
-		/*getEvent = CreateEvent(
-			NULL,               // default security attributes
-			TRUE,               // manual-reset event
-			FALSE,              // initial state is nonsignaled
-			TEXT("WriteEvent")  // object name
-		);
-
-		if (getEvent == NULL)
-		{
-			printf("CreateEvent failed (%d)\n", GetLastError());
-
-			return;
-		}*/
-
-		uint8_t threadCount = 1U; //обработку пакетов делаем в 1 потоке
-
-		for (size_t i = NULL; i < threadCount; i++)
-		{
-			// Allocate memory for thread data.
-
-			PMYDATA_1 pMyData = (PMYDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				sizeof(MYDATA_1));
-
-			if (pMyData == NULL)
-			{
-				// If the array allocation fails, the system is out of memory
-				// so there is no point in trying to print an error message.
-				// Just terminate execution.
-				ExitProcess(2);
+				return 3;
 			}
+		}
+		else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
+			EVENT_START_TIMER->databaseID = databaseID;
+			EVENT_START_TIMER->map_ID     = map_ID;
+			EVENT_START_TIMER->eventID    = eventID;
 
-			// Generate unique data for each thread to work with.
-
-			pMyData->databaseID = databaseID;
-			pMyData->map_ID     = map_ID;
-			pMyData->eventID    = eventID;
-
-			// Create the thread to begin execution on its own.
-
-			HANDLE hThread = CreateThread(
-				NULL,                                   // default security attributes
-				0,                                      // use default stack size  
-				Thread1_2_3,                            // thread function name
-				pMyData,                                // argument to thread function 
-				0,                                      // use default creation flags 
-				&(pMyData->ID));                        // returns the thread identifier 
-
-			if (hThread == NULL)
+			if (!SetEvent(EVENT_START_TIMER->hEvent))
 			{
-				OutputDebugString(TEXT("CreateThread: error 1\n"));
+#if debug_log
+				OutputDebugString(_T("STEvent event not setted!\n"));
+#endif
 
-				if (pMyData != NULL)   //очищаем память
-				{
-					HeapFree(GetProcessHeap(), 0, pMyData);
-					pMyData = NULL;
-				}
-
-				return 1U;
+				return 4;
 			}
-		} // End of main thread creation loop.
-
-		//delete[] hThreads;
-
-		/*if (_save) { //включаем GIL
-			Py_BLOCK_THREADS;
-
-			_save = NULL;
-		}*/
+		}
 
 		return NULL;
 	}
@@ -1739,7 +1972,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 
 	isTimeON = true;
 
-	request = get(mapID, EventsID.IN_BATTLE_GET_FULL);
+	request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
 
 	if (request) {
 #if debug_log
@@ -2007,21 +2240,99 @@ static PyObject* event_err_code(PyObject *self, PyObject *args) {
 	return PyInt_FromSize_t(first_check);
 };
 
-static PyObject* event_сheck(PyObject *self, PyObject *args) {
-	if (!isInited) {
-		return PyInt_FromSize_t(1U);
+bool createEvents1(PEVENTDATA_1 pEvent, uint8_t eventID) {
+	if (pEvent != NULL) { //если уже была инициализирована структура - удаляем
+		if (pEvent->hEvent != NULL) {
+			CloseHandle(pEvent->hEvent);
+
+			pEvent->hEvent = NULL;
+		}
+
+		HeapFree(GetProcessHeap(), NULL, pEvent);
+
+		pEvent = NULL;
 	}
+
+	pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+		sizeof(EVENTDATA_1));
+
+	if (pEvent == NULL) //нехватка памяти, завершаем работу
+	{
+		ExitProcess(1);
+	}
+
+	pEvent->hEvent = CreateEvent(
+		NULL,                      // default security attributes
+		TRUE,                      // manual-reset event
+		FALSE,                     // initial state is nonsignaled
+		EVENT_NAMES[eventID]       // object name
+	);
+
+	if (pEvent->hEvent == NULL)
+	{
+		OutputDebugString(TEXT("Event creating error\n"));
+
+		return false;
+	}
+
+	return true;
+}
+
+bool createEventsAndSecondThread() {
+	if (!createEvents1(EVENT_IN_HANGAR, EventsID.IN_HANGAR))                   return false;
+	if (!createEvents1(EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL))        return false;
+	//TODO: сделать ивент - удаление ближайшей модели
+
+	//Thread creating
+
+	if (hSecondThread) {
+		CloseHandle(hSecondThread);
+
+		hSecondThread = NULL;
+	}
+
+	hSecondThread = CreateThread( //создаем второй поток
+		NULL,                                   // default security attributes
+		0,                                      // use default stack size  
+		SecondThread,                           // thread function name
+		NULL,                                   // argument to thread function 
+		0,                                      // use default creation flags 
+		&secondThreadID);                       // returns the thread identifier 
+
+	if (hSecondThread == NULL)
+	{
+		OutputDebugString(TEXT("CreateThread: error 1\n"));
+
+		return false;
+	}
+
+	return true;
+}
+
+uint8_t event_сheck() {
+	if (!isInited) {
+		return 1U;
+	}
+
+	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
+
+	if (!createEventsAndSecondThread()) {
+		return 2U;
+	}
+
+	//------------------------------------------------------------------------------------------------
 
 #if debug_log && extended_debug_log
 	OutputDebugString(_T("[NY_Event]: checking...\n"));
 #endif
+
 	PyObject* __player = PyString_FromStringAndSize("player", 6U);
 	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
 	if (!player) {
-		return PyInt_FromSize_t(2U);
+		return 3U;
 	}
 
 	PyObject* __databaseID = PyString_FromStringAndSize("databaseID", 10U);
@@ -2031,7 +2342,7 @@ static PyObject* event_сheck(PyObject *self, PyObject *args) {
 	Py_DECREF(player);
 
 	if (!DBID_string) {
-		return PyInt_FromSize_t(3U);
+		return 4U;
 	}
 
 	PyObject* DBID_int = PyNumber_Int(DBID_string);
@@ -2039,7 +2350,7 @@ static PyObject* event_сheck(PyObject *self, PyObject *args) {
 	Py_DECREF(DBID_string);
 
 	if (!DBID_int) {
-		return PyInt_FromSize_t(4U);
+		return 5U;
 	}
 
 	databaseID = PyInt_AS_LONG(DBID_int);
@@ -2052,29 +2363,26 @@ static PyObject* event_сheck(PyObject *self, PyObject *args) {
 
 	battleEnded = false;
 
-	first_check = get(NULL, EventsID.IN_HANGAR);
+	first_check = makeEventInThread(NULL, EventsID.IN_HANGAR);
 
 	if (first_check) {
-		return PyInt_FromSize_t(2U);
+		return 6U;
 	}
 	else {
-		Py_RETURN_NONE;
+		return NULL;
 	}
+}
+
+static PyObject* event_сheck_py(PyObject *self, PyObject *args) {
+	uint8_t res = event_сheck();
+
+	if (res) {
+		return PyInt_FromSize_t(res);
+	}
+	else Py_RETURN_NONE;
 };
 
-static PyObject* event_init(PyObject *self, PyObject *args) {
-	if (!isInited) {
-		return PyInt_FromSize_t(1U);
-	}
-
-	PyObject* template_;
-	PyObject* apply;
-	PyObject* byteify;
-
-	if (!PyArg_ParseTuple(args, "OOO", &template_, &apply, &byteify)) {
-		return PyInt_FromSize_t(2U);
-	}
-
+uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) {
 	if (g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) {
 		Py_INCREF(template_);
 		Py_INCREF(apply);
@@ -2108,7 +2416,28 @@ static PyObject* event_init(PyObject *self, PyObject *args) {
 		Py_DECREF(byteify);
 	}
 
-	Py_RETURN_NONE;
+	return NULL;
+}
+
+static PyObject* event_init_py(PyObject *self, PyObject *args) {
+	if (!isInited) {
+		return PyInt_FromSize_t(1U);
+	}
+
+	PyObject* template_;
+	PyObject* apply;
+	PyObject* byteify;
+
+	if (!PyArg_ParseTuple(args, "OOO", &template_, &apply, &byteify)) {
+		return PyInt_FromSize_t(2U);
+	}
+
+	uint8_t res = event_init(template_, apply, byteify);
+
+	if (res) {
+		return PyInt_FromSize_t(res);
+	}
+	else Py_RETURN_NONE;
 };
 
 static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
@@ -2224,11 +2553,11 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 static struct PyMethodDef event_methods[] =
 {
-	{ "b",  event_сheck, METH_VARARGS, ":P" }, //check
+	{ "b",  event_сheck_py, METH_VARARGS, ":P" }, //check
 	{ "c",  event_start, METH_NOARGS, ":P" },//start
 	{ "d",  event_fini_py, METH_NOARGS, ":P" },//fini
 	{ "e",  event_err_code, METH_NOARGS, ":P" },//get_error_code
-	{ "g",  event_init, METH_VARARGS, ":P" },//init
+	{ "g",  event_init_py, METH_VARARGS, ":P" },//init
 	{ "cb", GUI_tickTimerMethod, METH_NOARGS, ":P" },//tickTimer
 	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" },//init
 	{ NULL, NULL, 0, NULL }

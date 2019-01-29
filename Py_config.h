@@ -6,7 +6,7 @@
 
 Config config = Config();
 
-uint8_t get(uint8_t, uint8_t);
+uint8_t makeEventInThread(uint8_t, uint8_t);
 
 typedef struct {
 	PyObject_HEAD

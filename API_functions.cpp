@@ -29,6 +29,13 @@ STAGE_ID StagesID;
 
 int8_t scoreID = -1;
 
+LPCWSTR EVENT_NAMES[] {
+	L"HangarEvent",
+	L"InBattleGFEvent",
+	L"InBattleGSEvent",
+	L"DelEvent"
+};
+
 char* COLOURS[MESSAGES_COUNT] {
 	"FFFF00FF",
 	"00E600FF",

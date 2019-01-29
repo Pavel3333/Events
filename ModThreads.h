@@ -9,11 +9,11 @@
 // that can be passed using a single void pointer (LPVOID).
 
 typedef struct {
-	DWORD ID;
+	HANDLE hEvent = NULL;
 
-	uint32_t databaseID;
-	uint8_t  map_ID;
-	uint8_t  eventID;
-} MYDATA_1, *PMYDATA_1;
+	uint32_t databaseID = NULL;
+	uint8_t  map_ID = NULL;
+	uint8_t  eventID = NULL;
+} EVENTDATA_1, *PEVENTDATA_1;
 
 uint8_t getThreadCount();

@@ -26,6 +26,8 @@
 
 extern uint16_t SCORE[SECTIONS_COUNT];
 
+extern LPCWSTR EVENT_NAMES[4];
+
 extern char* COLOURS[MESSAGES_COUNT];
 extern char* MESSAGES[MESSAGES_COUNT];
 extern char* MODEL_NAMES[SECTIONS_COUNT];
