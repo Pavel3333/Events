@@ -1499,97 +1499,103 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		return 1U;
 	}
 
-	wchar_t msgBuf[32];
+	wchar_t msgBuf[255];
 
-	do {
-		uint32_t databaseID;
-		uint8_t  map_ID;
-		uint8_t  eventID;
+	uint32_t databaseID;
+	uint8_t  map_ID;
+	uint8_t  eventID;
 
-		PyGILState_STATE gstate;
+	PyGILState_STATE gstate;
 
-		DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
-			EVENT_IN_HANGAR->hEvent, // event handle
-			INFINITE);               // indefinite wait
+	DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
+		EVENT_IN_HANGAR->hEvent, // event handle
+		INFINITE);               // indefinite wait
 
-		switch (EVENT_IN_HANGAR_WaitResult)
-		{
-			// Event object was signaled
-		case WAIT_OBJECT_0:
+	switch (EVENT_IN_HANGAR_WaitResult)
+	{
+		// Event object was signaled
+	case WAIT_OBJECT_0:
 #if debug_log
-			OutputDebugString(_T("HangarEvent was signaled!\n"));
+		OutputDebugString(_T("HangarEvent was signaled!\n"));
 #endif
 
-			//место для рабочего кода
+		//место для рабочего кода
 
-			databaseID = EVENT_IN_HANGAR->databaseID;
-			map_ID     = EVENT_IN_HANGAR->map_ID;
-			eventID    = EVENT_IN_HANGAR->eventID;
+		databaseID = EVENT_IN_HANGAR->databaseID;
+		map_ID     = EVENT_IN_HANGAR->map_ID;
+		eventID    = EVENT_IN_HANGAR->eventID;
 
-			if (eventID != EventsID.IN_HANGAR) {
-				ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+		if (eventID != EventsID.IN_HANGAR) {
+			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
 #if debug_log && extended_debug_log
-				OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n"));
+			OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n"));
 #endif
 
-				return 2U;
-			}
-
-			//рабочая часть
-
-			request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
-
-			//включаем GIL для этого потока
-
-			gstate = PyGILState_Ensure();
-
-			//-----------------------------
-
-			if (request) {
-				if (request > 9U) {
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
-#endif
-
-					GUI_setError(request);
-
-					return 5U;
-				}
-
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
-#endif
-
-				GUI_setWarning(request);
-
-				return 4U;
-			}
-
-			//выключаем GIL для этого потока
-
-			PyGILState_Release(gstate);
-
-			//------------------------------
-
-			//очищаем ивент
-
-			ResetEvent(EVENT_IN_HANGAR->hEvent);
-
-			break;
-
-			// An error occurred
-		default:
-			ResetEvent(EVENT_IN_HANGAR->hEvent);
-
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
-#endif
-
-			return 3U;
+			return 2U;
 		}
+
+		//рабочая часть
+
+		first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+
+		//включаем GIL для этого потока
+
+		gstate = PyGILState_Ensure();
+
+		//-----------------------------
+
+		if (first_check) {
+			if (first_check > 9U) {
+#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+#endif
+
+				GUI_setError(first_check);
+
+				return 5U;
+			}
+
+#if debug_log && extended_debug_log
+			PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
+#endif
+
+			GUI_setWarning(first_check);
+
+			return 4U;
+		}
+
+		//выключаем GIL для этого потока
+
+		PyGILState_Release(gstate);
+
+		//------------------------------
+
+		//очищаем ивент
+
+		ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+		break;
+
+		// An error occurred
+	default:
+		ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
+#endif
+
+		return 3U;
 	}
-	while (first_check);
+	if (first_check) {
+#if debug_log
+		wsprintfW(msgBuf, _T("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n"), (uint32_t)first_check);
+
+		OutputDebugString(msgBuf);
+#endif
+
+		return 4U;
+	}
 
 	/*do {
 		DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
@@ -1825,8 +1831,6 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 }
 
 //-----------------
-
-
 
 uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) {
 	if (!isInited || !databaseID || battleEnded) {
@@ -2172,17 +2176,17 @@ uint8_t event_fini() {
 	return NULL;
 }
 
-void closeEvent1(PEVENTDATA_1 pEvent) {
-	if (pEvent != NULL) { //если уже была инициализирована структура - удаляем
-		if (pEvent->hEvent != NULL) {
-			CloseHandle(pEvent->hEvent);
+void closeEvent1(PEVENTDATA_1* pEvent) {
+	if (*pEvent != NULL) { //если уже была инициализирована структура - удаляем
+		if ((*pEvent)->hEvent != NULL) {
+			CloseHandle((*pEvent)->hEvent);
 
-			pEvent->hEvent = NULL;
+			(*pEvent)->hEvent = NULL;
 		}
 
-		HeapFree(GetProcessHeap(), NULL, pEvent);
+		HeapFree(GetProcessHeap(), NULL, *pEvent);
 
-		pEvent = NULL;
+		*pEvent = NULL;
 	}
 }
 
@@ -2218,8 +2222,8 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 
 		isTimerStarted = false;
 
-		closeEvent1(EVENT_START_TIMER);
-		closeEvent1(EVENT_IN_HANGAR);
+		closeEvent1(&EVENT_START_TIMER);
+		closeEvent1(&EVENT_IN_HANGAR);
 
 		GUI_setVisible(false);
 		GUI_clearText();
@@ -2235,25 +2239,25 @@ static PyObject* event_err_code(PyObject *self, PyObject *args) {
 	return PyInt_FromSize_t(first_check);
 };
 
-bool createEvent1(PEVENTDATA_1 pEvent, uint8_t eventID) {
+bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 	closeEvent1(pEvent); //закрываем ивент, если существует
 
-	pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_1));
 
-	if (pEvent == NULL) //нехватка памяти, завершаем работу
+	if (*pEvent == NULL) //нехватка памяти, завершаем работу
 	{
 		ExitProcess(1);
 	}
 
-	pEvent->hEvent = CreateEvent(
+	(*pEvent)->hEvent = CreateEvent(
 		NULL,                      // default security attributes
 		TRUE,                      // manual-reset event
 		FALSE,                     // initial state is nonsignaled
 		EVENT_NAMES[eventID]       // object name
 	);
 
-	if (pEvent->hEvent == NULL)
+	if ((*pEvent)->hEvent == NULL)
 	{
 		OutputDebugString(TEXT("Event creating error\n"));
 
@@ -2264,8 +2268,8 @@ bool createEvent1(PEVENTDATA_1 pEvent, uint8_t eventID) {
 }
 
 bool createEventsAndSecondThread() {
-	if (!createEvent1(EVENT_IN_HANGAR, EventsID.IN_HANGAR))            return false;
-	if (!createEvent1(EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL)) return false;
+	if (!createEvent1(&EVENT_IN_HANGAR,   EventsID.IN_HANGAR))            return false;
+	if (!createEvent1(&EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL)) return false;
 	//TODO: сделать ивент - удаление ближайшей модели
 
 	//Thread creating
