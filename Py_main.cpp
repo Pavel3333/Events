@@ -66,6 +66,8 @@ HANDLE hTimer         = NULL;
 HANDLE hSecondThread  = NULL;
 DWORD  secondThreadID = NULL;
 
+uint8_t timerLastError = NULL;
+
 PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
 PEVENTDATA_1 EVENT_START_TIMER = NULL;
 
@@ -485,7 +487,7 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 	delete[] coords_pos;
 
 	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) {
-		return false;
+		return 8U;
 	}
 
 	if (dist > dist_equal) {
@@ -623,7 +625,7 @@ void GUI_setTimerVisible(bool visible) {
 	Py_DECREF(__setTimerVisible);
 	Py_XDECREF(res);
 
-	return ;
+	return;
 }
 
 void GUI_setTime(uint32_t time_preparing) {
@@ -960,6 +962,7 @@ static PyObject* event_model(char* path, float coords[3]) {
 
 	if (!coords_p) {
 		Py_DECREF(Model);
+
 		return NULL;
 	}
 
@@ -1048,13 +1051,12 @@ uint8_t init_models() {
 }
 
 uint8_t set_visible(bool isVisible) {
-	if (!isInited || first_check || request || battleEnded) {
+	if (!isInited || first_check || request || battleEnded || models.empty()) {
 		return 1U;
 	}
 
 	PyObject* py_visible = PyBool_FromLong(isVisible);
 
-	if (models.empty()) return 2U;
 #if debug_log && extended_debug_log
 	OutputDebugString(_T("[NY_Event]: Models visiblity changing...\n"));
 #endif
@@ -1163,8 +1165,6 @@ uint8_t create_models(uint8_t eventID) {
 
 					GUI_setWarning(event_result);
 				}
-
-
 			}
 			else {
 				if (!isTimeVisible) {
@@ -1297,7 +1297,7 @@ uint8_t create_models(uint8_t eventID) {
 						if (request) {
 							if (request > 9U) {
 #if debug_log
-								PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
+								PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
 #endif
 
 								GUI_setError(request);
@@ -1306,7 +1306,7 @@ uint8_t create_models(uint8_t eventID) {
 							}
 
 #if debug_log
-							PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
+							PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 #endif
 
 							GUI_setWarning(request);
@@ -1410,6 +1410,29 @@ uint8_t create_models(uint8_t eventID) {
 
 //threads functions
 
+
+void closeTimerInTimer() {
+
+
+	if (!hTimer) return;
+
+	HANDLE hTimer_old = hTimer;
+
+	hTimer = NULL;
+
+	CloseHandle(hTimer_old);
+}
+
+/*
+ѕќ„≈ћ” Ќ≈Ћ№«я «ј –џ¬ј“№ “ј…ћ≈–џ ¬ —јћ»’ —≈Ѕ≈
+
+-поток открыл ожидающий таймер
+-таймер и говорит ему: поток, у мен€ тут ашыпка
+-таймер сделал харакири
+-поток: “ј…ћ≈–!!!
+-программа ушла в вечное ожидание
+*/
+
 VOID CALLBACK TimerAPCProc(
 	LPVOID lpArg,               // Data value
 	DWORD dwTimerLowValue,      // Timer low value
@@ -1446,6 +1469,8 @@ VOID CALLBACK TimerAPCProc(
 
 			GUI_setError(request);
 
+			timerLastError = 1;
+
 			return;
 		}
 
@@ -1465,21 +1490,13 @@ VOID CALLBACK TimerAPCProc(
 	request = create_models(eventID);
 
 	if (request) {
-		if (request > 9U) {
 #if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
+		PySys_WriteStdout("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
 #endif
 
-			GUI_setError(request);
+		GUI_setError(request);
 
-			return;
-		}
-
-#if debug_log && extended_debug_log
-		PySys_WriteStdout("[NY_Event][WARNING]: TIMER - create_models - Warning code %d\n", request);
-#endif
-
-		GUI_setWarning(request);
+		timerLastError = 2;
 
 		return;
 	}
@@ -1522,8 +1539,8 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		//место дл€ рабочего кода
 
 		databaseID = EVENT_IN_HANGAR->databaseID;
-		map_ID     = EVENT_IN_HANGAR->map_ID;
-		eventID    = EVENT_IN_HANGAR->eventID;
+		map_ID = EVENT_IN_HANGAR->map_ID;
+		eventID = EVENT_IN_HANGAR->eventID;
 
 		if (eventID != EventsID.IN_HANGAR) {
 			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
@@ -1700,7 +1717,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 					return 3U;
 				}
 			}
-			
+
 
 			//выключаем GIL дл€ этого потока
 
@@ -1720,101 +1737,120 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		}
 	} //запускаем таймер
 	while (request || !battleEnded);*/
-	
-	if (!request && !battleEnded) { //инициализаци€ таймера дл€ получени€ полного списка моделей и синхронизации
-		BOOL            bSuccess;
-		__int64         qwDueTime;
-		LARGE_INTEGER   liDueTime;
 
-		DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
-			EVENT_START_TIMER->hEvent, // event handle
-			INFINITE);               // indefinite wait
 
-		switch (EVENT_START_TIMER_WaitResult)
-		{
-			// Event object was signaled
-		case WAIT_OBJECT_0:
+	BOOL            bSuccess;
+	__int64         qwDueTime;
+	LARGE_INTEGER   liDueTime;
+
+	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
+		EVENT_START_TIMER->hEvent, // event handle
+		INFINITE);               // indefinite wait
+
+	switch (EVENT_START_TIMER_WaitResult)
+	{
+		// Event object was signaled
+	case WAIT_OBJECT_0:
 #if debug_log
-			OutputDebugString(_T("STEvent was signaled!\n"));
+		OutputDebugString(_T("STEvent was signaled!\n"));
 #endif
 
-			//место дл€ рабочего кода
+		//место дл€ рабочего кода
 
-			if (EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_SYNC) {
-				ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+		if (EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_SYNC) {
+			ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
 #if debug_log && extended_debug_log
-				OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n"));
+			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n"));
 #endif
 
-				return 2U;
-			}
+			return 2U;
+		}
 
-			//рабоча€ часть
-
-			hTimer = CreateWaitableTimer(
-				NULL,                   // Default security attributes
-				FALSE,                  // Create auto-reset timer
-				TEXT("BattleTimer"));   // Name of waitable timer
-
-			if (hTimer != NULL)
-			{
-				__try
-				{
-					qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
-
-					// Copy the relative time into a LARGE_INTEGER.
-					liDueTime.LowPart  = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
-					liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
-
-					bSuccess = SetWaitableTimer(
-						hTimer,           // Handle to the timer object
-						&liDueTime,       // When timer will become signaled
-						1000,             // Periodic timer interval of 1 seconds
-						TimerAPCProc,     // Completion routine
-						NULL,             // Argument to the completion routine
-						FALSE);           // Do not restore a suspended system
-
-					if (bSuccess)
-					{
-						while (!first_check && !battleEnded)
-						{
-							SleepEx(
-								INFINITE,     // Wait forever
-								TRUE);        // Put thread in an alertable state
-						}
-					}
-					else
-					{
-						printf("SetWaitableTimer failed with error %d\n", GetLastError());
-					}
-				}
-				__finally
-				{
-					CloseHandle(hTimer);
-				}
-			}
-			else
-			{
-				printf("CreateWaitableTimer failed with error %d\n", GetLastError());
-			}
-
-			//очищаем ивент
-
-			ResetEvent(EVENT_START_TIMER->hEvent);
-
-			break;
-
-			// An error occurred
-		default:
-			ResetEvent(EVENT_IN_HANGAR->hEvent);
-
+		if (first_check || battleEnded) {
 #if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n"));
+			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n"));
 #endif
 
 			return 3U;
 		}
+
+		//рабоча€ часть
+
+		//инициализаци€ таймера дл€ получени€ полного списка моделей и синхронизации
+
+		hTimer = CreateWaitableTimer(
+			NULL,                   // Default security attributes
+			FALSE,                  // Create auto-reset timer
+			TEXT("BattleTimer"));   // Name of waitable timer
+
+		if (hTimer != NULL)
+		{
+			__try
+			{
+				qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
+
+				// Copy the relative time into a LARGE_INTEGER.
+				liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
+				liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
+
+				bSuccess = SetWaitableTimer(
+					hTimer,           // Handle to the timer object
+					&liDueTime,       // When timer will become signaled
+					1000,             // Periodic timer interval of 1 seconds
+					TimerAPCProc,     // Completion routine
+					NULL,             // Argument to the completion routine
+					FALSE);           // Do not restore a suspended system
+
+				if (bSuccess)
+				{
+					while (!first_check && !battleEnded && !timerLastError)
+					{
+						SleepEx(
+							INFINITE,     // Wait forever
+							TRUE);        // Put thread in an alertable state
+					}
+
+					if (timerLastError) {
+#if debug_log && extended_debug_log
+						OutputDebugString(_T("Timer got the error\n"));
+#endif
+
+						CancelWaitableTimer(hTimer);
+					}
+				}
+				else
+				{
+#if debug_log && extended_debug_log
+					OutputDebugString(_T("SetWaitableTimer failed\n"));
+#endif
+				}
+			}
+			__finally
+			{
+				CloseHandle(hTimer);
+			}
+		}
+		else
+		{
+			printf("CreateWaitableTimer failed with error %d\n", GetLastError());
+		}
+
+		//очищаем ивент
+
+		ResetEvent(EVENT_START_TIMER->hEvent);
+
+		break;
+
+		// An error occurred
+	default:
+		ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n"));
+#endif
+
+		return 3U;
 	}
 
 	//закрываем поток
@@ -1839,6 +1875,10 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) {
 
 	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //посылаем ивент и обрабатываем в треде
 		if      (eventID == EventsID.IN_HANGAR) {
+			if (!EVENT_IN_HANGAR) {
+				return 4;
+			}
+
 			EVENT_IN_HANGAR->databaseID = databaseID; //заполн€ем буфер дл€ ангара
 			EVENT_IN_HANGAR->map_ID = map_ID;
 			EVENT_IN_HANGAR->eventID = eventID;
@@ -1849,10 +1889,14 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) {
 				OutputDebugString(_T("HangarEvent not setted!\n"));
 #endif
 
-				return 3;
+				return 5;
 			}
 		}
 		else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
+			if (!EVENT_START_TIMER) {
+				return 4;
+			}
+
 			EVENT_START_TIMER->databaseID = databaseID;
 			EVENT_START_TIMER->map_ID     = map_ID;
 			EVENT_START_TIMER->eventID    = eventID;
@@ -1863,7 +1907,7 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) {
 				OutputDebugString(_T("STEvent event not setted!\n"));
 #endif
 
-				return 4;
+				return 5;
 			}
 		}
 
