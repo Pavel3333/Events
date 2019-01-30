@@ -1410,19 +1410,6 @@ uint8_t create_models(uint8_t eventID) {
 
 //threads functions
 
-
-void closeTimerInTimer() {
-
-
-	if (!hTimer) return;
-
-	HANDLE hTimer_old = hTimer;
-
-	hTimer = NULL;
-
-	CloseHandle(hTimer_old);
-}
-
 /*
 œŒ◊≈Ã” Õ≈À‹«ﬂ «¿ –€¬¿“‹ “¿…Ã≈–€ ¬ —¿Ã»’ —≈¡≈
 
@@ -1471,6 +1458,8 @@ VOID CALLBACK TimerAPCProc(
 
 			timerLastError = 1;
 
+			PyGILState_Release(gstate);
+
 			return;
 		}
 
@@ -1479,6 +1468,8 @@ VOID CALLBACK TimerAPCProc(
 #endif
 
 		GUI_setWarning(request);
+
+		PyGILState_Release(gstate);
 
 		return;
 	}
@@ -1497,6 +1488,8 @@ VOID CALLBACK TimerAPCProc(
 		GUI_setError(request);
 
 		timerLastError = 2;
+
+		PyGILState_Release(gstate);
 
 		return;
 	}
