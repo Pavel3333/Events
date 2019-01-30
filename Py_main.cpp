@@ -36,12 +36,12 @@ PyObject* json = NULL;
 
 PyObject* modGUI = NULL;
 
-PyObject* tickTimerMethod = NULL;
 PyObject* spaceKey = NULL;
 
 uint8_t  first_check = 100U;
-uint32_t request = 100U;
-uint8_t  mapID = NULL;
+uint32_t request     = 100U;
+
+uint8_t  mapID      = NULL;
 uint32_t databaseID = NULL;
 
 extern EVENT_ID EventsID;
@@ -52,10 +52,10 @@ bool isInited = false;
 bool battleEnded = true;
 
 bool isModelsAlreadyCreated = false;
-bool isModelsAlreadyInited = false;
+bool isModelsAlreadyInited  = false;
 
 bool isTimerStarted = false;
-bool isTimeON = false;
+bool isTimeVisible  = false;
 
 bool isStreamer = false;
 
@@ -456,8 +456,8 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 		coords_pos[i] = PyFloat_AS_DOUBLE(coord_p);
 	}
 
-	float distTemp;
-	float dist = -1.0;
+	double distTemp;
+	double dist = -1.0;
 	int8_t modelTypeLast = -1;
 	float* coords_res = nullptr;
 
@@ -773,35 +773,6 @@ void GUI_clearText() {
 
 	return;
 }
-
-void GUI_tickTimer() {
-	timerCBID = NULL;
-
-	if (!isInited || first_check || battleEnded) {
-		return;
-	}
-
-	if(isModelsAlreadyCreated && isModelsAlreadyInited) request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_SYNC);
-	else                                                request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
-
-	if (request) {
-#if debug_log
-		PySys_WriteStdout("[NY_Event]: Error in tickTimer: %d\n", request);
-#endif
-
-		return;
-	}
-
-	callback(&timerCBID, tickTimerMethod, 1.0);
-
-	return;
-};
-
-static PyObject* GUI_tickTimerMethod(PyObject *self, PyObject *args) {
-	GUI_tickTimer();
-
-	Py_RETURN_NONE;
-};
 
 //-----------
 
@@ -1178,7 +1149,7 @@ uint8_t create_models(uint8_t eventID) {
 				if (current_map.stageID == StagesID.END_BY_COUNT) {
 					GUI_setTimerVisible(false);
 
-					isTimeON = false;
+					isTimeVisible = false;
 				}
 
 				GUI_setMsg(current_map.stageID);
@@ -1196,10 +1167,10 @@ uint8_t create_models(uint8_t eventID) {
 
 			}
 			else {
-				if (!isTimeON) {
+				if (!isTimeVisible) {
 					GUI_setTimerVisible(true);
 
-					isTimeON = true;
+					isTimeVisible = true;
 				}
 			}
 
@@ -1855,6 +1826,8 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 
 //-----------------
 
+
+
 uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) {
 	if (!isInited || !databaseID || battleEnded) {
 		return 1U;
@@ -1970,7 +1943,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	GUI_setTimerVisible(true);
 	GUI_setVisible(true);
 
-	isTimeON = true;
+	isTimeVisible = true;
 
 	request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
 
@@ -2185,7 +2158,7 @@ uint8_t event_fini() {
 	GUI_setTime(NULL);
 	GUI_setTimerVisible(false);
 
-	isTimeON       = false;
+	isTimeVisible       = false;
 
 	current_map.minimap_count  = NULL;
 	current_map.time_preparing = NULL;
@@ -2197,6 +2170,20 @@ uint8_t event_fini() {
 #endif
 
 	return NULL;
+}
+
+void closeEvent1(PEVENTDATA_1 pEvent) {
+	if (pEvent != NULL) { //если уже была инициализирована структура - удаляем
+		if (pEvent->hEvent != NULL) {
+			CloseHandle(pEvent->hEvent);
+
+			pEvent->hEvent = NULL;
+		}
+
+		HeapFree(GetProcessHeap(), NULL, pEvent);
+
+		pEvent = NULL;
+	}
 }
 
 static PyObject* event_fini_py(PyObject *self, PyObject *args) {
@@ -2221,10 +2208,18 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 			Py_DECREF(delLabelCBID_p);
 		}
 
-		cancelCallback(&timerCBID);
 		cancelCallback(&delLabelCBID);
 
+		if (hTimer != NULL) { //закрываем таймер, если он был создан
+			CloseHandle(hTimer);
+
+			hTimer = NULL;
+		}
+
 		isTimerStarted = false;
+
+		closeEvent1(EVENT_START_TIMER);
+		closeEvent1(EVENT_IN_HANGAR);
 
 		GUI_setVisible(false);
 		GUI_clearText();
@@ -2240,18 +2235,8 @@ static PyObject* event_err_code(PyObject *self, PyObject *args) {
 	return PyInt_FromSize_t(first_check);
 };
 
-bool createEvents1(PEVENTDATA_1 pEvent, uint8_t eventID) {
-	if (pEvent != NULL) { //если уже была инициализирована структура - удаляем
-		if (pEvent->hEvent != NULL) {
-			CloseHandle(pEvent->hEvent);
-
-			pEvent->hEvent = NULL;
-		}
-
-		HeapFree(GetProcessHeap(), NULL, pEvent);
-
-		pEvent = NULL;
-	}
+bool createEvent1(PEVENTDATA_1 pEvent, uint8_t eventID) {
+	closeEvent1(pEvent); //закрываем ивент, если существует
 
 	pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_1));
@@ -2279,8 +2264,8 @@ bool createEvents1(PEVENTDATA_1 pEvent, uint8_t eventID) {
 }
 
 bool createEventsAndSecondThread() {
-	if (!createEvents1(EVENT_IN_HANGAR, EventsID.IN_HANGAR))                   return false;
-	if (!createEvents1(EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL))        return false;
+	if (!createEvent1(EVENT_IN_HANGAR, EventsID.IN_HANGAR))            return false;
+	if (!createEvent1(EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL)) return false;
 	//TODO: сделать ивент - удаление ближайшей модели
 
 	//Thread creating
@@ -2558,7 +2543,6 @@ static struct PyMethodDef event_methods[] =
 	{ "d",  event_fini_py, METH_NOARGS, ":P" },//fini
 	{ "e",  event_err_code, METH_NOARGS, ":P" },//get_error_code
 	{ "g",  event_init_py, METH_VARARGS, ":P" },//init
-	{ "cb", GUI_tickTimerMethod, METH_NOARGS, ":P" },//tickTimer
 	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" },//init
 	{ NULL, NULL, 0, NULL }
 };
@@ -2632,14 +2616,6 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(g_appLoader);
 		return;
 	}
-
-	//tick timer method
-
-	PyObject* __cb = PyString_FromStringAndSize("cb", 2U);
-
-	tickTimerMethod = PyObject_GetAttr(event_module, __cb);
-
-	Py_DECREF(__cb);
 
 	//Space key
 

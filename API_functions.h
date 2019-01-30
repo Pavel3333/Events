@@ -117,7 +117,7 @@ public:
 	i18n_c i18n;
 };
 
-float getDist2Points(double*, float*);
+double getDist2Points(double*, float*);
 
 uint32_t curl_init();
 void     curl_clean();

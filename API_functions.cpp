@@ -30,10 +30,10 @@ STAGE_ID StagesID;
 int8_t scoreID = -1;
 
 LPCWSTR EVENT_NAMES[] {
-	L"HangarEvent",
-	L"InBattleGFEvent",
-	L"InBattleGSEvent",
-	L"DelEvent"
+	L"NY_Event_HangarEvent",
+	L"NY_Event_StartTimerEvent",
+	L"NY_Event_StartTimerEvent",
+	L"NY_Event_DelEvent"
 };
 
 char* COLOURS[MESSAGES_COUNT] {
@@ -90,14 +90,14 @@ bool file_exists(const char *fname)
 	return _access(fname, 0) != -1;
 }
 
-float getDist2Points(double* point1, float* point2) {
+double getDist2Points(double* point1, float* point2) {
 	if (point1 == nullptr || point2 == nullptr) {
 		return -1.0;
 	}
 
-	float dist_x = point2[0] - point1[0];
-	float dist_y = point2[1] - point1[1];
-	float dist_z = point2[2] - point1[2];
+	double dist_x = point2[0] - (double)point1[0];
+	double dist_y = point2[1] - (double)point1[1];
+	double dist_z = point2[2] - (double)point1[2];
 
 	return sqrt(dist_x * dist_x + dist_y * dist_y + dist_z * dist_z);
 }
