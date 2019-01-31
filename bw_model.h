@@ -14,13 +14,10 @@ namespace BW
             this->y = y;
             this->z = z;
         }
-		Vector3D(float *arr) {
-			this->x = arr[0];
-			this->y = arr[1];
-			this->z = arr[2];
-		}
-        ~Vector3D() {
-            x = y = z = 0;
+        Vector3D(float *arr) {
+            this->x = arr[0];
+            this->y = arr[1];
+            this->z = arr[2];
         }
     };
 
@@ -33,8 +30,21 @@ namespace BW
     public:
         Model(PyObject* model, Vector3D* pos);
         ~Model();
-		
+
 		void Init();
-		static Model* Open(const std::string& path, Vector3D* pos);
+    };
+
+    class ModelSet {
+    private:
+        std::vector<PyObject*> models_for_bg_loading;
+        std::vector<Model*> models;
+        static void OnModelLoaded(PyObject*, PyObject*);
+
+    public:
+        ModelSet();
+        ~ModelSet();
+
+        void Add(std::string_view path);
+        void StartBGLoading();
     };
 }
