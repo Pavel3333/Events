@@ -1,5 +1,5 @@
 #pragma once
-#include <memory>
+#include <vector>
 #include <string>
 #include "python2.7/Python.h"
 
@@ -36,12 +36,13 @@ namespace BW
 
     class ModelSet {
     private:
+		size_t size;
         std::vector<PyObject*> models_for_bg_loading;
         std::vector<Model*> models;
         static void OnModelLoaded(PyObject*, PyObject*);
 
     public:
-        ModelSet();
+        ModelSet(size_t size);
         ~ModelSet();
 
         void Add(std::string_view path);

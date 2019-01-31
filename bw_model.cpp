@@ -41,6 +41,7 @@ void Model::Init()
 	}
 }
 
+/*
 Model* Model::Open(const std::string& path, Vector3D* pos)
 {
     static PyObject* modelMethodName = PyString_FromString("Model");
@@ -67,7 +68,7 @@ Model* Model::Open(const std::string& path, Vector3D* pos)
 
 	return new Model(pyModel, pos);
 }
-
+*/
 
 
 ModelSet::ModelSet(size_t size)
@@ -91,7 +92,7 @@ void ModelSet::Add(std::string_view path)
 
 void ModelSet::OnModelLoaded(PyObject* arg1, PyObject* arg2)
 {
-    ModelSet* this = reinterpret_cast<PyObject*>arg2;
+    ModelSet* self = reinterpret_cast<ModelSet*>(arg2);
 }
 
 void ModelSet::StartBGLoading()
@@ -103,7 +104,7 @@ void ModelSet::StartBGLoading()
         PyTuple_SET_ITEM(pyLoadModels, i++, model);
     }
 
-    PyMethodDef OnModelLoadedDef = {
+    PyMethodDef pyOnModelLoadedDef = {
         "OnModelLoaded",
         (PyCFunction)this->OnModelLoaded,
         METH_VARARGS,
@@ -111,8 +112,8 @@ void ModelSet::StartBGLoading()
     };
 
     PyObject* pyOnModelLoadedFunc = PyCFunction_New(
-        &OnModelLoadedDef,
-        reinterpret_cast<PyObject*>this
+        &pyOnModelLoadedDef,
+        reinterpret_cast<PyObject*>(this)
     );
 
     static PyObject* loadResourceListBGMethodName = PyString_FromString("loadResourceListBG");
