@@ -68,8 +68,14 @@ DWORD  secondThreadID = NULL;
 
 uint8_t timerLastError = NULL;
 
+//Главные ивенты
+
 PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
 PEVENTDATA_1 EVENT_START_TIMER = NULL;
+
+//Второстепенные ивенты
+
+PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
 
 uint8_t lastStageID = StagesID.COMPETITION;
 uint8_t lastEventID = EventsID.IN_HANGAR;
@@ -989,6 +995,77 @@ static PyObject* event_model(char* path, float coords[3]) {
 	return Model;
 };
 
+int create_models(void* args) {
+	if (!isInited || battleEnded) {
+		return -1;
+	}
+
+	if (!EVENT_ALL_MODELS_CREATED->hEvent) {
+#if debug_log
+		OutputDebugString(_T("AMCEvent event is NULL!\n"));
+#endif
+
+		return -1;
+	}
+
+	uint16_t counter_model = NULL;
+
+	for (auto it = current_map.modelsSects.cbegin();
+		it != current_map.modelsSects.cend();
+		it++) {
+		if (!it->isInitialised || it->models.empty()) {
+			continue;
+		}
+
+		for (auto it2 = it->models.cbegin();
+			it2 != it->models.cend();
+			it2++) {
+			if (*it2 == nullptr) {
+#if debug_log && extended_debug_log && super_extended_debug_log
+				OutputDebugString("NULL, ");
+#endif
+
+				counter_model++;
+
+				continue;
+			}
+#if debug_log && extended_debug_log && super_extended_debug_log
+			OutputDebugString("[");
+#endif
+			models[counter_model] = new ModModel{
+				false,
+				event_model(it->path, *it2),
+				*it2
+			};
+
+			lights[counter_model] = new ModLight{
+				event_light(*it2),
+				*it2
+			};
+
+			counter_model++;
+
+#if debug_log && extended_debug_log && super_extended_debug_log
+			OutputDebugString("], ");
+#endif
+		}
+	}
+#if debug_log && extended_debug_log && super_extended_debug_log
+	OutputDebugString(_T("], \n"));
+#endif
+
+	if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
+	{
+#if debug_log
+		OutputDebugString(_T("AMCEvent event not setted!\n"));
+#endif
+
+		return -1;
+	}
+
+	return NULL;
+}
+
 uint8_t init_models() {
 	if (!isInited || first_check || request || battleEnded || models.empty()) {
 		return 1U;
@@ -1095,7 +1172,7 @@ uint8_t set_visible(bool isVisible) {
 	return NULL;
 };
 
-uint8_t create_models(uint8_t eventID) {
+uint8_t handle_battle_event(uint8_t eventID) {
 	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
 		return 1U;
 	}
@@ -1160,7 +1237,7 @@ uint8_t create_models(uint8_t eventID) {
 
 				if (event_result) {
 #if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event]: Warning - create_models - event_fini - Error code %d\n", event_result);
+					PySys_WriteStdout("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n", event_result);
 #endif
 
 					GUI_setWarning(event_result);
@@ -1183,11 +1260,11 @@ uint8_t create_models(uint8_t eventID) {
 						PySys_WriteStdout("sect count: %d\npos count: %d\n", (uint32_t)current_map.modelsSects.size(), (uint32_t)current_map.minimap_count);
 #endif
 
+						Py_BEGIN_ALLOW_THREADS;
+
 #if debug_log && extended_debug_log
 						OutputDebugString(_T("[NY_Event]: creating...\n"));
 #endif
-
-						Py_BEGIN_ALLOW_THREADS;
 
 						models.~vector();
 						lights.~vector();
@@ -1218,103 +1295,100 @@ uint8_t create_models(uint8_t eventID) {
 							}
 						}
 
+						int creating_result = Py_AddPendingCall(&create_models, nullptr); //create_models();
+
+						if (creating_result == -1) {
+#if debug_log
+							OutputDebugString(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - failed to start PendingCall of creating models!\n"));
+#endif
+
+							return 3U;
+						}
+
 						Py_END_ALLOW_THREADS;
 
-						uint16_t counter_model = NULL;
+						DWORD EVENT_ALL_MODELS_CREATED_WaitResult = WaitForSingleObject(
+							EVENT_ALL_MODELS_CREATED->hEvent, // event handle
+							INFINITE);                        // indefinite wait
 
-						for (auto it = current_map.modelsSects.cbegin();
-							it != current_map.modelsSects.cend();
-							it++) {
-							if (!it->isInitialised || it->models.empty()) {
-								continue;
-							}
-
-							for (auto it2 = it->models.cbegin();
-								it2 != it->models.cend();
-								it2++) {
-								if (*it2 == nullptr) {
-#if debug_log && extended_debug_log && super_extended_debug_log
-									OutputDebugString("NULL, ");
+						switch (EVENT_ALL_MODELS_CREATED_WaitResult)
+						{
+							// Event object was signaled
+						case WAIT_OBJECT_0:
+#if debug_log
+							OutputDebugString(_T("AllModelsCreatedEvent was signaled!\n"));
 #endif
 
-									counter_model++;
+							//очищаем ивент
 
-									continue;
-								}
-#if debug_log && extended_debug_log && super_extended_debug_log
-								OutputDebugString("[");
-#endif
-								models[counter_model] = new ModModel{
-									false,
-									event_model(it->path, *it2),
-									*it2
-								};
+							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
 
-								lights[counter_model] = new ModLight{
-									event_light(*it2),
-									*it2
-								};
+							//-------------
 
-								counter_model++;
-
-#if debug_log && extended_debug_log && super_extended_debug_log
-								OutputDebugString("], ");
-#endif
-							}
-						}
-#if debug_log && extended_debug_log
-						OutputDebugString(_T("], \n"));
-#endif
+							//место для рабочего кода
 
 #if debug_log  && extended_debug_log
-						OutputDebugString(_T("[NY_Event]: creating OK!\n"));
+							OutputDebugString(_T("[NY_Event]: creating OK!\n"));
 #endif
 
-						request = init_models();
+							request = init_models();
 
-						if (request) {
-							if (request > 9U) {
+							if (request) {
+								if (request > 9U) {
 #if debug_log
-								PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
+									PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
 #endif
 
-								GUI_setError(request);
+									GUI_setError(request);
+
+									return 5U;
+								}
+
+#if debug_log
+								PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
+#endif
+
+								GUI_setWarning(request);
 
 								return 4U;
 							}
 
+							request = set_visible(true);
+
+							if (request) {
+								if (request > 9U) {
 #if debug_log
-							PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
+									PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
 #endif
 
-							GUI_setWarning(request);
+									GUI_setError(request);
 
-							return 3U;
-						}
+									return 5U;
+								}
 
-						request = set_visible(true);
-
-						if (request) {
-							if (request > 9U) {
 #if debug_log
-								PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
+								PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 #endif
 
-								GUI_setError(request);
+								GUI_setWarning(request);
 
 								return 4U;
 							}
 
-#if debug_log
-							PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
-#endif
+							isModelsAlreadyInited = true;
 
-							GUI_setWarning(request);
+							break;
+
+							// An error occurred
+						default:
+							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
+
+					#if debug_log && extended_debug_log
+							OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
+					#endif
 
 							return 3U;
 						}
-
-						isModelsAlreadyInited = true;
 					}
 
 					return NULL;
@@ -1478,7 +1552,7 @@ VOID CALLBACK TimerAPCProc(
 	OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
 #endif
 
-	request = create_models(eventID);
+	request = handle_battle_event(eventID);
 
 	if (request) {
 #if debug_log && extended_debug_log
@@ -1837,7 +1911,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 
 		// An error occurred
 	default:
-		ResetEvent(EVENT_IN_HANGAR->hEvent);
+		ResetEvent(EVENT_START_TIMER->hEvent);
 
 #if debug_log && extended_debug_log
 		OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n"));
@@ -1861,7 +1935,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 
 //-----------------
 
-uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) {
+uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводим ивенты в сигнальные состояния
 	if (!isInited || !databaseID || battleEnded) {
 		return 1U;
 	}
@@ -2183,28 +2257,34 @@ uint8_t event_fini() {
 		lights.~vector();
 	}
 
-#if debug_log && extended_debug_log
+#if debug_log && extended_debug_log && super_extended_debug_log
 	OutputDebugString(_T("[NY_Event]: fini debug 1\n"));
 #endif
 
-	if (current_map.modelsSects.size() && current_map.minimap_count) {
+	if (!current_map.modelsSects.empty() && current_map.minimap_count) {
 #if debug_log && extended_debug_log
 		OutputDebugString(_T("[PositionsMod_Free]: fini debug 3\n"));
 #endif
-		Py_BEGIN_ALLOW_THREADS
-			clearModelsSections();
-		Py_END_ALLOW_THREADS
+
+		Py_BEGIN_ALLOW_THREADS;
+		clearModelsSections();
+		Py_END_ALLOW_THREADS;
+
+
 	}
 
-	GUI_setTime(NULL);
-	GUI_setTimerVisible(false);
-
-	isTimeVisible       = false;
-
-	current_map.minimap_count  = NULL;
-	current_map.time_preparing = NULL;
-
 	isModelsAlreadyCreated = false;
+
+	current_map.minimap_count = NULL;
+
+	if (isTimeVisible) {
+		GUI_setTime(NULL);
+		GUI_setTimerVisible(false);
+
+		isTimeVisible = false;
+
+		current_map.time_preparing = NULL;
+	}
 
 #if debug_log && extended_debug_log
 	OutputDebugString(_T("[NY_Event]: fini OK!\n"));
@@ -2214,6 +2294,20 @@ uint8_t event_fini() {
 }
 
 void closeEvent1(PEVENTDATA_1* pEvent) {
+	if (*pEvent != NULL) { //если уже была инициализирована структура - удаляем
+		if ((*pEvent)->hEvent != NULL) {
+			CloseHandle((*pEvent)->hEvent);
+
+			(*pEvent)->hEvent = NULL;
+		}
+
+		HeapFree(GetProcessHeap(), NULL, *pEvent);
+
+		*pEvent = NULL;
+	}
+}
+
+void closeEvent2(PEVENTDATA_2* pEvent) {
 	if (*pEvent != NULL) { //если уже была инициализирована структура - удаляем
 		if ((*pEvent)->hEvent != NULL) {
 			CloseHandle((*pEvent)->hEvent);
@@ -2296,7 +2390,35 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 	if ((*pEvent)->hEvent == NULL)
 	{
-		OutputDebugString(TEXT("Event creating error\n"));
+		OutputDebugString(TEXT("Primary event creating error\n"));
+
+		return false;
+	}
+
+	return true;
+}
+
+bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName) {
+	closeEvent2(pEvent); //закрываем ивент, если существует
+
+	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+		sizeof(EVENTDATA_2));
+
+	if (*pEvent == NULL) //нехватка памяти, завершаем работу
+	{
+		ExitProcess(1);
+	}
+
+	(*pEvent)->hEvent = CreateEvent(
+		NULL,                      // default security attributes
+		TRUE,                      // manual-reset event
+		FALSE,                     // initial state is nonsignaled
+		eventName                  // object name
+	);
+
+	if ((*pEvent)->hEvent == NULL)
+	{
+		OutputDebugString(TEXT("Secondary event creating error\n"));
 
 		return false;
 	}
@@ -2306,7 +2428,9 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 bool createEventsAndSecondThread() {
 	if (!createEvent1(&EVENT_IN_HANGAR,   EventsID.IN_HANGAR))            return false;
-	if (!createEvent1(&EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL)) return false;
+	if (!createEvent1(&EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL))   return false;
+
+	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent"))   return false;
 	//TODO: сделать ивент - удаление ближайшей модели
 
 	//Thread creating

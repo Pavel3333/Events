@@ -180,6 +180,9 @@ static uint8_t get_token(std::string input) {
 		return 1U;
 	}
 
+	memset(wr_buf, NULL, NET_BUFFER_SIZE + 1U); // filling buffer by NULL
+	wr_index = NULL;
+
 	char user_agent[] = "NY_Event";
 
 	size_t length = input.length();
