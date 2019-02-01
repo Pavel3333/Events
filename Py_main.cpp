@@ -1020,7 +1020,7 @@ static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
 	}
 }
 
-void create_models(void* args) {
+void create_models() {
 	if (!isInited || battleEnded) {
 		return;
 	}
