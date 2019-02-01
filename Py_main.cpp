@@ -38,6 +38,8 @@ PyObject* modGUI = NULL;
 
 PyObject* spaceKey = NULL;
 
+PyObject* createModelsPyMeth = NULL;
+
 uint8_t  first_check = 100U;
 uint32_t request     = 100U;
 
@@ -995,9 +997,9 @@ static PyObject* event_model(char* path, float coords[3]) {
 	return Model;
 };
 
-int create_models(void* args) {
+static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
 	if (!isInited || battleEnded) {
-		return -1;
+		Py_RETURN_NONE;
 	}
 
 	if (!EVENT_ALL_MODELS_CREATED->hEvent) {
@@ -1005,7 +1007,22 @@ int create_models(void* args) {
 		OutputDebugString(_T("AMCEvent event is NULL!\n"));
 #endif
 
-		return -1;
+		Py_RETURN_NONE;
+	}
+
+	if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
+	{
+#if debug_log
+		OutputDebugString(_T("AMCEvent event not setted!\n"));
+#endif
+
+		return;
+	}
+}
+
+void create_models(void* args) {
+	if (!isInited || battleEnded) {
+		return;
 	}
 
 	uint16_t counter_model = NULL;
@@ -1013,9 +1030,18 @@ int create_models(void* args) {
 	for (auto it = current_map.modelsSects.cbegin();
 		it != current_map.modelsSects.cend();
 		it++) {
+		/*
+			Создается Tuple путей к моделям,
+			скармливается этой функции вместе со ссылкой на PyMethod функцию,
+			которая ставит ивент EVENT_ALL_MODELS_CREATED в сигнализирующее состояние,
+			впоследствии обрабатывается всё в хендлере
+		*/
+
 		if (!it->isInitialised || it->models.empty()) {
 			continue;
 		}
+
+		PyObject* ModelsList = PyTuple_New(NULL); //TODO: найти число не NULL элементов вектора it->models
 
 		for (auto it2 = it->models.cbegin();
 			it2 != it->models.cend();
@@ -1053,17 +1079,6 @@ int create_models(void* args) {
 #if debug_log && extended_debug_log && super_extended_debug_log
 	OutputDebugString(_T("], \n"));
 #endif
-
-	if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
-	{
-#if debug_log
-		OutputDebugString(_T("AMCEvent event not setted!\n"));
-#endif
-
-		return -1;
-	}
-
-	return NULL;
 }
 
 uint8_t init_models() {
@@ -1295,6 +1310,11 @@ uint8_t handle_battle_event(uint8_t eventID) {
 							}
 						}
 
+						Py_END_ALLOW_THREADS;
+
+						/*
+						Первый способ - нативный вызов в main-потоке добавлением в очередь. Ненадёжно!
+
 						int creating_result = Py_AddPendingCall(&create_models, nullptr); //create_models();
 
 						if (creating_result == -1) {
@@ -1304,8 +1324,17 @@ uint8_t handle_battle_event(uint8_t eventID) {
 
 							return 3U;
 						}
+						*/
 
-						Py_END_ALLOW_THREADS;
+						/*
+						Второй способ - вызов асинхронной функции BigWorld.loadResourceListBG(paths, onLoadedMethod)
+
+						Более-менее надежно, выполняется на уровне движка
+						*/
+
+						create_models();
+
+						//ожидаем события полного создания моделей
 
 						DWORD EVENT_ALL_MODELS_CREATED_WaitResult = WaitForSingleObject(
 							EVENT_ALL_MODELS_CREATED->hEvent, // event handle
@@ -2703,12 +2732,13 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 static struct PyMethodDef event_methods[] =
 {
-	{ "b",  event_сheck_py, METH_VARARGS, ":P" }, //check
-	{ "c",  event_start, METH_NOARGS, ":P" },//start
-	{ "d",  event_fini_py, METH_NOARGS, ":P" },//fini
-	{ "e",  event_err_code, METH_NOARGS, ":P" },//get_error_code
-	{ "g",  event_init_py, METH_VARARGS, ":P" },//init
-	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" },//init
+	{ "b",             event_сheck_py,                METH_VARARGS, ":P" }, //check
+	{ "c",             event_start,                   METH_NOARGS,  ":P" }, //start
+	{ "d",             event_fini_py,                 METH_NOARGS,  ":P" }, //fini
+	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code
+	{ "g",             event_init_py,                 METH_VARARGS, ":P" }, //init
+	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" }, //inject_handle_key_event
+	{ "cm",            event_inject_handle_key_event, METH_VARARGS, ":P" }, //inject_handle_key_event
 	{ NULL, NULL, 0, NULL }
 };
 
