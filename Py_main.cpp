@@ -38,7 +38,9 @@ PyObject* modGUI = NULL;
 
 PyObject* spaceKey = NULL;
 
-PyObject* createModelsPyMeth = NULL;
+uint16_t  createdModelsCounter = NULL;
+
+PyObject* createModelsPyMeth   = NULL;
 
 uint8_t  first_check = 100U;
 uint32_t request     = 100U;
@@ -947,7 +949,7 @@ static PyObject* event_light(float coords[3]) {
 	return Light;
 }
 
-static PyObject* event_model(char* path, float coords[3]) {
+static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	if (!isInited || battleEnded) {
 		return NULL;
 	}
@@ -956,9 +958,19 @@ static PyObject* event_model(char* path, float coords[3]) {
 	OutputDebugString(_T("model creating...\n"));
 #endif
 
+	PyObject* Model;
+
+	if (isAsync) {
+		PyObject* __fetchModel = PyString_FromStringAndSize("fetchModel", 10U);
+
+		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), NULL);
+
+		return NULL;
+	}
+
 	PyObject* __Model = PyString_FromStringAndSize("Model", 5U);
 
-	PyObject* Model = PyObject_CallMethodObjArgs(BigWorld, __Model, PyString_FromString(path), NULL);
+	Model = PyObject_CallMethodObjArgs(BigWorld, __Model, PyString_FromString(path), NULL);
 
 	Py_DECREF(__Model);
 
@@ -1002,7 +1014,7 @@ static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
 		Py_RETURN_NONE;
 	}
 
-	if (!EVENT_ALL_MODELS_CREATED->hEvent || !createModelsPyMeth) {
+	if (!EVENT_ALL_MODELS_CREATED->hEvent) {
 #if debug_log && extended_debug_log
 		OutputDebugString(_T("AMCEvent or createModelsPyMeth event is NULL!\n"));
 #endif
@@ -1032,8 +1044,8 @@ static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
 	}
 }
 
-void create_models() {
-	if (!isInited || battleEnded) {
+void create_models(PyObject* partial) {
+	if (!isInited || battleEnded || !partial) {
 		return;
 	}
 
@@ -1042,12 +1054,6 @@ void create_models() {
 	for (auto it = current_map.modelsSects.cbegin();
 		it != current_map.modelsSects.cend();
 		it++) {
-		/*
-			Создается Tuple путей к моделям,
-			скармливается этой функции вместе со ссылкой на PyMethod функцию,
-			которая ставит ивент EVENT_ALL_MODELS_CREATED в сигнализирующее состояние,
-			впоследствии обрабатывается всё в хендлере
-		*/
 
 		if (!it->isInitialised || it->models.empty()) {
 			continue;
@@ -1200,7 +1206,7 @@ uint8_t set_visible(bool isVisible) {
 };
 
 uint8_t handle_battle_event(uint8_t eventID) {
-	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
+	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR || !createModelsPyMeth) {
 		return 1U;
 	}
 
@@ -1339,12 +1345,29 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						*/
 
 						/*
-						Второй способ - вызов асинхронной функции BigWorld.loadResourceListBG(paths, onLoadedMethod)
+						Второй способ - вызов асинхронной функции BigWorld.fetchModel(path, onLoadedMethod)
 
 						Более-менее надежно, выполняется на уровне движка
 						*/
 
-						create_models();
+						PyObject* functools = PyImport_ImportModule("functools");
+
+						if (!functools) {
+							return 3;
+						}
+
+						PyObject* __partial = PyString_FromStringAndSize("partial", 7);
+
+						PyObject* partial = PyObject_GetAttr(functools, __partial);
+
+						Py_DECREF(__partial);
+						Py_DECREF(functools);
+
+						if (!partial) {
+							return 4;
+						}
+
+						create_models(partial);
 
 						//ожидаем события полного создания моделей
 
