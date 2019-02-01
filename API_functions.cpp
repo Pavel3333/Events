@@ -57,7 +57,7 @@ char* MESSAGES[MESSAGES_COUNT] {
 	"\\c%s;Streamer mode"
 };
 
-uint16_t SCORE[SECTIONS_COUNT]{ 7, 9, 3, 500, 13, 11, 5 };
+uint16_t SCORE[SECTIONS_COUNT]{ 7, 9, 3, 500, 13, 11, 5, 1, 1, 1};
 
 char* MODEL_NAMES[SECTIONS_COUNT] {
 	"ball",
@@ -66,7 +66,10 @@ char* MODEL_NAMES[SECTIONS_COUNT] {
 	"Santa_Claus",
 	"snowman",
 	"gifts_boxes",
-	"pig"
+	"pig",
+	"lollipop",
+	"mandarine",
+	"wood_toilet"
 };
 
 //---------------------------------------------API functions--------------------------------------------------------

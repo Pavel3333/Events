@@ -14,7 +14,7 @@
 
 #define STAGES_COUNT   8U
 #define MESSAGES_COUNT 8U
-#define SECTIONS_COUNT 7U
+#define SECTIONS_COUNT 10U
 
 #define BALL        (0U)
 #define CANDY_CANE  (1U)
@@ -23,6 +23,9 @@
 #define SNOWMAN     (4U)
 #define GIFTS_BOXES (5U)
 #define PIG         (6U)
+#define LOLLIPOP    (7U)
+#define MANDARINE   (8U)
+#define WOOD_TOILET (9U)
 
 extern uint16_t SCORE[SECTIONS_COUNT];
 

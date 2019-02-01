@@ -1002,21 +1002,33 @@ static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
 		Py_RETURN_NONE;
 	}
 
-	if (!EVENT_ALL_MODELS_CREATED->hEvent) {
-#if debug_log
-		OutputDebugString(_T("AMCEvent event is NULL!\n"));
+	if (!EVENT_ALL_MODELS_CREATED->hEvent || !createModelsPyMeth) {
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("AMCEvent or createModelsPyMeth event is NULL!\n"));
 #endif
 
 		Py_RETURN_NONE;
 	}
 
+	//рабочая часть
+
+	PyObject* modelsReferences = NULL;
+
+	if (!PyArg_ParseTuple(args, "O", &modelsReferences)) {
+		Py_RETURN_NONE;
+	}
+
+	//TODO: пройтись по списку (или кортежу) моделей и добавить их в соответствующую секцию
+
+	//сигналим о том, что все модели были успешно созданы
+
 	if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
 	{
-#if debug_log
+#if debug_log && extended_debug_log
 		OutputDebugString(_T("AMCEvent event not setted!\n"));
 #endif
 
-		return;
+		Py_RETURN_NONE;
 	}
 }
 
@@ -1085,7 +1097,7 @@ uint8_t init_models() {
 	if (!isInited || first_check || request || battleEnded || models.empty()) {
 		return 1U;
 	}
-#if debug_log 
+#if debug_log  && extended_debug_log
 	OutputDebugString(_T("[NY_Event]: models adding...\n"));
 #endif
 
@@ -1135,7 +1147,7 @@ uint8_t init_models() {
 #endif
 	}
 
-#if debug_log
+#if debug_log && extended_debug_log
 	OutputDebugString(_T("[NY_Event]: models adding OK!\n"));
 #endif
 
@@ -1318,7 +1330,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						int creating_result = Py_AddPendingCall(&create_models, nullptr); //create_models();
 
 						if (creating_result == -1) {
-#if debug_log
+#if debug_log && extended_debug_log
 							OutputDebugString(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - failed to start PendingCall of creating models!\n"));
 #endif
 
@@ -1344,7 +1356,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						{
 							// Event object was signaled
 						case WAIT_OBJECT_0:
-#if debug_log
+#if debug_log && extended_debug_log
 							OutputDebugString(_T("AllModelsCreatedEvent was signaled!\n"));
 #endif
 
@@ -1364,7 +1376,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 
 							if (request) {
 								if (request > 9U) {
-#if debug_log
+#if debug_log && extended_debug_log
 									PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
 #endif
 
@@ -1373,7 +1385,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 									return 5U;
 								}
 
-#if debug_log
+#if debug_log && extended_debug_log
 								PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
 #endif
 
@@ -1386,7 +1398,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 
 							if (request) {
 								if (request > 9U) {
-#if debug_log
+#if debug_log && extended_debug_log
 									PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
 #endif
 
@@ -1395,7 +1407,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 									return 5U;
 								}
 
-#if debug_log
+#if debug_log && extended_debug_log
 								PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 #endif
 
@@ -1412,9 +1424,9 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						default:
 							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
 
-					#if debug_log && extended_debug_log
+#if debug_log && extended_debug_log
 							OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
-					#endif
+#endif
 
 							return 3U;
 						}
@@ -1497,13 +1509,13 @@ uint8_t handle_battle_event(uint8_t eventID) {
 			}
 		}
 		else {
-#if debug_log
+#if debug_log && extended_debug_log
 			OutputDebugString(_T("[NY_Event]: Warning - StageID is not right for this event\n"));
 #endif
 		}
 	}
 	else {
-#if debug_log
+#if debug_log && extended_debug_log
 		OutputDebugString(_T("[NY_Event]: Warning - StageID is not correct\n"));
 #endif
 	}
@@ -1628,7 +1640,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 	{
 		// Event object was signaled
 	case WAIT_OBJECT_0:
-#if debug_log
+#if debug_log && extended_debug_log
 		OutputDebugString(_T("HangarEvent was signaled!\n"));
 #endif
 
@@ -1701,7 +1713,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		return 3U;
 	}
 	if (first_check) {
-#if debug_log
+#if debug_log && extended_debug_log
 		wsprintfW(msgBuf, _T("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n"), (uint32_t)first_check);
 
 		OutputDebugString(msgBuf);
@@ -1719,7 +1731,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		{
 			// Event object was signaled
 		case WAIT_OBJECT_0:
-#if debug_log
+#if debug_log && extended_debug_log
 			OutputDebugString(_T("HangarEvent was signaled!\n"));
 #endif
 
@@ -1847,7 +1859,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 	{
 		// Event object was signaled
 	case WAIT_OBJECT_0:
-#if debug_log
+#if debug_log && extended_debug_log
 		OutputDebugString(_T("STEvent was signaled!\n"));
 #endif
 
@@ -1981,7 +1993,7 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводим ивенты 
 
 			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
 			{
-#if debug_log
+#if debug_log && extended_debug_log
 				OutputDebugString(_T("HangarEvent not setted!\n"));
 #endif
 
@@ -1999,7 +2011,7 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводим ивенты 
 
 			if (!SetEvent(EVENT_START_TIMER->hEvent))
 			{
-#if debug_log
+#if debug_log && extended_debug_log
 				OutputDebugString(_T("STEvent event not setted!\n"));
 #endif
 
@@ -2092,7 +2104,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
 
 	if (request) {
-#if debug_log
+#if debug_log && extended_debug_log
 		PySys_WriteStdout("[NY_Event]: Error in get: %d\n", request);
 #endif
 
@@ -2229,7 +2241,7 @@ uint8_t event_fini() {
 		uint8_t delete_models = del_models();
 
 		if (delete_models) {
-#if debug_log
+#if debug_log && extended_debug_log
 			PySys_WriteStdout("[NY_Event]: Warning: del_models: %d\n", (uint32_t)delete_models);
 #endif
 		}
@@ -2562,6 +2574,10 @@ static PyObject* event_сheck_py(PyObject *self, PyObject *args) {
 };
 
 uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) {
+	if (!template_ || !apply || !byteify) {
+		return 1U;
+	}
+
 	if (g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) {
 		Py_INCREF(template_);
 		Py_INCREF(apply);
@@ -2603,9 +2619,9 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) {
 		return PyInt_FromSize_t(1U);
 	}
 
-	PyObject* template_;
-	PyObject* apply;
-	PyObject* byteify;
+	PyObject* template_ = NULL;
+	PyObject* apply     = NULL;
+	PyObject* byteify   = NULL;
 
 	if (!PyArg_ParseTuple(args, "OOO", &template_, &apply, &byteify)) {
 		return PyInt_FromSize_t(2U);
@@ -2662,7 +2678,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 			if (server_req) {
 				if (server_req > 9U) {
-#if debug_log
+#if debug_log && extended_debug_log
 					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
 #endif
 
@@ -2671,7 +2687,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 					Py_RETURN_NONE;
 				}
 
-#if debug_log
+#if debug_log && extended_debug_log
 				PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
 #endif
 
@@ -2738,7 +2754,7 @@ static struct PyMethodDef event_methods[] =
 	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code
 	{ "g",             event_init_py,                 METH_VARARGS, ":P" }, //init
 	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" }, //inject_handle_key_event
-	{ "cm",            event_inject_handle_key_event, METH_VARARGS, ":P" }, //inject_handle_key_event
+	{ "cm",            event_onAllModelsCreated,      METH_VARARGS, ":P" }, //onAllModelsCreate
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -2752,11 +2768,15 @@ PyMODINIT_FUNC initevent(void)
 {
 	BigWorld = PyImport_AddModule("BigWorld");
 
-	if (!BigWorld) return;
+	if (!BigWorld) {
+		return;
+	}
 
 	PyObject* appLoader = PyImport_ImportModule("gui.app_loader");
 
-	if (!appLoader) return;
+	if (!appLoader) {
+		return;
+	}
 
 	PyObject* __g_appLoader = PyString_FromStringAndSize("g_appLoader", 11U);
 
@@ -2765,7 +2785,9 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(__g_appLoader);
 	Py_DECREF(appLoader);
 
-	if (!g_appLoader) return;
+	if (!g_appLoader) {
+		return;
+	}
 
 	json = PyImport_ImportModule("json");
 
@@ -2808,6 +2830,19 @@ PyMODINIT_FUNC initevent(void)
 	}
 
 	if (PyModule_AddObject(event_module, "l", g_config)) {
+		Py_DECREF(g_appLoader);
+		return;
+	}
+
+	//
+
+	PyObject* __cm = PyString_FromStringAndSize("cm", 2);
+
+	createModelsPyMeth = PyObject_GetAttr(event_module, __cm);
+
+	Py_DECREF(__cm);
+
+	if (!createModelsPyMeth) {
 		Py_DECREF(g_appLoader);
 		return;
 	}
