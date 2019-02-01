@@ -36,16 +36,17 @@ namespace BW
 
     class ModelSet {
     private:
+        size_t now_loaded;
 		size_t size;
-        std::vector<PyObject*> models_for_bg_loading;
+
         std::vector<Model*> models;
+        PyObject* pyOnModelLoadedCallback;
         static void OnModelLoaded(PyObject*, PyObject*);
 
     public:
         ModelSet(size_t size);
         ~ModelSet();
 
-        void Add(std::string_view path);
-        void StartBGLoading();
+        void Add(std::string_view path, size_t index);
     };
 }

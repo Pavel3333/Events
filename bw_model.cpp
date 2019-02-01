@@ -74,7 +74,19 @@ Model* Model::Open(const std::string& path, Vector3D* pos)
 ModelSet::ModelSet(size_t size)
 {
     this->size = size;
-    this->models_for_bg_loading.reserve(size);
+    this->models.reserve(size);
+
+    static PyMethodDef pyOnModelLoadedDef = {
+        "OnModelLoaded",
+        (PyCFunction)OnModelLoaded,
+        METH_VARARGS,
+        ""
+    };
+
+    this->pyOnModelLoadedCallback = PyCFunction_New(
+        &pyOnModelLoadedDef,
+        reinterpret_cast<PyObject*>(this)
+    );
 }
 
 
@@ -83,43 +95,26 @@ ModelSet::~ModelSet()
 }
 
 
-void ModelSet::Add(std::string_view path)
+void ModelSet::Add(std::string_view path, size_t index)
 {
     PyObject* pyPath = PyString_FromStringAndSize(path.data(), path.size());
-    models_for_bg_loading.push_back(pyPath);
+    PyObject* pyIndex = PyInt_FromSize_t(index);
+
+	static PyObject* m_functools = PyImport_AddModule("functools");
+    static PyObject* partialMethodName = PyString_FromString("partial");
+    PyObject* callback = PyObject_CallMethodObjArgs(m_functools, partialMethodName, pyOnModelLoadedCallback, pyIndex, nullptr);
+
+	static PyObject* m_BigWorld = PyImport_AddModule("BigWorld");
+    static PyObject* fetchModelMethodName = PyString_FromString("fetchModel");
+    PyObject_CallMethodObjArgs(m_BigWorld, fetchModelMethodName, pyPath, callback, nullptr);
 }
 
 
 void ModelSet::OnModelLoaded(PyObject* arg1, PyObject* arg2)
 {
     ModelSet* self = reinterpret_cast<ModelSet*>(arg2);
-}
 
-void ModelSet::StartBGLoading()
-{
-    PyObject* pyLoadModels = PyTuple_New(size);
+    // TODO:
 
-    size_t i = 0;
-    for (PyObject* model : models_for_bg_loading) {
-        PyTuple_SET_ITEM(pyLoadModels, i++, model);
-    }
-
-    PyMethodDef pyOnModelLoadedDef = {
-        "OnModelLoaded",
-        (PyCFunction)this->OnModelLoaded,
-        METH_VARARGS,
-        ""
-    };
-
-    PyObject* pyOnModelLoadedFunc = PyCFunction_New(
-        &pyOnModelLoadedDef,
-        reinterpret_cast<PyObject*>(this)
-    );
-
-    static PyObject* loadResourceListBGMethodName = PyString_FromString("loadResourceListBG");
-    PyObject* res = PyObject_CallMethodObjArgs(Py::BigWorld, loadResourceListBGMethodName, pyLoadModels, pyOnModelLoadedFunc, NULL);
-
-	Py_DECREF(pyLoadModels);
-
-    models_for_bg_loading.clear();
+    now_loaded++;
 }
