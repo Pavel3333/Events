@@ -1102,11 +1102,13 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 			Py_RETURN_NONE;
 		}
 	}
+
+	Py_RETURN_NONE;
 }
 
-void create_models() {
+uint8_t create_models() {
 	if (!isInited || battleEnded || !onModelCreatedPyMeth) {
-		return;
+		return 1U;
 	}
 
 	for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
@@ -1125,12 +1127,12 @@ void create_models() {
 
 				continue;
 			}
+
+			allModelsCreated++;
+
 			it2++;
 		}
 	}
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("], \n"));
-#endif
 
 	for (auto it = current_map.modelsSects.begin(); //второй проход - создаем модели
 		it != current_map.modelsSects.end();
@@ -1146,13 +1148,16 @@ void create_models() {
 
 			event_model(it->path, *it2, true);
 
-			it2++;
-
 #if debug_log && extended_debug_log && super_extended_debug_log
 			OutputDebugString("], ");
 #endif
 		}
 	}
+#if debug_log && extended_debug_log && super_extended_debug_log
+	OutputDebugString(_T("], \n"));
+#endif
+
+	return NULL;
 }
 
 uint8_t init_models() {
@@ -1380,7 +1385,15 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						Более-менее надежно, выполняется на уровне движка
 						*/
 
-						create_models();
+						request = create_models();
+
+						if (request) {
+#if debug_log && extended_debug_log
+							PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
+#endif
+
+							return 3U;
+						}
 
 						//ожидаем события полного создания моделей
 
