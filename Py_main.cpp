@@ -39,6 +39,8 @@ PyObject* modGUI = NULL;
 
 PyObject* spaceKey = NULL;
 
+uint16_t allModelsCreated      = NULL;
+
 PyObject* onModelCreatedPyMeth = NULL;
 
 uint8_t  first_check = 100U;
@@ -948,7 +950,11 @@ static PyObject* event_light(float coords[3]) {
 	return Light;
 }
 
-bool setModelPosition(PyObject* Model, PyObject* coords_p) {
+bool setModelPosition(PyObject* Model, float* coords_f) {
+	PyObject* coords_p = PyTuple_New(3);
+
+	for (uint8_t i = NULL; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords_f[i]));
+
 	PyObject* __position = PyString_FromStringAndSize("position", 8U);
 
 	if (PyObject_SetAttr(Model, __position, coords_p)) {
@@ -982,9 +988,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 
 		PyObject* __partial = PyString_FromStringAndSize("partial", 7);
 
-		PyObject* coords_p = PyTuple_New(3); //передаем координаты в кортеже
-
-		for (uint8_t i = NULL; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
+		PyObject* coords_p = PyInt_FromLong((long)coords); //передаем указатель на 3 координаты
 
 		PyObject* partialized = PyObject_CallMethodObjArgs(functools, __partial, onModelCreatedPyMeth, coords_p, NULL);
 
@@ -1015,19 +1019,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	}
 	
 	if (coords != nullptr) {
-		PyObject* coords_p = PyTuple_New(3U);
-
-		if (!coords_p) {
-			Py_DECREF(Model);
-
-			return NULL;
-		}
-
-		for (uint8_t i = NULL; i < 3U; i++) {
-			PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
-		}
-
-		if (!setModelPosition(Model, coords_p)) { //ставим на нужную позицию
+		if (!setModelPosition(Model, coords)) { //ставим на нужную позицию
 			return NULL;
 		}
 	}
@@ -1039,8 +1031,8 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	return Model;
 };
 
-static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //принимает аргументы: кортеж (Tuple) координат и саму модель
-	if (!isInited || battleEnded) {
+static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //принимает аргументы: указатель на координаты и саму модель
+	if (!isInited || battleEnded || models.size() >= allModelsCreated) {
 		Py_RETURN_NONE;
 	}
 
@@ -1054,10 +1046,10 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 
 	//рабочая часть
 
-	PyObject* coords_p = NULL;
+	PyObject* coords_pointer = NULL;
 	PyObject* Model    = NULL;
 
-	if (!PyArg_ParseTuple(args, "OO", &coords_p, &Model)) {
+	if (!PyArg_ParseTuple(args, "OO", &coords_pointer, &Model)) {
 		Py_RETURN_NONE;
 	}
 
@@ -1065,33 +1057,50 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 		Py_RETURN_NONE;
 	}
 
-	if(!coords_p) {
+	if(!coords_pointer) {
+		Py_DECREF(Model);
+
 		Py_RETURN_NONE;
 	}
 
-	if (!setModelPosition(Model, coords_p)) { //ставим на нужную позицию
+	float* coords_f = (float*)(PyInt_AS_LONG(coords_pointer));
+
+	if (coords_f == nullptr) {
+		Py_DECREF(coords_pointer);
+		Py_DECREF(Model);
+
 		Py_RETURN_NONE;
 	}
 
-	float* coords_new
+	if (!setModelPosition(Model, coords_f)) { //ставим на нужную позицию
+		Py_RETURN_NONE;
+	}
 
 	ModModel* newModel = new ModModel {
 		false,
 		Model,
-		
+		coords_f
+	};
+
+	ModLight* newLight = new ModLight {
+		event_light(coords_f),
+		coords_f
 	};
 
 	models.push_back(newModel);
+	lights.push_back(newLight);
 
-	//сигналим о том, что все модели были успешно созданы
+	if (models.size() >= allModelsCreated) {
+		//сигналим о том, что все модели были успешно созданы
 
-	if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
-	{
+		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
+		{
 #if debug_log && extended_debug_log
-		OutputDebugString(_T("AMCEvent event not setted!\n"));
+			OutputDebugString(_T("AMCEvent event not setted!\n"));
 #endif
 
-		Py_RETURN_NONE;
+			Py_RETURN_NONE;
+		}
 	}
 }
 
@@ -1134,17 +1143,6 @@ void create_models() {
 #if debug_log && extended_debug_log && super_extended_debug_log
 			OutputDebugString("[");
 #endif
-
-			/*models[allCreatedModels] = new ModModel {
-				false,
-				NULL,
-				*it2
-			};
-
-			lights[allCreatedModels] = new ModLight {
-				event_light(*it2),
-				*it2
-			};*/
 
 			event_model(it->path, *it2, true);
 
@@ -1359,32 +1357,6 @@ uint8_t handle_battle_event(uint8_t eventID) {
 
 						models.~vector();
 						lights.~vector();
-
-						//models.resize(current_map.minimap_count);
-						//lights.resize(current_map.minimap_count);
-
-						/*for (uint16_t i = NULL; i < current_map.minimap_count; i++) {
-							if (models[i] != nullptr) {
-								Py_XDECREF(models[i]->model);
-
-								models[i]->model = NULL;
-								models[i]->coords = nullptr;
-								models[i]->processed = false;
-
-								delete models[i];
-								models[i] = nullptr;
-							}
-
-							if (lights[i] != nullptr) {
-								Py_XDECREF(lights[i]->model);
-
-								lights[i]->model = NULL;
-								lights[i]->coords = nullptr;
-
-								delete lights[i];
-								lights[i] = nullptr;
-							}
-						}*/
 
 						Py_END_ALLOW_THREADS;
 
@@ -2463,7 +2435,7 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 
 		closeEvent2(&EVENT_ALL_MODELS_CREATED);
 
-		allCreatedModels = NULL;
+		allModelsCreated = NULL;
 
 		GUI_setVisible(false);
 		GUI_clearText();
