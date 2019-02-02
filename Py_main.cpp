@@ -29,18 +29,17 @@ std::vector<ModLight*> lights;
 
 PyObject* event_module = NULL;
 
-PyObject* BigWorld = NULL;
-PyObject* g_gui = NULL;
+PyObject* BigWorld    = NULL;
+PyObject* g_gui       = NULL;
 PyObject* g_appLoader = NULL;
-PyObject* json = NULL;
+PyObject* functools   = NULL;
+PyObject* json        = NULL;
 
 PyObject* modGUI = NULL;
 
 PyObject* spaceKey = NULL;
 
-uint16_t  createdModelsCounter = NULL;
-
-PyObject* createModelsPyMeth   = NULL;
+PyObject* onModelCreatedPyMeth = NULL;
 
 uint8_t  first_check = 100U;
 uint32_t request     = 100U;
@@ -949,6 +948,22 @@ static PyObject* event_light(float coords[3]) {
 	return Light;
 }
 
+bool setModelPosition(PyObject* Model, PyObject* coords_p) {
+	PyObject* __position = PyString_FromStringAndSize("position", 8U);
+
+	if (PyObject_SetAttr(Model, __position, coords_p)) {
+		Py_DECREF(__position);
+		Py_DECREF(coords_p);
+		Py_DECREF(Model);
+
+		return false;
+	}
+
+	Py_DECREF(__position);
+
+	return true;
+}
+
 static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	if (!isInited || battleEnded) {
 		return NULL;
@@ -958,12 +973,33 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	OutputDebugString(_T("model creating...\n"));
 #endif
 
-	PyObject* Model;
+	PyObject* Model = NULL;
 
 	if (isAsync) {
+		if (coords == nullptr) {
+			return NULL;
+		}
+
+		PyObject* __partial = PyString_FromStringAndSize("partial", 7);
+
+		PyObject* coords_p = PyTuple_New(3); //передаем координаты в кортеже
+
+		for (uint8_t i = NULL; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
+
+		PyObject* partialized = PyObject_CallMethodObjArgs(functools, __partial, onModelCreatedPyMeth, coords_p, NULL);
+
+		Py_DECREF(__partial);
+
+		if (!partialized) {
+			return NULL;
+		}
+
 		PyObject* __fetchModel = PyString_FromStringAndSize("fetchModel", 10U);
 
-		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), NULL);
+		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+
+		Py_XDECREF(Model);
+		Py_DECREF(__fetchModel);
 
 		return NULL;
 	}
@@ -977,30 +1013,24 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	if (!Model) {
 		return NULL;
 	}
+	
+	if (coords != nullptr) {
+		PyObject* coords_p = PyTuple_New(3U);
 
-	PyObject* coords_p = PyTuple_New(3U);
+		if (!coords_p) {
+			Py_DECREF(Model);
 
-	if (!coords_p) {
-		Py_DECREF(Model);
+			return NULL;
+		}
 
-		return NULL;
+		for (uint8_t i = NULL; i < 3U; i++) {
+			PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
+		}
+
+		if (!setModelPosition(Model, coords_p)) { //ставим на нужную позицию
+			return NULL;
+		}
 	}
-
-	for (uint8_t i = NULL; i < 3U; i++) {
-		PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
-	}
-
-	PyObject* __position = PyString_FromStringAndSize("position", 8U);
-
-	if (PyObject_SetAttr(Model, __position, coords_p)) {
-		Py_DECREF(__position);
-		Py_DECREF(coords_p);
-		Py_DECREF(Model);
-
-		return NULL;
-	}
-
-	Py_DECREF(__position);
 
 #if debug_log && extended_debug_log && super_extended_debug_log
 	OutputDebugString(_T("model creating OK!\n"));
@@ -1009,7 +1039,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	return Model;
 };
 
-static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
+static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //принимает аргументы: кортеж (Tuple) координат и саму модель
 	if (!isInited || battleEnded) {
 		Py_RETURN_NONE;
 	}
@@ -1024,13 +1054,34 @@ static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
 
 	//рабочая часть
 
-	PyObject* modelsReferences = NULL;
+	PyObject* coords_p = NULL;
+	PyObject* Model    = NULL;
 
-	if (!PyArg_ParseTuple(args, "O", &modelsReferences)) {
+	if (!PyArg_ParseTuple(args, "OO", &coords_p, &Model)) {
 		Py_RETURN_NONE;
 	}
 
-	//TODO: пройтись по списку (или кортежу) моделей и добавить их в соответствующую секцию
+	if (!Model) {
+		Py_RETURN_NONE;
+	}
+
+	if(!coords_p) {
+		Py_RETURN_NONE;
+	}
+
+	if (!setModelPosition(Model, coords_p)) { //ставим на нужную позицию
+		Py_RETURN_NONE;
+	}
+
+	float* coords_new
+
+	ModModel* newModel = new ModModel {
+		false,
+		Model,
+		
+	};
+
+	models.push_back(newModel);
 
 	//сигналим о том, что все модели были успешно созданы
 
@@ -1044,59 +1095,66 @@ static PyObject* event_onAllModelsCreated(PyObject *self, PyObject *args) {
 	}
 }
 
-void create_models(PyObject* partial) {
-	if (!isInited || battleEnded || !partial) {
+void create_models() {
+	if (!isInited || battleEnded || !onModelCreatedPyMeth) {
 		return;
 	}
 
-	uint16_t counter_model = NULL;
-
-	for (auto it = current_map.modelsSects.cbegin();
-		it != current_map.modelsSects.cend();
+	for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
+		it != current_map.modelsSects.end();
 		it++) {
 
 		if (!it->isInitialised || it->models.empty()) {
 			continue;
 		}
 
-		PyObject* ModelsList = PyTuple_New(NULL); //TODO: найти число не NULL элементов вектора it->models
+		auto it2 = it->models.begin();
 
-		for (auto it2 = it->models.cbegin();
-			it2 != it->models.cend();
-			it2++) {
+		while (it2 != it->models.end()) {
 			if (*it2 == nullptr) {
-#if debug_log && extended_debug_log && super_extended_debug_log
-				OutputDebugString("NULL, ");
-#endif
-
-				counter_model++;
+				it2 = it->models.erase(it2);
 
 				continue;
 			}
+			it2++;
+		}
+	}
+#if debug_log && extended_debug_log && super_extended_debug_log
+	OutputDebugString(_T("], \n"));
+#endif
+
+	for (auto it = current_map.modelsSects.begin(); //второй проход - создаем модели
+		it != current_map.modelsSects.end();
+		it++) {
+		if (!it->isInitialised || it->models.empty()) {
+			continue;
+		}
+		
+		for (auto it2 = it->models.cbegin(); it2 != it->models.cend(); it2++) {
 #if debug_log && extended_debug_log && super_extended_debug_log
 			OutputDebugString("[");
 #endif
-			models[counter_model] = new ModModel{
+
+			/*models[allCreatedModels] = new ModModel {
 				false,
-				event_model(it->path, *it2),
+				NULL,
 				*it2
 			};
 
-			lights[counter_model] = new ModLight{
+			lights[allCreatedModels] = new ModLight {
 				event_light(*it2),
 				*it2
-			};
+			};*/
 
-			counter_model++;
+			event_model(it->path, *it2, true);
+
+			it2++;
 
 #if debug_log && extended_debug_log && super_extended_debug_log
 			OutputDebugString("], ");
 #endif
 		}
 	}
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("], \n"));
-#endif
 }
 
 uint8_t init_models() {
@@ -1206,7 +1264,7 @@ uint8_t set_visible(bool isVisible) {
 };
 
 uint8_t handle_battle_event(uint8_t eventID) {
-	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR || !createModelsPyMeth) {
+	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
 		return 1U;
 	}
 
@@ -1302,10 +1360,10 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						models.~vector();
 						lights.~vector();
 
-						models.resize(current_map.minimap_count);
-						lights.resize(current_map.minimap_count);
+						//models.resize(current_map.minimap_count);
+						//lights.resize(current_map.minimap_count);
 
-						for (uint16_t i = NULL; i < current_map.minimap_count; i++) {
+						/*for (uint16_t i = NULL; i < current_map.minimap_count; i++) {
 							if (models[i] != nullptr) {
 								Py_XDECREF(models[i]->model);
 
@@ -1326,7 +1384,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 								delete lights[i];
 								lights[i] = nullptr;
 							}
-						}
+						}*/
 
 						Py_END_ALLOW_THREADS;
 
@@ -1350,24 +1408,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						Более-менее надежно, выполняется на уровне движка
 						*/
 
-						PyObject* functools = PyImport_ImportModule("functools");
-
-						if (!functools) {
-							return 3;
-						}
-
-						PyObject* __partial = PyString_FromStringAndSize("partial", 7);
-
-						PyObject* partial = PyObject_GetAttr(functools, __partial);
-
-						Py_DECREF(__partial);
-						Py_DECREF(functools);
-
-						if (!partial) {
-							return 4;
-						}
-
-						create_models(partial);
+						create_models();
 
 						//ожидаем события полного создания моделей
 
@@ -2420,6 +2461,10 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 		closeEvent1(&EVENT_START_TIMER);
 		closeEvent1(&EVENT_IN_HANGAR);
 
+		closeEvent2(&EVENT_ALL_MODELS_CREATED);
+
+		allCreatedModels = NULL;
+
 		GUI_setVisible(false);
 		GUI_clearText();
 
@@ -2777,7 +2822,7 @@ static struct PyMethodDef event_methods[] =
 	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code
 	{ "g",             event_init_py,                 METH_VARARGS, ":P" }, //init
 	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" }, //inject_handle_key_event
-	{ "cm",            event_onAllModelsCreated,      METH_VARARGS, ":P" }, //onAllModelsCreate
+	{ "cm",            event_onModelCreated,          METH_VARARGS, ":P" }, //onModelCreated
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -2809,6 +2854,12 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(appLoader);
 
 	if (!g_appLoader) {
+		return;
+	}
+
+	PyObject* functools = PyImport_ImportModule("functools");
+
+	if (!functools) {
 		return;
 	}
 
@@ -2861,11 +2912,11 @@ PyMODINIT_FUNC initevent(void)
 
 	PyObject* __cm = PyString_FromStringAndSize("cm", 2);
 
-	createModelsPyMeth = PyObject_GetAttr(event_module, __cm);
+	onModelCreatedPyMeth = PyObject_GetAttr(event_module, __cm);
 
 	Py_DECREF(__cm);
 
-	if (!createModelsPyMeth) {
+	if (!onModelCreatedPyMeth) {
 		Py_DECREF(g_appLoader);
 		return;
 	}
