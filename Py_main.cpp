@@ -1116,6 +1116,9 @@ uint8_t handle_battle_event(uint8_t eventID) {
 							return 3U;
 						}
 
+						PyThreadState *_save;        //глушим GIL, пока ожидаем
+						Py_UNBLOCK_THREADS;
+
 						//ожидаем события полного создания моделей
 
 						DWORD EVENT_ALL_MODELS_CREATED_WaitResult = WaitForSingleObject(
@@ -1137,6 +1140,8 @@ uint8_t handle_battle_event(uint8_t eventID) {
 							//-------------
 
 							//место для рабочего кода
+
+							Py_UNBLOCK_THREADS;
 
 #if debug_log  && extended_debug_log
 							OutputDebugString(_T("[NY_Event]: creating OK!\n"));
@@ -1197,6 +1202,8 @@ uint8_t handle_battle_event(uint8_t eventID) {
 #if debug_log && extended_debug_log
 							OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
 #endif
+
+							Py_UNBLOCK_THREADS;
 
 							return 3U;
 						}
@@ -1847,7 +1854,9 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	Py_DECREF(__geometryName);
 	Py_DECREF(arenaType);
 
-	if (!map_PS) return PyInt_FromSize_t(5U);
+	if (!map_PS) {
+		return PyInt_FromSize_t(5U);
+	}
 
 	char* map_s = PyString_AS_STRING(map_PS);
 
@@ -1993,6 +2002,7 @@ uint8_t del_models() {
 #if debug_log && extended_debug_log
 	OutputDebugString(_T("[NY_Event]: models deleting OK!\n"));
 #endif
+
 	return NULL;
 }
 
@@ -2102,7 +2112,7 @@ uint8_t event_fini() {
 #endif
 
 	return NULL;
-}
+	}
 
 void closeEvent1(PEVENTDATA_1* pEvent) {
 	if (*pEvent != NULL) { //если уже была инициализирована структура - удаляем
@@ -2134,8 +2144,10 @@ void closeEvent2(PEVENTDATA_2* pEvent) {
 
 static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 	uint8_t fini_result = event_fini();
-	
-	if (fini_result) return PyInt_FromSize_t(fini_result);
+
+	if (fini_result) {
+		return PyInt_FromSize_t(fini_result);
+	}
 	else {
 		battleEnded = true;
 
@@ -2242,10 +2254,16 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName) {
 }
 
 bool createEventsAndSecondThread() {
-	if (!createEvent1(&EVENT_IN_HANGAR,   EventsID.IN_HANGAR))            return false;
-	if (!createEvent1(&EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL))   return false;
+	if (!createEvent1(&EVENT_IN_HANGAR, EventsID.IN_HANGAR)) {
+		return false;
+	}
+	if (!createEvent1(&EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL)) {
+		return false;
+	}
 
-	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent"))   return false;
+	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) {
+		return false;
+	}
 	//TODO: сделать ивент - удаление ближайшей модели
 
 	//Thread creating
