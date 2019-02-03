@@ -708,6 +708,14 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
+		if (!coords_p) {
+			Py_DECREF(__partial);
+
+			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+
+			return NULL;
+		}
+
 		PyObject* partialized = PyObject_CallMethodObjArgs(functools, __partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		Py_DECREF(__partial);
