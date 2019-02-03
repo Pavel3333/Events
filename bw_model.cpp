@@ -9,6 +9,7 @@ using namespace BW;
 
 Model::Model(PyObject* model, Vector3D* pos)
 {
+	Py_INCREF(model);
     this->model = model;
     SetPosition(pos);
 }
