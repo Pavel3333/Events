@@ -972,6 +972,8 @@ bool setModelPosition(PyObject* Model, float* coords_f) {
 
 static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	if (!isInited || battleEnded) {
+		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+
 		return NULL;
 	}
 
@@ -982,19 +984,23 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	PyObject* Model = NULL;
 
 	if (isAsync) {
-		if (coords == nullptr) {
+		if (coords == nullptr) { 
+			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+
 			return NULL;
 		}
 
 		PyObject* __partial = PyString_FromStringAndSize("partial", 7);
 
-		PyObject* coords_p = PyInt_FromLong((long)coords); //передаем указатель на 3 координаты
+		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
 		PyObject* partialized = PyObject_CallMethodObjArgs(functools, __partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		Py_DECREF(__partial);
 
 		if (!partialized) {
+			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+
 			return NULL;
 		}
 
@@ -1063,14 +1069,16 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 		Py_RETURN_NONE;
 	}
 
-	float* coords_f = (float*)(PyInt_AS_LONG(coords_pointer));
+	void* coords_vptr = PyLong_AsVoidPtr(coords_pointer);
 
-	if (coords_f == nullptr) {
+	if (!coords_vptr) {
 		Py_DECREF(coords_pointer);
 		Py_DECREF(Model);
 
 		Py_RETURN_NONE;
 	}
+
+	float* coords_f = (float*)(coords_vptr);
 
 	if (!setModelPosition(Model, coords_f)) { //ставим на нужную позицию
 		Py_RETURN_NONE;
@@ -1090,7 +1098,7 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 	models.push_back(newModel);
 	lights.push_back(newLight);
 
-	if (models.size() >= allModelsCreated) {
+	if (models.size() >= allModelsCreated) { //если число созданных моделей - столько же или больше, чем надо
 		//сигналим о том, что все модели были успешно созданы
 
 		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
