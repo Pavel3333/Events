@@ -9,66 +9,52 @@ using namespace BW;
 Model::Model(PyObject* model, Vector3D* pos)
 {
     this->model = model;
-    this->pos = pos;
+    SetPosition(pos);
 }
-
 
 Model::~Model()
 {
-	if (!inited) {
-		Py_DECREF(this->model);
-		return;
-	}
-
-	static PyObject* delModelMethodName = PyString_FromString("delModel");
-	PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, delModelMethodName, this->model, NULL);
-
-	if (result) {
-		Py_DECREF(result);
-		Py_DECREF(this->model);
-	}
-}
-
-void Model::Init()
-{
-	static PyObject* addModelMethodName = PyString_FromString("addModel");
-
-	PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, addModelMethodName, this->model, NULL);
-
-	if (result) {
-		Py_DECREF(result);
-		this->inited = true;
-	}
-}
-
-/*
-Model* Model::Open(const std::string& path, Vector3D* pos)
-{
-    static PyObject* modelMethodName = PyString_FromString("Model");
-
-    PyObject* pyModel = PyObject_CallMethodObjArgs(Py::BigWorld, modelMethodName, PyString_FromString(path.c_str()), NULL);
-
-    if (!pyModel) {
-        return nullptr;
+    if (!inited) {
+        Py_DECREF(this->model);
+        return;
     }
+
+    static PyObject* delModelMethodName = PyString_FromString("delModel");
+    PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, delModelMethodName, this->model, NULL);
+
+    if (result) {
+        Py_DECREF(result);
+        Py_DECREF(this->model);
+    }
+}
+
+void Model::SetPosition(Vector3D* pos)
+{
+    this->pos = pos;
 
     PyObject* pyPosition = PyTuple_New(3);
     PyTuple_SET_ITEM(pyPosition, 0, PyFloat_FromDouble(pos->x));
     PyTuple_SET_ITEM(pyPosition, 1, PyFloat_FromDouble(pos->y));
     PyTuple_SET_ITEM(pyPosition, 2, PyFloat_FromDouble(pos->z));
 
-	static PyObject* positionAttrName = PyString_FromString("position");
-	if (PyObject_SetAttr(pyModel, positionAttrName, pyPosition) == -1) {
-        Py_DECREF(pyPosition);
-        Py_DECREF(pyModel);
-		return nullptr;
-	}
+    if (PyObject_SetAttrString(model, "position", pyPosition) == -1) {
+        // TODO: log here
+        return;
+    }
 
-	Py_DECREF(pyPosition);
-
-	return new Model(pyModel, pos);
+    Py_DECREF(pyPosition);
 }
-*/
+
+void Model::Init()
+{
+    static PyObject* addModelMethodName = PyString_FromString("addModel");
+    PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, addModelMethodName, this->model, NULL);
+
+    if (result) {
+        Py_DECREF(result);
+        this->inited = true;
+    }
+}
 
 
 ModelSet::ModelSet(size_t size)
@@ -95,26 +81,36 @@ ModelSet::~ModelSet()
 }
 
 
-void ModelSet::Add(std::string_view path, size_t index)
+void ModelSet::Add(std::string_view path, Vector3D* pos, long index)
 {
     PyObject* pyPath = PyString_FromStringAndSize(path.data(), path.size());
-    PyObject* pyIndex = PyInt_FromSize_t(index);
+    PyObject* pyPos = PyLong_FromVoidPtr(static_cast<void*>(pos));
+    PyObject* pyIndex = PyInt_FromLong(index);
 
-	static PyObject* m_functools = PyImport_AddModule("functools");
+    static PyObject* m_functools = PyImport_AddModule("functools");
     static PyObject* partialMethodName = PyString_FromString("partial");
-    PyObject* callback = PyObject_CallMethodObjArgs(m_functools, partialMethodName, pyOnModelLoadedCallback, pyIndex, nullptr);
+    PyObject* callback = PyObject_CallMethodObjArgs(m_functools, partialMethodName, pyOnModelLoadedCallback, pyPos, pyIndex, nullptr);
 
-	static PyObject* m_BigWorld = PyImport_AddModule("BigWorld");
     static PyObject* fetchModelMethodName = PyString_FromString("fetchModel");
-    PyObject_CallMethodObjArgs(m_BigWorld, fetchModelMethodName, pyPath, callback, nullptr);
+    PyObject_CallMethodObjArgs(Py::BigWorld, fetchModelMethodName, pyPath, callback, nullptr);
 }
 
 
-void ModelSet::OnModelLoaded(PyObject* arg1, PyObject* arg2)
+void ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
 {
-    ModelSet* self = reinterpret_cast<ModelSet*>(arg2);
+    ModelSet* self = reinterpret_cast<ModelSet*>(selfPtr);
 
-    // TODO:
+    PyObject* pyPos;
+    long index;
+    PyObject* pyModel;
 
-    now_loaded++;
+    if (!PyArg_ParseTuple(args, "OlO", &pyPos, &index, &pyModel)) {
+        // TODO: log here
+        return;
+    }
+
+    Vector3D* pos = static_cast<Vector3D*>(PyLong_AsVoidPtr(pyPos));
+
+    self->models[index] = new Model(pyModel, pos);
+    self->now_loaded++;
 }

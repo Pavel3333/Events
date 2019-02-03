@@ -22,22 +22,23 @@ namespace BW
     };
 
     class Model {
-	public:
+    public:
         PyObject* model;
-		Vector3D* pos;
-		bool inited = false;
+        Vector3D* pos;
+        bool inited = false;
 
     public:
         Model(PyObject* model, Vector3D* pos);
         ~Model();
 
-		void Init();
+        void SetPosition(Vector3D* pos);
+        void Init();
     };
 
     class ModelSet {
     private:
         size_t now_loaded;
-		size_t size;
+        size_t size;
 
         std::vector<Model*> models;
         PyObject* pyOnModelLoadedCallback;
@@ -47,6 +48,6 @@ namespace BW
         ModelSet(size_t size);
         ~ModelSet();
 
-        void Add(std::string_view path, size_t index);
+        void Add(std::string_view path, Vector3D* pos, long index);
     };
 }
