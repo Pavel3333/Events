@@ -1,9 +1,9 @@
 #define CONSOLE_VER1
 
-#include "stdafx.h"
-
 #include "ModThreads.h"
 #include "Py_config.h"
+#include "BW_native.h"
+#include "GUI.h"
 #include <stdlib.h>
 #include <direct.h>
 
@@ -28,12 +28,6 @@ std::vector<ModModel*> models;
 std::vector<ModLight*> lights;
 
 PyObject* event_module = NULL;
-
-PyObject* BigWorld    = NULL;
-PyObject* g_gui       = NULL;
-PyObject* g_appLoader = NULL;
-PyObject* functools   = NULL;
-PyObject* json        = NULL;
 
 PyObject* modGUI = NULL;
 
@@ -63,9 +57,6 @@ bool isTimerStarted = false;
 bool isTimeVisible  = false;
 
 bool isStreamer = false;
-
-long timerCBID    = NULL;
-long delLabelCBID = NULL;
 
 HANDLE hTimer         = NULL;
 HANDLE hSecondThread  = NULL;
@@ -264,6 +255,114 @@ void clearModelsSections() {
 	sync_map.modelsSects_deleting.~vector();
 }
 
+uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
+	PyObject* __player = PyString_FromStringAndSize("player", 6U);
+
+	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
+
+	Py_DECREF(__player);
+
+	isModelsAlreadyCreated = false;
+
+	if (!player) {
+		return 1U;
+	}
+
+	PyObject* __vehicle = PyString_FromStringAndSize("vehicle", 7U);
+	PyObject* vehicle = PyObject_GetAttr(player, __vehicle);
+
+	Py_DECREF(__vehicle);
+
+	Py_DECREF(player);
+
+	if (!vehicle) {
+		return 2U;
+	}
+
+	PyObject* __model = PyString_FromStringAndSize("model", 5U);
+	PyObject* model_p = PyObject_GetAttr(vehicle, __model);
+
+	Py_DECREF(__model);
+	Py_DECREF(vehicle);
+
+	if (!model_p) {
+		return 3U;
+	}
+
+	PyObject* __position = PyString_FromStringAndSize("position", 8U);
+	PyObject* position_Vec3 = PyObject_GetAttr(model_p, __position);
+
+	Py_DECREF(__position);
+	Py_DECREF(model_p);
+
+	if (!position_Vec3) {
+		return 4U;
+	}
+
+	double* coords_pos = new double[3];
+
+	for (uint8_t i = NULL; i < 3U; i++) {
+		PyObject* __tuple = PyString_FromStringAndSize("tuple", 5U);
+
+		PyObject* position = PyObject_CallMethodObjArgs(position_Vec3, __tuple, NULL);
+
+		Py_DECREF(__tuple);
+
+		if (!position) {
+			return 5U;
+		}
+
+		PyObject* coord_p = PyTuple_GetItem(position, i);
+
+		if (!coord_p) {
+			return 6U;
+		}
+
+		coords_pos[i] = PyFloat_AS_DOUBLE(coord_p);
+	}
+
+	double distTemp;
+	double dist = -1.0;
+	int8_t modelTypeLast = -1;
+	float* coords_res = nullptr;
+
+	for (auto it = current_map.modelsSects.cbegin();
+		it != current_map.modelsSects.cend();
+		it++) {
+		if (it->isInitialised) {
+			for (auto it2 = it->models.cbegin();
+				it2 != it->models.cend();
+				it2++) {
+				if (*it2 == nullptr) continue;
+
+				distTemp = getDist2Points(coords_pos, *it2);
+
+				if (dist == -1.0 || distTemp < dist) {
+					dist = distTemp;
+					modelTypeLast = it->ID;
+
+					coords_res = *it2;
+				}
+			}
+		}
+	}
+
+	delete[] coords_pos;
+
+	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) {
+		return 8U;
+	}
+
+	if (dist > dist_equal) {
+		return 7U;
+	}
+
+	*modelID = modelTypeLast;
+	*coords = coords_res;
+
+	return NULL;
+}
+
 uint8_t delModelPy(float* coords) {
 	if (coords == nullptr) {
 		return 1U;
@@ -400,394 +499,6 @@ uint8_t delModelCoords(uint16_t ID, float* coords) {
 
 	return 2U;
 }
-
-//native methods
-
-uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
-	PyObject* __player = PyString_FromStringAndSize("player", 6U);
-
-	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
-
-	Py_DECREF(__player);
-
-	isModelsAlreadyCreated = false;
-
-	if (!player) {
-		return 1U;
-	}
-
-	PyObject* __vehicle = PyString_FromStringAndSize("vehicle", 7U);
-	PyObject* vehicle = PyObject_GetAttr(player, __vehicle);
-
-	Py_DECREF(__vehicle);
-
-	Py_DECREF(player);
-
-	if (!vehicle) {
-		return 2U;
-	}
-
-	PyObject* __model = PyString_FromStringAndSize("model", 5U);
-	PyObject* model_p = PyObject_GetAttr(vehicle, __model);
-
-	Py_DECREF(__model);
-	Py_DECREF(vehicle);
-
-	if (!model_p) {
-		return 3U;
-	}
-
-	PyObject* __position = PyString_FromStringAndSize("position", 8U);
-	PyObject* position_Vec3 = PyObject_GetAttr(model_p, __position);
-
-	Py_DECREF(__position);
-	Py_DECREF(model_p);
-
-	if (!position_Vec3) {
-		return 4U;
-	}
-
-	double* coords_pos = new double[3];
-
-	for (uint8_t i = NULL; i < 3U; i++) {
-		PyObject* __tuple = PyString_FromStringAndSize("tuple", 5U);
-
-		PyObject* position = PyObject_CallMethodObjArgs(position_Vec3, __tuple, NULL);
-
-		Py_DECREF(__tuple);
-
-		if (!position) {
-			return 5U;
-		}
-
-		PyObject* coord_p = PyTuple_GetItem(position, i);
-
-		if (!coord_p) {
-			return 6U;
-		}
-
-		coords_pos[i] = PyFloat_AS_DOUBLE(coord_p);
-	}
-
-	double distTemp;
-	double dist = -1.0;
-	int8_t modelTypeLast = -1;
-	float* coords_res = nullptr;
-
-	for (auto it = current_map.modelsSects.cbegin();
-		it != current_map.modelsSects.cend();
-		it++) {
-		if (it->isInitialised) {
-			for (auto it2 = it->models.cbegin();
-				it2 != it->models.cend();
-				it2++) {
-				if (*it2 == nullptr) continue;
-
-				distTemp = getDist2Points(coords_pos, *it2);
-
-				if (dist == -1.0 || distTemp < dist) {
-					dist = distTemp;
-					modelTypeLast = it->ID;
-
-					coords_res = *it2;
-				}
-			}
-		}
-	}
-
-	delete[] coords_pos;
-
-	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) {
-		return 8U;
-	}
-
-	if (dist > dist_equal) {
-		return 7U;
-	}
-
-	*modelID = modelTypeLast;
-	*coords  = coords_res;
-
-	return NULL;
-}
-
-void callback(long* CBID, PyObject* func, float time_f=1.0) {
-	if (!func) {
-		return;
-	}
-
-	PyObject* time_p;
-
-	if (!time_f) time_p = PyFloat_FromDouble(0.0);
-	else         time_p = PyFloat_FromDouble(time_f);
-
-	if (!time_p) {
-		return;
-	}
-
-	PyObject* __callback_text = PyString_FromStringAndSize("callback", 8U);
-
-	//Py_INCREF(func);
-
-	PyObject* res = PyObject_CallMethodObjArgs(BigWorld, __callback_text, time_p, func, NULL);
-
-	Py_DECREF(__callback_text);
-	
-	if (!res) {
-		return;
-	}
-
-	*CBID = PyInt_AS_LONG(res);
-
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("[NY_Event]: Callback created!\n"));
-#endif
-
-	Py_DECREF(res);
-}
-
-void cancelCallback(long* CBID) {
-	if (!*CBID) {
-		return;
-	}
-
-	PyObject* __cancelCallback = PyString_FromStringAndSize("cancelCallback", 14U);
-
-	PyObject* res = PyObject_CallMethodObjArgs(BigWorld, __cancelCallback, PyInt_FromLong(*CBID), NULL);
-
-	Py_DECREF(__cancelCallback);
-	Py_XDECREF(res);
-
-	*CBID = NULL;
-}
-
-//GUI methods
-
-PyObject* GUI_getAttr(char* attribute) {
-	if (!modGUI) {
-		return NULL;
-	}
-
-	return PyObject_GetAttrString(modGUI, attribute);
-}
-
-bool GUI_setAttr(char* attribute, PyObject* value) {
-	if (!modGUI) {
-		return false;
-	}
-
-	return PyObject_SetAttrString(modGUI, attribute, value);
-}
-
-void GUI_setWarning(uint8_t warningCode) {
-#if debug_log && extended_debug_log
-	if (!isInited || !modGUI) {
-		return;
-	}
-
-	PyObject* __setWarning = PyString_FromStringAndSize("setWarning", 10U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setWarning, PyInt_FromSize_t((size_t)warningCode), NULL);
-
-	Py_DECREF(__setWarning);
-	Py_XDECREF(res);
-#endif
-
-	return;
-}
-
-void GUI_setError(uint8_t errorCode) {
-#if debug_log && extended_debug_log
-	if (!isInited || !modGUI) {
-		return;
-	}
-
-	PyObject* __setError = PyString_FromStringAndSize("setError", 8U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setError, PyInt_FromSize_t((size_t)errorCode), NULL);
-
-	Py_DECREF(__setError);
-	Py_XDECREF(res);
-#endif
-
-	return;
-}
-
-void GUI_setVisible(bool visible) {
-	if (!isInited || battleEnded || !modGUI) {
-		return;
-	}
-
-	PyObject* __setVisible = PyString_FromStringAndSize("setVisible", 10U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setVisible, PyBool_FromLong((long)visible), NULL);
-
-	Py_DECREF(__setVisible);
-	Py_XDECREF(res);
-
-	return;
-}
-
-void GUI_setTimerVisible(bool visible) {
-	if (!isInited || battleEnded || !modGUI) {
-		return;
-	}
-
-	PyObject* __setTimerVisible = PyString_FromStringAndSize("setTimerVisible", 15U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setTimerVisible, PyBool_FromLong((long)visible), NULL);
-
-	Py_DECREF(__setTimerVisible);
-	Py_XDECREF(res);
-
-	return;
-}
-
-void GUI_setTime(uint32_t time_preparing) {
-	if (!isInited || battleEnded || !modGUI) {
-		return;
-	}
-
-	char new_time[30];
-
-	sprintf_s(new_time, 30U, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
-
-	PyObject* __setTime = PyString_FromStringAndSize("setTime", 7U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setTime, PyString_FromString(new_time), NULL);
-
-	Py_DECREF(__setTime);
-	Py_XDECREF(res);
-
-	return;
-}
-
-void GUI_setText(char* msg, float time_f=NULL) {
-	if (!isInited || battleEnded || !modGUI) {
-		return;
-	}
-
-	PyObject* __setText = PyString_FromStringAndSize("setText", 7U);
-
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setText, PyString_FromString(msg), NULL);
-
-	Py_DECREF(__setText);
-	Py_XDECREF(res);
-
-	PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
-
-	if (!delLabelCBID_p || delLabelCBID_p == Py_None) {
-		delLabelCBID = NULL;
-
-		Py_XDECREF(delLabelCBID_p);
-	}
-	else {
-		delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
-
-		Py_DECREF(delLabelCBID_p);
-	}
-
-	if (delLabelCBID) {
-		cancelCallback(&delLabelCBID);
-
-		Py_INCREF(Py_None);
-
-		if (!GUI_setAttr("delLabelCBID", Py_None)) {
-			return;
-		}
-	}
-
-	if (time_f) {
-		PyObject* __clearTextCB = PyString_FromStringAndSize("clearTextCB", 11U);
-		PyObject* res2 = PyObject_CallMethodObjArgs(modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
-
-		Py_DECREF(__clearTextCB);
-
-		Py_XDECREF(res2);
-
-		PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
-
-		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = NULL;
-		else delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
-	}
-
-	return;
-}
-
-void GUI_setMsg(uint8_t msgID, uint8_t scoreID = NULL, float time_f = NULL) {
-	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= MESSAGES_COUNT) {
-		return;
-	}
-
-	if (lastStageID == current_map.stageID && lastStageID != StagesID.GET_SCORE && lastStageID != StagesID.ITEMS_NOT_EXISTS) {
-		return;
-	}
-
-	// получить из словаря локализации нужную строку
-
-	PyObject* __UI_messages = PyString_FromStringAndSize("UI_messages", 11U);
-
-	/*if (PyDict_Contains(g_self->i18n, __UI_messages) != 1U) {
-		Py_DECREF(__UI_messages);
-		return ;
-	}*/
-
-	PyObject* messagesList = PyDict_GetItem(g_self->i18n, __UI_messages);
-
-	Py_DECREF(__UI_messages);
-	 
-	if (!messagesList) {
-		return;
-	}
-
-	//----------------------------------------------
-
-	//находим сообщение из списка
-
-	PyObject* msg_p = PyList_GetItem(messagesList, msgID);
-
-	if (!msg_p) {
-		return;
-	}
-
-	char* msg = PyString_AsString(msg_p);
-
-	if (!msg) {
-		return;
-	}
-
-	//---------------------------
-
-	char new_msg[255];
-
-	if (msgID == StagesID.GET_SCORE) { // если это - сообщение о том, что получили баллы
-		sprintf_s(new_msg, 255U, msg, COLOURS[msgID], SCORE[scoreID]);
-	}
-	else {
-		sprintf_s(new_msg, 255U, msg, COLOURS[msgID]);
-	}
-
-	GUI_setText(new_msg, time_f);
-
-	lastStageID = current_map.stageID;
-
-	return;
-}
-
-void GUI_clearText() {
-	if (!isInited || !modGUI) {
-		return;
-	}
-
-	PyObject* __clearText = PyString_FromStringAndSize("clearText", 9U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __clearText, NULL);
-
-	Py_DECREF(__clearText);
-	Py_XDECREF(res);
-
-	lastStageID = StagesID.COMPETITION;
-
-	delLabelCBID = NULL;
-
-	return;
-}
-
-//-----------
 
 static PyObject* event_light(float coords[3]) {
 	if (!isInited || battleEnded) {

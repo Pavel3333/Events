@@ -1,10 +1,10 @@
 #pragma once
-#include "stdafx.h"
 
-#include "iostream"
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <windows.h>
+#include <tchar.h>
 
 #define NET_BUFFER_SIZE (16384U)
 #define MARKERS_SIZE 12U
@@ -34,6 +34,10 @@ extern LPCWSTR EVENT_NAMES[4];
 extern char* COLOURS[MESSAGES_COUNT];
 extern char* MESSAGES[MESSAGES_COUNT];
 extern char* MODEL_NAMES[SECTIONS_COUNT];
+
+extern bool isInited;
+
+extern bool battleEnded;
 
 extern bool isModelsAlreadyCreated;
 

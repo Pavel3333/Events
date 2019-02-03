@@ -1,7 +1,5 @@
 #pragma once
 
-#include "stdafx.h"
-
 #include "API_functions.h"
 
 // Sample custom data structure for threads to use.
