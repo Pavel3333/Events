@@ -19,21 +19,6 @@
     <Filter Include="dll">
       <UniqueIdentifier>{7158c383-0bd1-48e5-a6a8-4380a04e37fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mod">
-      <UniqueIdentifier>{46270cf4-c846-4c51-b956-c5b06f668798}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mod\xfw_packages">
-      <UniqueIdentifier>{f417e01c-5758-4b32-b9ff-aadd4a09f7de}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mod\xfw_packages\TrajectoryMod">
-      <UniqueIdentifier>{52b49e7f-6ece-41f7-9892-607ba0069d22}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mod\xfw_packages\TrajectoryMod\native">
-      <UniqueIdentifier>{d710aa5f-2e12-4d1e-a37f-bbc3ec5ef2dd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mod\xfw_packages\TrajectoryMod\python">
-      <UniqueIdentifier>{69d1b3bc-eb4c-46f8-86ab-90d8ce3912f1}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Py_main.cpp">
@@ -60,42 +45,6 @@
   <ItemGroup>
     <None Include="libcurl.dll">
       <Filter>dll</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\libeay32.dll">
-      <Filter>mod\xfw_packages\TrajectoryMod\native</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\ssleay32.dll">
-      <Filter>mod\xfw_packages\TrajectoryMod\native</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\TRAJECTORY.lic">
-      <Filter>mod\xfw_packages\TrajectoryMod\native</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\trj.pyd">
-      <Filter>mod\xfw_packages\TrajectoryMod\native</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\1.py">
-      <Filter>mod\xfw_packages\TrajectoryMod\native</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\libcurl.dll">
-      <Filter>mod\xfw_packages\TrajectoryMod\native</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\xfw_package.json">
-      <Filter>mod\xfw_packages\TrajectoryMod</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Config.pyd">
-      <Filter>mod\xfw_packages\TrajectoryMod\python</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Config.pyx">
-      <Filter>mod\xfw_packages\TrajectoryMod\python</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Minimap.pyd">
-      <Filter>mod\xfw_packages\TrajectoryMod\python</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Minimap.pyx">
-      <Filter>mod\xfw_packages\TrajectoryMod\python</Filter>
-    </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\python\__init__.py">
-      <Filter>mod\xfw_packages\TrajectoryMod\python</Filter>
     </None>
   </ItemGroup>
 </Project>

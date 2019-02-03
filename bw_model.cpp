@@ -22,7 +22,7 @@ Model::~Model()
     }
 
     static PyObject* delModelMethodName = PyString_FromString("delModel");
-    PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, delModelMethodName, this->model, NULL);
+    PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, delModelMethodName, this->model, nullptr);
 
     if (result) {
         Py_DECREF(result);
@@ -50,7 +50,7 @@ void Model::SetPosition(Vector3D* pos)
 void Model::Init()
 {
     static PyObject* addModelMethodName = PyString_FromString("addModel");
-    PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, addModelMethodName, this->model, NULL);
+    PyObject* result = PyObject_CallMethodObjArgs(Py::BigWorld, addModelMethodName, this->model, nullptr);
 
     if (result) {
         Py_DECREF(result);
@@ -67,14 +67,14 @@ ModelSet::ModelSet(size_t size, std::function<void()> on_created)
 
     static PyMethodDef pyOnModelLoadedDef = {
         "OnModelLoaded",
-        (PyCFunction)OnModelLoaded,
+        OnModelLoaded,
         METH_VARARGS,
         ""
     };
 
     this->pyOnModelLoadedCallback = PyCFunction_New(
         &pyOnModelLoadedDef,
-        reinterpret_cast<PyObject*>(this)
+        PyLong_FromVoidPtr(static_cast<void*>(this))
     );
 }
 
@@ -86,7 +86,7 @@ ModelSet::~ModelSet()
 
 int ModelSet::InitAll()
 {
-    for (auto model : models)
+    for (auto* model : models)
         model->Init();
 
     return 0;
@@ -94,6 +94,8 @@ int ModelSet::InitAll()
 
 int ModelSet::Add(std::string_view path, Vector3D* pos, long index)
 {
+    LOG_extended_debug(path.data());
+
     PyObject* pyPath = PyString_FromStringAndSize(path.data(), path.size());
     PyObject* pyPos = PyLong_FromVoidPtr(static_cast<void*>(pos));
     PyObject* pyIndex = PyInt_FromLong(index);
@@ -109,9 +111,9 @@ int ModelSet::Add(std::string_view path, Vector3D* pos, long index)
 }
 
 
-void ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
+PyObject* ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
 {
-    ModelSet* self = reinterpret_cast<ModelSet*>(selfPtr);
+    ModelSet* self = static_cast<ModelSet*>(PyLong_AsVoidPtr(selfPtr));
 
     PyObject* pyPos;
     long index;
@@ -119,7 +121,7 @@ void ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
 
     if (!PyArg_ParseTuple(args, "OlO", &pyPos, &index, &pyModel)) {
         // TODO: log here
-        return;
+        return nullptr;
     }
 
     Vector3D* pos = static_cast<Vector3D*>(PyLong_AsVoidPtr(pyPos));
@@ -127,6 +129,8 @@ void ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
     self->models[index] = new Model(pyModel, pos);
     self->now_loaded++;
 
-	if (self->now_loaded == self->size)
-		self->on_created();
+    if (self->now_loaded == self->size)
+        self->on_created();
+
+    Py_RETURN_NONE;
 }

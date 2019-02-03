@@ -3,50 +3,55 @@
 #include "bw_model.h"
 
 
-BW::ModelSet* modelSet = nullptr;
+static BW::ModelSet* modelSet = nullptr;
 
 
-int init_models()
+static void on_created()
 {
-    return modelSet->InitAll();
+    LOG_extended_debug("On created");
+
+    modelSet->InitAll();
 }
 
 
-void on_created()
+static PyObject* create_models(PyObject* self, PyObject* args)
 {
-	init_models();
-}
+    LOG_extended_debug("Create models");
 
-
-int create_models()
-{
     modelSet = new BW::ModelSet(3, on_created);
 
-    if (modelSet->Add("demo1.model", new BW::Vector3D(0.0, 0.0, 0.0), 0))
-        return -1;
+    modelSet->Add("content/Hangars/hangar_v3/enviroment/normal/lod0/hd_hv3_026_Fieldkitchen.model", new BW::Vector3D(0.0, 0.0, 0.0), 0);
+    modelSet->Add("content/Hangars/hangar_v3/enviroment/normal/lod0/hd_hv3_026_Fieldkitchen.model", new BW::Vector3D(0.0, 0.0, 0.5), 1);
+    modelSet->Add("content/Hangars/hangar_v3/enviroment/normal/lod0/hd_hv3_026_Fieldkitchen.model", new BW::Vector3D(0.0, 0.0, 1.0), 2);
 
-    if (modelSet->Add("demo2.model", new BW::Vector3D(0.0, 0.0, 1.0), 1))
-        return -1;
-
-    if (modelSet->Add("demo3.model", new BW::Vector3D(1.0, 0.0, 0.0), 2))
-        return -1;
-
-    return 0;
+    Py_RETURN_NONE;
 }
 
 
-int delete_models()
+static PyObject* delete_models(PyObject* self, PyObject* args)
 {
+    LOG_debug("Delete models");
+
+    if (!modelSet)
+        return nullptr;
+
     delete modelSet;
     modelSet = nullptr;
 
-    return 0;
+    Py_RETURN_NONE;
 }
+
+
+static PyMethodDef eventMethods[] = {
+    {"create_models", create_models, METH_NOARGS, ""},
+    {"delete_models", delete_models, METH_NOARGS, ""},
+    {NULL, NULL, 0, NULL}
+};
 
 
 PyMODINIT_FUNC initevent()
 {
-    Py::init_imports();
+    (void)Py_InitModule("event", eventMethods);
 
-	create_models();
+    Py::init_imports();
 }

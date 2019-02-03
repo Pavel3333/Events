@@ -38,13 +38,13 @@ namespace BW
 
     class ModelSet {
     private:
-        size_t now_loaded;
+        size_t now_loaded = 0;
         size_t size;
 
-		std::function<void()> on_created;
+        std::function<void()> on_created;
         std::vector<Model*> models;
         PyObject* pyOnModelLoadedCallback;
-        static void OnModelLoaded(PyObject*, PyObject*);
+        static PyObject* OnModelLoaded(PyObject*, PyObject*);
 
     public:
         ModelSet(size_t size, std::function<void()> on_created);

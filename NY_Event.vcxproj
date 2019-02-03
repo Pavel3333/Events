@@ -147,18 +147,6 @@
     <None Include="libcurl.dll">
       <FileType>Document</FileType>
     </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\1.py" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\libcurl.dll" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\libeay32.dll" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\ssleay32.dll" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\TRAJECTORY.lic" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\trj.pyd" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Config.pyd" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Config.pyx" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Minimap.pyd" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Minimap.pyx" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\__init__.py" />
-    <None Include="mods\xfw_packages\TrajectoryMod\xfw_package.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,5 +7,5 @@ PyObject* Py::BigWorld = nullptr;
 
 void Py::init_imports()
 {
-	BigWorld = PyImport_AddModule("BigWorld");
+    BigWorld = PyImport_AddModule("BigWorld");
 }
