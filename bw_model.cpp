@@ -9,7 +9,6 @@ using namespace BW;
 
 Model::Model(PyObject* model, Vector3D* pos)
 {
-    Py_INCREF(model);
     this->model = model;
     SetPosition(pos);
 }
@@ -23,7 +22,7 @@ Model::~Model()
         return;
     }
 
-    static PyObject* delModelMethodName = PyString_FromString("delModel");
+    static PyObject* delModelMethodName = PyString_InternFromString("delModel");
     PyObject_CallMethodObjArgs(Py::BigWorld, delModelMethodName, model, nullptr);
 
     Py_DECREF(model);
@@ -32,7 +31,7 @@ Model::~Model()
 
 void Model::ShowDebugInfo(const string& title) const
 {
-#if debug_log
+#if _BW_MODEL_DEBUG
     PyObject* sources = PyObject_GetAttrString(model, "sources");
     PyObject* position = PyObject_GetAttrString(model, "position");
 
@@ -87,7 +86,7 @@ void Model::Init()
         return;
     }
 
-    static PyObject* addModelMethodName = PyString_FromString("addModel");
+    static PyObject* addModelMethodName = PyString_InternFromString("addModel");
     PyObject_CallMethodObjArgs(Py::BigWorld, addModelMethodName, model, nullptr);
 }
 
@@ -104,14 +103,13 @@ ModelSet::ModelSet(size_t size, function<void()> on_created)
     std::fill(begin(this->models), end(this->models), nullptr);
     this->on_created = on_created;
 
-#if USE_ASYNC_MODEL_LOADING
+#if _BW_MODEL_USE_ASYNC_LOADING
 
     // ну а как еще?...
     PyObject* self = PyLong_FromVoidPtr(static_cast<void*>(this));
 
     static PyMethodDef pyOnModelLoadedDef = {
-        "OnModelLoaded", OnModelLoaded, METH_VARARGS, ""
-    };
+        "OnModelLoaded", OnModelLoaded, METH_VARARGS, "" };
 
     pyOnModelLoadedCallback = PyCFunction_New(
         &pyOnModelLoadedDef, self);
@@ -150,21 +148,21 @@ int ModelSet::Add(std::string_view path, Vector3D* pos, long index)
 {
     PyObject* pyPath = PyString_FromStringAndSize(path.data(), path.size());
 
-#if USE_ASYNC_MODEL_LOADING
+#if _BW_MODEL_USE_ASYNC_LOADING
 
     PyObject* pyPos = PyLong_FromVoidPtr(static_cast<void*>(pos));
     PyObject* pyIndex = PyInt_FromLong(index);
 
-    static PyObject* m_functools = PyImport_AddModule("functools");
-    static PyObject* partialMethodName = PyString_FromString("partial");
+    static PyObject* m_functools = PyImport_ImportModule("functools");
+    static PyObject* partialMethodName = PyString_InternFromString("partial");
     PyObject* callback = PyObject_CallMethodObjArgs(m_functools, partialMethodName, pyOnModelLoadedCallback, pyPos, pyIndex, nullptr);
 
-    static PyObject* fetchModelMethodName = PyString_FromString("fetchModel");
+    static PyObject* fetchModelMethodName = PyString_InternFromString("fetchModel");
     PyObject_CallMethodObjArgs(Py::BigWorld, fetchModelMethodName, pyPath, callback, nullptr);
 
 #else
 
-    static PyObject* ModelMethodName = PyString_FromString("Model");
+    static PyObject* ModelMethodName = PyString_InternFromString("Model");
     PyObject* pyModel = PyObject_CallMethodObjArgs(Py::BigWorld, ModelMethodName, pyPath, nullptr);
 
     models.at(index) = new Model(pyModel, pos);
@@ -179,7 +177,7 @@ int ModelSet::Add(std::string_view path, Vector3D* pos, long index)
 }
 
 
-#if USE_ASYNC_MODEL_LOADING
+#if _BW_MODEL_USE_ASYNC_LOADING
 
 PyObject* ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
 {
@@ -193,7 +191,7 @@ PyObject* ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
     }
 
     if (pyModel == Py_None) {
-        LOG_debug("fetch model failed!");
+        LOG_debug("fetch model failed!"); // Возможно был указан неправильный путь к файлу
         return nullptr;
     }
 
@@ -206,7 +204,7 @@ PyObject* ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
 
     if (self->now_loaded == self->size) {
         static PyObject* callbackTime = PyFloat_FromDouble(0.0);
-        static PyObject* callbackMethodName = PyString_FromString("callback");
+        static PyObject* callbackMethodName = PyString_InternFromString("callback");
         PyObject_CallMethodObjArgs(Py::BigWorld, callbackMethodName, callbackTime, self->pyOnLoadingCompletedCallback, nullptr);
     }
 
@@ -218,7 +216,7 @@ PyObject* ModelSet::OnLoadingCompleted(PyObject* selfPtr, PyObject* args)
     ModelSet* self = static_cast<ModelSet*>(PyLong_AsVoidPtr(selfPtr));
     self->on_created();
 
-	Py_RETURN_NONE;
+    Py_RETURN_NONE;
 }
 
 #endif

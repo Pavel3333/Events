@@ -5,7 +5,8 @@
 #include "python2.7/Python.h"
 
 
-#define USE_ASYNC_MODEL_LOADING true
+#define _BW_MODEL_DEBUG true
+#define _BW_MODEL_USE_ASYNC_LOADING true
 
 
 namespace BW
@@ -58,7 +59,7 @@ namespace BW
         vector<Model*> models;
         function<void()> on_created;
 
-#if USE_ASYNC_MODEL_LOADING
+#if _BW_MODEL_USE_ASYNC_LOADING
         PyObject* pyOnModelLoadedCallback;
         static PyObject* OnModelLoaded(PyObject*, PyObject*);
         PyObject* pyOnLoadingCompletedCallback;
