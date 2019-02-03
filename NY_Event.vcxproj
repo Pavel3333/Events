@@ -160,9 +160,6 @@
     <None Include="mods\xfw_packages\TrajectoryMod\python\__init__.py" />
     <None Include="mods\xfw_packages\TrajectoryMod\xfw_package.json" />
   </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\libcurl.lib" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

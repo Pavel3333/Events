@@ -98,9 +98,4 @@
       <Filter>mod\xfw_packages\TrajectoryMod\python</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\libcurl.lib">
-      <Filter>lib</Filter>
-    </Library>
-  </ItemGroup>
 </Project>
