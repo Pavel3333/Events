@@ -148,6 +148,7 @@
     <ClCompile Include="BW_native.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="ModThreads.cpp" />
+    <ClCompile Include="Py_config.cpp" />
     <ClCompile Include="Py_main.cpp" />
   </ItemGroup>
   <ItemGroup>

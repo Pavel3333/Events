@@ -8,7 +8,7 @@ PyObject* json        = NULL;
 
 //native functions
 
-void callback(long* CBID, PyObject* func, float time_f = 1.0) {
+void callback(long* CBID, PyObject* func, float time_f) {
 	if (!func) {
 		return;
 	}

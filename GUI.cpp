@@ -88,7 +88,7 @@ void GUI_setTime(uint32_t time_preparing) {
 	Py_XDECREF(res);
 }
 
-void GUI_setText(char* msg, float time_f = NULL) {
+void GUI_setText(char* msg, float time_f) {
 	if (!isInited || battleEnded || !modGUI) {
 		return;
 	}
@@ -138,7 +138,7 @@ void GUI_setText(char* msg, float time_f = NULL) {
 	}
 }
 
-void GUI_setMsg(uint8_t msgID, uint8_t scoreID = NULL, float time_f = NULL) {
+void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= MESSAGES_COUNT) {
 		return;
 	}

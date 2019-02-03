@@ -14,8 +14,6 @@
 unsigned char wr_buf[NET_BUFFER_SIZE + 1];
 size_t wr_index = NULL;
 
-extern Config config;
-
 map      current_map;
 map_sync sync_map;
 

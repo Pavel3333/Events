@@ -76,6 +76,8 @@ PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
 uint8_t lastStageID = StagesID.COMPETITION;
 uint8_t lastEventID = EventsID.IN_HANGAR;
 
+uint8_t makeEventInThread(uint8_t, uint8_t);
+
 bool write_data(char* data_path, PyObject* data_p) {
 	PyObject* arg2 = Py_False;
 	Py_INCREF(arg2);
