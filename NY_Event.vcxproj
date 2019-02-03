@@ -134,21 +134,12 @@
     </ManifestResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="description\ErrorCodes.txt" />
-    <Text Include="description\Structures.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="API_functions.h" />
     <ClInclude Include="bw_model.h" />
     <ClInclude Include="common.h" />
-    <ClInclude Include="ModThreads.h" />
-    <ClInclude Include="Py_config.h" />
     <ClInclude Include="py_imports.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="API_functions.cpp" />
     <ClCompile Include="bw_model.cpp" />
-    <ClCompile Include="ModThreads.cpp" />
     <ClCompile Include="py_imports.cpp" />
     <ClCompile Include="Py_main.cpp" />
   </ItemGroup>
@@ -168,7 +159,6 @@
     <None Include="mods\xfw_packages\TrajectoryMod\python\Minimap.pyx" />
     <None Include="mods\xfw_packages\TrajectoryMod\python\__init__.py" />
     <None Include="mods\xfw_packages\TrajectoryMod\xfw_package.json" />
-    <None Include="TRAJECTORY.lic" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libcurl.lib" />

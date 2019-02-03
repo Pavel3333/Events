@@ -14,6 +14,8 @@ Model::Model(PyObject* model, Vector3D* pos)
 
 Model::~Model()
 {
+    delete this->pos;
+
     if (!inited) {
         Py_DECREF(this->model);
         return;
@@ -57,10 +59,11 @@ void Model::Init()
 }
 
 
-ModelSet::ModelSet(size_t size)
+ModelSet::ModelSet(size_t size, std::function<void()> on_created)
 {
     this->size = size;
     this->models.reserve(size);
+	this->on_created = on_created;
 
     static PyMethodDef pyOnModelLoadedDef = {
         "OnModelLoaded",
@@ -81,7 +84,15 @@ ModelSet::~ModelSet()
 }
 
 
-void ModelSet::Add(std::string_view path, Vector3D* pos, long index)
+int ModelSet::InitAll()
+{
+    for (auto model : models)
+        model->Init();
+
+    return 0;
+}
+
+int ModelSet::Add(std::string_view path, Vector3D* pos, long index)
 {
     PyObject* pyPath = PyString_FromStringAndSize(path.data(), path.size());
     PyObject* pyPos = PyLong_FromVoidPtr(static_cast<void*>(pos));
@@ -93,6 +104,8 @@ void ModelSet::Add(std::string_view path, Vector3D* pos, long index)
 
     static PyObject* fetchModelMethodName = PyString_FromString("fetchModel");
     PyObject_CallMethodObjArgs(Py::BigWorld, fetchModelMethodName, pyPath, callback, nullptr);
+
+    return 0;
 }
 
 
@@ -113,4 +126,7 @@ void ModelSet::OnModelLoaded(PyObject* selfPtr, PyObject* args)
 
     self->models[index] = new Model(pyModel, pos);
     self->now_loaded++;
+
+	if (self->now_loaded == self->size)
+		self->on_created();
 }

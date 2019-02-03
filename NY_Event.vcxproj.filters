@@ -19,9 +19,6 @@
     <Filter Include="dll">
       <UniqueIdentifier>{7158c383-0bd1-48e5-a6a8-4380a04e37fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="description">
-      <UniqueIdentifier>{3a375c4d-3dc8-4cf2-abef-802867856c94}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mod">
       <UniqueIdentifier>{46270cf4-c846-4c51-b956-c5b06f668798}</UniqueIdentifier>
     </Filter>
@@ -39,21 +36,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="description\ErrorCodes.txt">
-      <Filter>description</Filter>
-    </Text>
-    <Text Include="description\Structures.txt">
-      <Filter>description</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="API_functions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Py_main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ModThreads.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="py_imports.cpp">
@@ -64,15 +47,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="API_functions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Py_config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ModThreads.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -123,7 +97,6 @@
     <None Include="mods\xfw_packages\TrajectoryMod\python\__init__.py">
       <Filter>mod\xfw_packages\TrajectoryMod\python</Filter>
     </None>
-    <None Include="TRAJECTORY.lic" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libcurl.lib">

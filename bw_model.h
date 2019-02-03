@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <functional>
 #include "python2.7/Python.h"
 
 
@@ -40,14 +41,16 @@ namespace BW
         size_t now_loaded;
         size_t size;
 
+		std::function<void()> on_created;
         std::vector<Model*> models;
         PyObject* pyOnModelLoadedCallback;
         static void OnModelLoaded(PyObject*, PyObject*);
 
     public:
-        ModelSet(size_t size);
+        ModelSet(size_t size, std::function<void()> on_created);
         ~ModelSet();
 
-        void Add(std::string_view path, Vector3D* pos, long index);
+        int InitAll();
+        int Add(std::string_view path, Vector3D* pos, long index);
     };
 }
