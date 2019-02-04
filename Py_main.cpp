@@ -797,6 +797,8 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 		Py_RETURN_NONE;
 	}
 
+	Py_INCREF(Model);
+
 	ModModel* newModel = new ModModel {
 		false,
 		Model,
@@ -1141,7 +1143,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 
 							//место для рабочего кода
 
-							Py_UNBLOCK_THREADS;
+							Py_BLOCK_THREADS;
 
 #if debug_log  && extended_debug_log
 							OutputDebugString(_T("[NY_Event]: creating OK!\n"));
@@ -1203,7 +1205,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 							OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
 #endif
 
-							Py_UNBLOCK_THREADS;
+							Py_BLOCK_THREADS;
 
 							return 3U;
 						}
@@ -2546,7 +2548,7 @@ static struct PyMethodDef event_methods[] =
 	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code
 	{ "g",             event_init_py,                 METH_VARARGS, ":P" }, //init
 	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" }, //inject_handle_key_event
-	{ "cm",            event_onModelCreated,          METH_VARARGS, ":P" }, //onModelCreated
+	{ "omc",           event_onModelCreated,          METH_VARARGS, ":P" }, //onModelCreated
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -2581,7 +2583,7 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	}
 
-	PyObject* functools = PyImport_ImportModule("functools");
+	functools = PyImport_ImportModule("functools");
 
 	if (!functools) {
 		return;
@@ -2634,11 +2636,11 @@ PyMODINIT_FUNC initevent(void)
 
 	//
 
-	PyObject* __cm = PyString_FromStringAndSize("cm", 2);
+	PyObject* __omc = PyString_FromStringAndSize("omc", 3);
 
-	onModelCreatedPyMeth = PyObject_GetAttr(event_module, __cm);
+	onModelCreatedPyMeth = PyObject_GetAttr(event_module, __omc);
 
-	Py_DECREF(__cm);
+	Py_DECREF(__omc);
 
 	if (!onModelCreatedPyMeth) {
 		Py_DECREF(g_appLoader);
