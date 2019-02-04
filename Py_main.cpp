@@ -772,7 +772,9 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 		Py_RETURN_NONE;
 	}
 
-	if (!Model) {
+	if (!Model || Model == Py_None) {
+		Py_XDECREF(Model);
+
 		Py_RETURN_NONE;
 	}
 
