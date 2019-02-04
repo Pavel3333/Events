@@ -857,8 +857,8 @@ uint8_t create_models() {
 		}
 	}
 
-	for (auto it = current_map.modelsSects.begin(); //второй проход - создаем модели
-		it != current_map.modelsSects.end();
+	for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
+		it != current_map.modelsSects.cend();
 		it++) {
 		if (!it->isInitialised || it->models.empty()) {
 			continue;
@@ -2114,7 +2114,7 @@ uint8_t event_fini() {
 #endif
 
 	return NULL;
-	}
+}
 
 void closeEvent1(PEVENTDATA_1* pEvent) {
 	if (*pEvent != NULL) { //если уже была инициализирована структура - удаляем
