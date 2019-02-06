@@ -117,8 +117,8 @@ class Config {
 public:
 	char* ids = "NY_Event";
 	char* author = "by Pavel3333 & RAINN VOD";
-	char* version = "v1.0.0.0 (11.01.2019)";
-	char* patch = "1.3.0.1";
+	char* version = "v1.0.0.0 (06.02.2019)";
+	char* patch = "1.4.0.0";
 	uint16_t version_id = 100U;
 	data_c data;
 	i18n_c i18n;
