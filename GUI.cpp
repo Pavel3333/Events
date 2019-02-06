@@ -1,4 +1,4 @@
-#include "GUI.h"
+п»ї#include "GUI.h"
 
 long delLabelCBID = NULL;
 
@@ -147,7 +147,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 		return;
 	}
 
-	// получить из словаря локализации нужную строку
+	// РїРѕР»СѓС‡РёС‚СЊ РёР· СЃР»РѕРІР°СЂСЏ Р»РѕРєР°Р»РёР·Р°С†РёРё РЅСѓР¶РЅСѓСЋ СЃС‚СЂРѕРєСѓ
 
 	PyObject* __UI_messages = PyString_FromStringAndSize("UI_messages", 11U);
 
@@ -166,7 +166,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 
 	//----------------------------------------------
 
-	//находим сообщение из списка
+	//РЅР°С…РѕРґРёРј СЃРѕРѕР±С‰РµРЅРёРµ РёР· СЃРїРёСЃРєР°
 
 	PyObject* msg_p = PyList_GetItem(messagesList, msgID);
 
@@ -184,7 +184,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 
 	char new_msg[255];
 
-	if (msgID == StagesID.GET_SCORE) { // если это - сообщение о том, что получили баллы
+	if (msgID == StagesID.GET_SCORE) { // РµСЃР»Рё СЌС‚Рѕ - СЃРѕРѕР±С‰РµРЅРёРµ Рѕ С‚РѕРј, С‡С‚Рѕ РїРѕР»СѓС‡РёР»Рё Р±Р°Р»Р»С‹
 		sprintf_s(new_msg, 255U, msg, COLOURS[msgID], SCORE[scoreID]);
 	}
 	else {

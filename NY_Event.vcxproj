@@ -133,10 +133,6 @@
     </ManifestResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="description\ErrorCodes.txt" />
-    <Text Include="description\Structures.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="API_functions.h" />
     <ClInclude Include="BW_native.h" />
     <ClInclude Include="GUI.h" />
@@ -155,19 +151,6 @@
     <None Include="libcurl.dll">
       <FileType>Document</FileType>
     </None>
-    <None Include="mods\xfw_packages\TrajectoryMod\native\1.py" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\libcurl.dll" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\libeay32.dll" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\ssleay32.dll" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\TRAJECTORY.lic" />
-    <None Include="mods\xfw_packages\TrajectoryMod\native\trj.pyd" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Config.pyd" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Config.pyx" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Minimap.pyd" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\Minimap.pyx" />
-    <None Include="mods\xfw_packages\TrajectoryMod\python\__init__.py" />
-    <None Include="mods\xfw_packages\TrajectoryMod\xfw_package.json" />
-    <None Include="TRAJECTORY.lic" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libcurl.lib" />

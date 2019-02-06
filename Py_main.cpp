@@ -1,4 +1,4 @@
-#define CONSOLE_VER1
+п»ї#define CONSOLE_VER1
 
 #include "ModThreads.h"
 #include "Py_config.h"
@@ -64,12 +64,12 @@ DWORD  secondThreadID = NULL;
 
 uint8_t timerLastError = NULL;
 
-//Главные ивенты
+//Р“Р»Р°РІРЅС‹Рµ РёРІРµРЅС‚С‹
 
 PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
 PEVENTDATA_1 EVENT_START_TIMER = NULL;
 
-//Второстепенные ивенты
+//Р’С‚РѕСЂРѕСЃС‚РµРїРµРЅРЅС‹Рµ РёРІРµРЅС‚С‹
 
 PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
 
@@ -251,7 +251,7 @@ void clearModelsSections() {
 
 		it_sect_sync->models.~vector();
 
-		it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
+		it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //СѓРґР°Р»СЏРµРј СЃРµРєС†РёСЋ РёР· РІРµРєС‚РѕСЂР° СЃРµРєС†РёР№ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 	}
 
 	sync_map.modelsSects_deleting.~vector();
@@ -685,7 +685,7 @@ bool setModelPosition(PyObject* Model, float* coords_f) {
 
 static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	if (!isInited || battleEnded) {
-		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //СЃРѕР·РґР°С‚СЊ РјРѕРґРµР»СЊ РЅРµРІРѕР·РјРѕР¶РЅРѕ, СѓР±Р°РІР»СЏРµРј СЃС‡РµС‚С‡РёРє С‡РёСЃР»Р° РјРѕРґРµР»РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРѕР·РґР°РЅС‹
 
 		return NULL;
 	}
@@ -698,28 +698,28 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 
 	if (isAsync) {
 		if (coords == nullptr) { 
-			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+			if (allModelsCreated > NULL) allModelsCreated--; //СЃРѕР·РґР°С‚СЊ РјРѕРґРµР»СЊ РЅРµРІРѕР·РјРѕР¶РЅРѕ, СѓР±Р°РІР»СЏРµРј СЃС‡РµС‚С‡РёРє С‡РёСЃР»Р° РјРѕРґРµР»РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРѕР·РґР°РЅС‹
 
 			return NULL;
 		}
 
 		PyObject* __partial = PyString_FromStringAndSize("partial", 7);
 
-		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
+		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //РїРµСЂРµРґР°РµРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° 3 РєРѕРѕСЂРґРёРЅР°С‚С‹
 
 		PyObject* partialized = PyObject_CallMethodObjArgs(functools, __partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		Py_DECREF(__partial);
 
 		if (!partialized) {
-			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+			if (allModelsCreated > NULL) allModelsCreated--; //СЃРѕР·РґР°С‚СЊ РјРѕРґРµР»СЊ РЅРµРІРѕР·РјРѕР¶РЅРѕ, СѓР±Р°РІР»СЏРµРј СЃС‡РµС‚С‡РёРє С‡РёСЃР»Р° РјРѕРґРµР»РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРѕР·РґР°РЅС‹
 
 			return NULL;
 		}
 
 		PyObject* __fetchModel = PyString_FromStringAndSize("fetchModel", 10U);
 
-		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), partialized, NULL); //Р·Р°РїСѓСЃРєР°РµРј Р°СЃРёРЅС…СЂРѕРЅРЅРѕРµ РґРѕР±Р°РІР»РµРЅРёРµ РјРѕРґРµР»Рё
 
 		Py_XDECREF(Model);
 		Py_DECREF(__fetchModel);
@@ -738,7 +738,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	}
 	
 	if (coords != nullptr) {
-		if (!setModelPosition(Model, coords)) { //ставим на нужную позицию
+		if (!setModelPosition(Model, coords)) { //СЃС‚Р°РІРёРј РЅР° РЅСѓР¶РЅСѓСЋ РїРѕР·РёС†РёСЋ
 			return NULL;
 		}
 	}
@@ -750,7 +750,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 	return Model;
 };
 
-static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //принимает аргументы: указатель на координаты и саму модель
+static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //РїСЂРёРЅРёРјР°РµС‚ Р°СЂРіСѓРјРµРЅС‚С‹: СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РєРѕРѕСЂРґРёРЅР°С‚С‹ Рё СЃР°РјСѓ РјРѕРґРµР»СЊ
 	if (!isInited || battleEnded || models.size() >= allModelsCreated) {
 		Py_RETURN_NONE;
 	}
@@ -763,7 +763,7 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 		Py_RETURN_NONE;
 	}
 
-	//рабочая часть
+	//СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚СЊ
 
 	PyObject* coords_pointer = NULL;
 	PyObject* Model    = NULL;
@@ -795,7 +795,7 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 
 	float* coords_f = (float*)(coords_vptr);
 
-	if (!setModelPosition(Model, coords_f)) { //ставим на нужную позицию
+	if (!setModelPosition(Model, coords_f)) { //СЃС‚Р°РІРёРј РЅР° РЅСѓР¶РЅСѓСЋ РїРѕР·РёС†РёСЋ
 		Py_RETURN_NONE;
 	}
 
@@ -815,8 +815,8 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //приним
 	models.push_back(newModel);
 	lights.push_back(newLight);
 
-	if (models.size() >= allModelsCreated) { //если число созданных моделей - столько же или больше, чем надо
-		//сигналим о том, что все модели были успешно созданы
+	if (models.size() >= allModelsCreated) { //РµСЃР»Рё С‡РёСЃР»Рѕ СЃРѕР·РґР°РЅРЅС‹С… РјРѕРґРµР»РµР№ - СЃС‚РѕР»СЊРєРѕ Р¶Рµ РёР»Рё Р±РѕР»СЊС€Рµ, С‡РµРј РЅР°РґРѕ
+		//СЃРёРіРЅР°Р»РёРј Рѕ С‚РѕРј, С‡С‚Рѕ РІСЃРµ РјРѕРґРµР»Рё Р±С‹Р»Рё СѓСЃРїРµС€РЅРѕ СЃРѕР·РґР°РЅС‹
 
 		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
 		{
@@ -836,7 +836,7 @@ uint8_t create_models() {
 		return 1U;
 	}
 
-	for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
+	for (auto it = current_map.modelsSects.begin(); //РїРµСЂРІС‹Р№ РїСЂРѕС…РѕРґ - РїРѕР»СѓС‡Р°РµРј С‡РёСЃР»Рѕ РІСЃРµС… СЃРѕР·РґР°РЅРЅС‹С… РјРѕРґРµР»РµР№
 		it != current_map.modelsSects.end();
 		it++) {
 
@@ -859,7 +859,7 @@ uint8_t create_models() {
 		}
 	}
 
-	for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
+	for (auto it = current_map.modelsSects.cbegin(); //РІС‚РѕСЂРѕР№ РїСЂРѕС…РѕРґ - СЃРѕР·РґР°РµРј РјРѕРґРµР»Рё
 		it != current_map.modelsSects.cend();
 		it++) {
 		if (!it->isInitialised || it->models.empty()) {
@@ -1025,10 +1025,10 @@ uint8_t handle_battle_event(uint8_t eventID) {
 	OutputDebugString(_T("[NY_Event]: parsing OK!\n"));
 #endif
 	
-	if (current_map.time_preparing)  //выводим время
+	if (current_map.time_preparing)  //РІС‹РІРѕРґРёРј РІСЂРµРјСЏ
 		GUI_setTime(current_map.time_preparing);
 		
-	if (current_map.stageID >= 0 && current_map.stageID < STAGES_COUNT) {    //выводим сообщение
+	if (current_map.stageID >= 0 && current_map.stageID < STAGES_COUNT) {    //РІС‹РІРѕРґРёРј СЃРѕРѕР±С‰РµРЅРёРµ
 		if (
 			current_map.stageID == StagesID.WAITING      ||
 			current_map.stageID == StagesID.START        ||
@@ -1091,7 +1091,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						Py_END_ALLOW_THREADS;
 
 						/*
-						Первый способ - нативный вызов в main-потоке добавлением в очередь. Ненадёжно!
+						РџРµСЂРІС‹Р№ СЃРїРѕСЃРѕР± - РЅР°С‚РёРІРЅС‹Р№ РІС‹Р·РѕРІ РІ main-РїРѕС‚РѕРєРµ РґРѕР±Р°РІР»РµРЅРёРµРј РІ РѕС‡РµСЂРµРґСЊ. РќРµРЅР°РґС‘Р¶РЅРѕ!
 
 						int creating_result = Py_AddPendingCall(&create_models, nullptr); //create_models();
 
@@ -1105,9 +1105,9 @@ uint8_t handle_battle_event(uint8_t eventID) {
 						*/
 
 						/*
-						Второй способ - вызов асинхронной функции BigWorld.fetchModel(path, onLoadedMethod)
+						Р’С‚РѕСЂРѕР№ СЃРїРѕСЃРѕР± - РІС‹Р·РѕРІ Р°СЃРёРЅС…СЂРѕРЅРЅРѕР№ С„СѓРЅРєС†РёРё BigWorld.fetchModel(path, onLoadedMethod)
 
-						Более-менее надежно, выполняется на уровне движка
+						Р‘РѕР»РµРµ-РјРµРЅРµРµ РЅР°РґРµР¶РЅРѕ, РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РЅР° СѓСЂРѕРІРЅРµ РґРІРёР¶РєР°
 						*/
 
 						request = create_models();
@@ -1120,10 +1120,10 @@ uint8_t handle_battle_event(uint8_t eventID) {
 							return 3U;
 						}
 
-						PyThreadState *_save;        //глушим GIL, пока ожидаем
+						PyThreadState *_save;        //РіР»СѓС€РёРј GIL, РїРѕРєР° РѕР¶РёРґР°РµРј
 						Py_UNBLOCK_THREADS;
 
-						//ожидаем события полного создания моделей
+						//РѕР¶РёРґР°РµРј СЃРѕР±С‹С‚РёСЏ РїРѕР»РЅРѕРіРѕ СЃРѕР·РґР°РЅРёСЏ РјРѕРґРµР»РµР№
 
 						DWORD EVENT_ALL_MODELS_CREATED_WaitResult = WaitForSingleObject(
 							EVENT_ALL_MODELS_CREATED->hEvent, // event handle
@@ -1137,13 +1137,13 @@ uint8_t handle_battle_event(uint8_t eventID) {
 							OutputDebugString(_T("AllModelsCreatedEvent was signaled!\n"));
 #endif
 
-							//очищаем ивент
+							//РѕС‡РёС‰Р°РµРј РёРІРµРЅС‚
 
 							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
 
 							//-------------
 
-							//место для рабочего кода
+							//РјРµСЃС‚Рѕ РґР»СЏ СЂР°Р±РѕС‡РµРіРѕ РєРѕРґР°
 
 							Py_BLOCK_THREADS;
 
@@ -1280,7 +1280,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 
 					it_sect_sync->models.~vector();
 
-					it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
+					it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //СѓРґР°Р»СЏРµРј СЃРµРєС†РёСЋ РёР· РІРµРєС‚РѕСЂР° СЃРµРєС†РёР№ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 				}
 
 				sync_map.modelsSects_deleting.~vector();
@@ -1307,13 +1307,13 @@ uint8_t handle_battle_event(uint8_t eventID) {
 //threads functions
 
 /*
-ПОЧЕМУ НЕЛЬЗЯ ЗАКРЫВАТЬ ТАЙМЕРЫ В САМИХ СЕБЕ
+РџРћР§Р•РњРЈ РќР•Р›Р¬Р—РЇ Р—РђРљР Р«Р’РђРўР¬ РўРђР™РњР•Р Р« Р’ РЎРђРњРРҐ РЎР•Р‘Р•
 
--поток открыл ожидающий таймер
--таймер и говорит ему: поток, у меня тут ашыпка
--таймер сделал харакири
--поток: ТАЙМЕР!!!
--программа ушла в вечное ожидание
+-РїРѕС‚РѕРє РѕС‚РєСЂС‹Р» РѕР¶РёРґР°СЋС‰РёР№ С‚Р°Р№РјРµСЂ
+-С‚Р°Р№РјРµСЂ Рё РіРѕРІРѕСЂРёС‚ РµРјСѓ: РїРѕС‚РѕРє, Сѓ РјРµРЅСЏ С‚СѓС‚ Р°С€С‹РїРєР°
+-С‚Р°Р№РјРµСЂ СЃРґРµР»Р°Р» С…Р°СЂР°РєРёСЂРё
+-РїРѕС‚РѕРє: РўРђР™РњР•Р !!!
+-РїСЂРѕРіСЂР°РјРјР° СѓС€Р»Р° РІ РІРµС‡РЅРѕРµ РѕР¶РёРґР°РЅРёРµ
 */
 
 VOID CALLBACK TimerAPCProc(
@@ -1338,7 +1338,7 @@ VOID CALLBACK TimerAPCProc(
 
 	request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 
-	//включаем GIL для этого потока
+	//РІРєР»СЋС‡Р°РµРј GIL РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -1390,7 +1390,7 @@ VOID CALLBACK TimerAPCProc(
 		return;
 	}
 
-	//выключаем GIL для этого потока
+	//РІС‹РєР»СЋС‡Р°РµРј GIL РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 	PyGILState_Release(gstate);
 
@@ -1425,14 +1425,14 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		OutputDebugString(_T("HangarEvent was signaled!\n"));
 #endif
 
-		//место для рабочего кода
+		//РјРµСЃС‚Рѕ РґР»СЏ СЂР°Р±РѕС‡РµРіРѕ РєРѕРґР°
 
 		databaseID = EVENT_IN_HANGAR->databaseID;
 		map_ID = EVENT_IN_HANGAR->map_ID;
 		eventID = EVENT_IN_HANGAR->eventID;
 
 		if (eventID != EventsID.IN_HANGAR) {
-			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+			ResetEvent(EVENT_IN_HANGAR->hEvent); //РµСЃР»Рё РёРІРµРЅС‚ РЅРµ СЃРѕРІРїР°Р» СЃ РЅСѓР¶РЅС‹Рј - С‡С‚Рѕ-С‚Рѕ РёРґРµС‚ РЅРµ С‚Р°Рє, РіР»СѓС€РёРј С‚СЂРµРґ, СЃР»РµРґСѓСЋС‰РёР№ Р·Р°РїСѓСЃРє С‚СЂРµРґР° РїСЂРё РІС…РѕРґРµ РІ Р°РЅРіР°СЂ
 
 #if debug_log && extended_debug_log
 			OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n"));
@@ -1441,11 +1441,11 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 			return 2U;
 		}
 
-		//рабочая часть
+		//СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚СЊ
 
 		first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 
-		//включаем GIL для этого потока
+		//РІРєР»СЋС‡Р°РµРј GIL РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 		gstate = PyGILState_Ensure();
 
@@ -1471,13 +1471,13 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 			return 4U;
 		}
 
-		//выключаем GIL для этого потока
+		//РІС‹РєР»СЋС‡Р°РµРј GIL РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 		PyGILState_Release(gstate);
 
 		//------------------------------
 
-		//очищаем ивент
+		//РѕС‡РёС‰Р°РµРј РёРІРµРЅС‚
 
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
 
@@ -1516,7 +1516,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 			OutputDebugString(_T("HangarEvent was signaled!\n"));
 #endif
 
-			//место для рабочего кода
+			//РјРµСЃС‚Рѕ РґР»СЏ СЂР°Р±РѕС‡РµРіРѕ РєРѕРґР°
 
 			databaseID = EVENT_IN_HANGAR->databaseID;
 			map_ID = EVENT_IN_HANGAR->map_ID;
@@ -1528,11 +1528,11 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 				return 2U;
 			}
 
-			//рабочая часть
+			//СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚СЊ
 
 			request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 
-			//включаем GIL для этого потока
+			//РІРєР»СЋС‡Р°РµРј GIL РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 			gstate = PyGILState_Ensure();
 
@@ -1608,13 +1608,13 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 			}
 
 
-			//выключаем GIL для этого потока
+			//РІС‹РєР»СЋС‡Р°РµРј GIL РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 			PyGILState_Release(gstate);
 
 			//------------------------------
 
-			//очищаем ивент
+			//РѕС‡РёС‰Р°РµРј РёРІРµРЅС‚
 
 			ResetEvent(EVENT_IN_HANGAR);
 
@@ -1624,7 +1624,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		default:
 			return NULL;
 		}
-	} //запускаем таймер
+	} //Р·Р°РїСѓСЃРєР°РµРј С‚Р°Р№РјРµСЂ
 	while (request || !battleEnded);*/
 
 
@@ -1644,10 +1644,10 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		OutputDebugString(_T("STEvent was signaled!\n"));
 #endif
 
-		//место для рабочего кода
+		//РјРµСЃС‚Рѕ РґР»СЏ СЂР°Р±РѕС‡РµРіРѕ РєРѕРґР°
 
 		if (EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_SYNC) {
-			ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+			ResetEvent(EVENT_START_TIMER->hEvent); //РµСЃР»Рё РёРІРµРЅС‚ РЅРµ СЃРѕРІРїР°Р» СЃ РЅСѓР¶РЅС‹Рј - С‡С‚Рѕ-С‚Рѕ РёРґРµС‚ РЅРµ С‚Р°Рє, РіР»СѓС€РёРј С‚СЂРµРґ, СЃР»РµРґСѓСЋС‰РёР№ Р·Р°РїСѓСЃРє С‚СЂРµРґР° РїСЂРё РІС…РѕРґРµ РІ Р°РЅРіР°СЂ
 
 #if debug_log && extended_debug_log
 			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n"));
@@ -1664,9 +1664,9 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 			return 3U;
 		}
 
-		//рабочая часть
+		//СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚СЊ
 
-		//инициализация таймера для получения полного списка моделей и синхронизации
+		//РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚Р°Р№РјРµСЂР° РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РїРѕР»РЅРѕРіРѕ СЃРїРёСЃРєР° РјРѕРґРµР»РµР№ Рё СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 
 		hTimer = CreateWaitableTimer(
 			NULL,                   // Default security attributes
@@ -1677,7 +1677,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		{
 			__try
 			{
-				qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
+				qwDueTime = 0; // Р·Р°РґРµСЂР¶РєР° РїРµСЂРµРґ СЃРѕР·РґР°РЅРёРµРј С‚Р°Р№РјРµСЂР° - 0 СЃРµРєСѓРЅРґ
 
 				// Copy the relative time into a LARGE_INTEGER.
 				liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
@@ -1725,7 +1725,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 			printf("CreateWaitableTimer failed with error %d\n", GetLastError());
 		}
 
-		//очищаем ивент
+		//РѕС‡РёС‰Р°РµРј РёРІРµРЅС‚
 
 		ResetEvent(EVENT_START_TIMER->hEvent);
 
@@ -1742,7 +1742,7 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		return 3U;
 	}
 
-	//закрываем поток
+	//Р·Р°РєСЂС‹РІР°РµРј РїРѕС‚РѕРє
 
 #if debug_log && extended_debug_log
 	wsprintfW(msgBuf, _T("Closing thread %d\n"), secondThreadID);
@@ -1750,25 +1750,25 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 	OutputDebugString(msgBuf);
 #endif
 
-	ExitThread(NULL); //завершаем поток
+	ExitThread(NULL); //Р·Р°РІРµСЂС€Р°РµРј РїРѕС‚РѕРє
 
 	return NULL;
 }
 
 //-----------------
 
-uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводим ивенты в сигнальные состояния
+uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //РїРµСЂРµРІРѕРґРёРј РёРІРµРЅС‚С‹ РІ СЃРёРіРЅР°Р»СЊРЅС‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 	if (!isInited || !databaseID || battleEnded) {
 		return 1U;
 	}
 
-	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //посылаем ивент и обрабатываем в треде
+	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //РїРѕСЃС‹Р»Р°РµРј РёРІРµРЅС‚ Рё РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РІ С‚СЂРµРґРµ
 		if      (eventID == EventsID.IN_HANGAR) {
 			if (!EVENT_IN_HANGAR) {
 				return 4;
 			}
 
-			EVENT_IN_HANGAR->databaseID = databaseID; //заполняем буфер для ангара
+			EVENT_IN_HANGAR->databaseID = databaseID; //Р·Р°РїРѕР»РЅСЏРµРј Р±СѓС„РµСЂ РґР»СЏ Р°РЅРіР°СЂР°
 			EVENT_IN_HANGAR->map_ID = map_ID;
 			EVENT_IN_HANGAR->eventID = eventID;
 
@@ -2119,7 +2119,7 @@ uint8_t event_fini() {
 }
 
 void closeEvent1(PEVENTDATA_1* pEvent) {
-	if (*pEvent != NULL) { //если уже была инициализирована структура - удаляем
+	if (*pEvent != NULL) { //РµСЃР»Рё СѓР¶Рµ Р±С‹Р»Р° РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅР° СЃС‚СЂСѓРєС‚СѓСЂР° - СѓРґР°Р»СЏРµРј
 		if ((*pEvent)->hEvent != NULL) {
 			CloseHandle((*pEvent)->hEvent);
 
@@ -2133,7 +2133,7 @@ void closeEvent1(PEVENTDATA_1* pEvent) {
 }
 
 void closeEvent2(PEVENTDATA_2* pEvent) {
-	if (*pEvent != NULL) { //если уже была инициализирована структура - удаляем
+	if (*pEvent != NULL) { //РµСЃР»Рё СѓР¶Рµ Р±С‹Р»Р° РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅР° СЃС‚СЂСѓРєС‚СѓСЂР° - СѓРґР°Р»СЏРµРј
 		if ((*pEvent)->hEvent != NULL) {
 			CloseHandle((*pEvent)->hEvent);
 
@@ -2172,7 +2172,7 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 
 		cancelCallback(&delLabelCBID);
 
-		if (hTimer != NULL) { //закрываем таймер, если он был создан
+		if (hTimer != NULL) { //Р·Р°РєСЂС‹РІР°РµРј С‚Р°Р№РјРµСЂ, РµСЃР»Рё РѕРЅ Р±С‹Р» СЃРѕР·РґР°РЅ
 			CloseHandle(hTimer);
 
 			hTimer = NULL;
@@ -2202,12 +2202,12 @@ static PyObject* event_err_code(PyObject *self, PyObject *args) {
 };
 
 bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
-	closeEvent1(pEvent); //закрываем ивент, если существует
+	closeEvent1(pEvent); //Р·Р°РєСЂС‹РІР°РµРј РёРІРµРЅС‚, РµСЃР»Рё СЃСѓС‰РµСЃС‚РІСѓРµС‚
 
-	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //РІС‹РґРµР»СЏРµРј РїР°РјСЏС‚СЊ РІ РєСѓС‡Рµ РґР»СЏ РёРІРµРЅС‚Р°
 		sizeof(EVENTDATA_1));
 
-	if (*pEvent == NULL) //нехватка памяти, завершаем работу
+	if (*pEvent == NULL) //РЅРµС…РІР°С‚РєР° РїР°РјСЏС‚Рё, Р·Р°РІРµСЂС€Р°РµРј СЂР°Р±РѕС‚Сѓ
 	{
 		ExitProcess(1);
 	}
@@ -2230,12 +2230,12 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 }
 
 bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName) {
-	closeEvent2(pEvent); //закрываем ивент, если существует
+	closeEvent2(pEvent); //Р·Р°РєСЂС‹РІР°РµРј РёРІРµРЅС‚, РµСЃР»Рё СЃСѓС‰РµСЃС‚РІСѓРµС‚
 
-	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //РІС‹РґРµР»СЏРµРј РїР°РјСЏС‚СЊ РІ РєСѓС‡Рµ РґР»СЏ РёРІРµРЅС‚Р°
 		sizeof(EVENTDATA_2));
 
-	if (*pEvent == NULL) //нехватка памяти, завершаем работу
+	if (*pEvent == NULL) //РЅРµС…РІР°С‚РєР° РїР°РјСЏС‚Рё, Р·Р°РІРµСЂС€Р°РµРј СЂР°Р±РѕС‚Сѓ
 	{
 		ExitProcess(1);
 	}
@@ -2268,7 +2268,7 @@ bool createEventsAndSecondThread() {
 	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) {
 		return false;
 	}
-	//TODO: сделать ивент - удаление ближайшей модели
+	//TODO: СЃРґРµР»Р°С‚СЊ РёРІРµРЅС‚ - СѓРґР°Р»РµРЅРёРµ Р±Р»РёР¶Р°Р№С€РµР№ РјРѕРґРµР»Рё
 
 	//Thread creating
 
@@ -2278,7 +2278,7 @@ bool createEventsAndSecondThread() {
 		hSecondThread = NULL;
 	}
 
-	hSecondThread = CreateThread( //создаем второй поток
+	hSecondThread = CreateThread( //СЃРѕР·РґР°РµРј РІС‚РѕСЂРѕР№ РїРѕС‚РѕРє
 		NULL,                                   // default security attributes
 		0,                                      // use default stack size  
 		SecondThread,                           // thread function name
@@ -2296,12 +2296,12 @@ bool createEventsAndSecondThread() {
 	return true;
 }
 
-uint8_t event_сheck() {
+uint8_t event_СЃheck() {
 	if (!isInited) {
 		return 1U;
 	}
 
-	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
+	// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РІС‚РѕСЂРѕРіРѕ РїРѕС‚РѕРєР°, РµСЃР»Рё РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚, РёРЅР°С‡Рµ - Р·Р°РІРµСЂС€РёС‚СЊ РІС‚РѕСЂРѕР№ РїРѕС‚РѕРє Рё РЅР°С‡Р°С‚СЊ РЅРѕРІС‹Р№
 
 	if (!createEventsAndSecondThread()) {
 		return 2U;
@@ -2360,8 +2360,8 @@ uint8_t event_сheck() {
 	}
 }
 
-static PyObject* event_сheck_py(PyObject *self, PyObject *args) {
-	uint8_t res = event_сheck();
+static PyObject* event_СЃheck_py(PyObject *self, PyObject *args) {
+	uint8_t res = event_СЃheck();
 
 	if (res) {
 		return PyInt_FromSize_t(res);
@@ -2544,7 +2544,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 static struct PyMethodDef event_methods[] =
 {
-	{ "b",             event_сheck_py,                METH_VARARGS, ":P" }, //check
+	{ "b",             event_СЃheck_py,                METH_VARARGS, ":P" }, //check
 	{ "c",             event_start,                   METH_NOARGS,  ":P" }, //start
 	{ "d",             event_fini_py,                 METH_NOARGS,  ":P" }, //fini
 	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code

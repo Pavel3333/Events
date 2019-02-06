@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Py_config.h"
 #include "BW_native.h"

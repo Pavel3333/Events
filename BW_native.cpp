@@ -1,4 +1,4 @@
-#include "BW_native.h"
+﻿#include "BW_native.h"
 
 PyObject* BigWorld    = NULL;
 PyObject* g_gui       = NULL;
