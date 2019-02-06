@@ -1656,13 +1656,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		hTimerThread = NULL;
 	}
 
-	hTimerThread = CreateThread( //создаем второй поток
+	hTimerThread = CreateThread( //создаем поток с таймером
 		NULL,                                   // default security attributes
 		0,                                      // use default stack size  
 		TimerThread,                            // thread function name
 		NULL,                                   // argument to thread function 
 		0,                                      // use default creation flags 
-		&handlerThreadID);                       // returns the thread identifier 
+		&timerThreadID);                        // returns the thread identifier 
 
 	if (hTimerThread == NULL)
 	{
@@ -1670,6 +1670,12 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		return false;
 	}
+
+	DWORD EVENT_IN_HANGAR_WaitResult = WaitForMultipleObjects(
+		HEVENTS_COUNT,
+		hEvents,
+		FALSE,
+		INFINITE);
 
 	//закрываем поток
 

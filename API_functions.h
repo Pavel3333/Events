@@ -6,26 +6,30 @@
 #include <windows.h>
 #include <tchar.h>
 
-#define NET_BUFFER_SIZE (16384U)
-#define MARKERS_SIZE 12U
+#define NET_BUFFER_SIZE 16384
+#define MARKERS_SIZE 12
 
 #define ID_SIZE 4
 #define DWNLD_TOKEN_SIZE 252
 
-#define STAGES_COUNT   8U
-#define MESSAGES_COUNT 8U
-#define SECTIONS_COUNT 10U
+#define HEVENTS_COUNT 2
 
-#define BALL        (0U)
-#define CANDY_CANE  (1U)
-#define FIR         (2U)
-#define SANTA_CLAUS (3U)
-#define SNOWMAN     (4U)
-#define GIFTS_BOXES (5U)
-#define PIG         (6U)
-#define LOLLIPOP    (7U)
-#define MANDARINE   (8U)
-#define WOOD_TOILET (9U)
+#define STAGES_COUNT   8
+#define MESSAGES_COUNT 8
+#define SECTIONS_COUNT 10
+
+#define BALL        0
+#define CANDY_CANE  1
+#define FIR         2
+#define SANTA_CLAUS 3
+#define SNOWMAN     4
+#define GIFTS_BOXES 5
+#define PIG         6
+#define LOLLIPOP    7
+#define MANDARINE   8
+#define WOOD_TOILET 9
+
+extern HANDLE hEvents[HEVENTS_COUNT];
 
 extern uint16_t SCORE[SECTIONS_COUNT];
 

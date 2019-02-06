@@ -25,6 +25,11 @@ STAGE_ID StagesID;
 
 int8_t scoreID = -1;
 
+HANDLE hEvents[HEVENTS_COUNT] = {
+	NULL, //событие удаления модели
+	NULL  //событие выхода из боя
+};
+
 LPCWSTR EVENT_NAMES[] {
 	L"NY_Event_HangarEvent",
 	L"NY_Event_StartTimerEvent",
@@ -42,6 +47,7 @@ char* COLOURS[MESSAGES_COUNT] {
 	"FFFF00FF",
 	"00E600FF"
 };
+
 char* MESSAGES[MESSAGES_COUNT] {
 	"\\c%s;Waiting for competition...",
 	"\\c%s;START!!!",
