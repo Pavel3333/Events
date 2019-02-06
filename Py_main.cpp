@@ -59,8 +59,12 @@ bool isTimeVisible  = false;
 bool isStreamer = false;
 
 HANDLE hTimer         = NULL;
-HANDLE hSecondThread  = NULL;
-DWORD  secondThreadID = NULL;
+
+HANDLE hTimerThread   = NULL;
+DWORD  timerThreadID  = NULL;
+
+HANDLE hHandlerThread  = NULL;
+DWORD  handlerThreadID = NULL;
 
 uint8_t timerLastError = NULL;
 
@@ -1397,7 +1401,150 @@ VOID CALLBACK TimerAPCProc(
 	//------------------------------
 }
 
-DWORD WINAPI SecondThread(LPVOID lpParam)
+DWORD WINAPI TimerThread(LPVOID lpParam)
+{
+	UNREFERENCED_PARAMETER(lpParam);
+
+	if (!isInited) {
+		return 1U;
+	}
+
+	wchar_t msgBuf[255];
+
+	uint32_t databaseID;
+	uint8_t  map_ID;
+	uint8_t  eventID;
+
+	PyGILState_STATE gstate;
+
+	BOOL            bSuccess;
+	__int64         qwDueTime;
+	LARGE_INTEGER   liDueTime;
+
+	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
+		EVENT_START_TIMER->hEvent, // event handle
+		INFINITE);               // indefinite wait
+
+	switch (EVENT_START_TIMER_WaitResult)
+	{
+		// Event object was signaled
+	case WAIT_OBJECT_0:
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("STEvent was signaled!\n"));
+#endif
+
+		//место для рабочего кода
+
+		if (EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_SYNC) {
+			ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n"));
+#endif
+
+			return 2U;
+		}
+
+		if (first_check || battleEnded) {
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n"));
+#endif
+
+			return 3U;
+		}
+
+		//рабочая часть
+
+		//инициализация таймера для получения полного списка моделей и синхронизации
+
+		hTimer = CreateWaitableTimer(
+			NULL,                   // Default security attributes
+			FALSE,                  // Create auto-reset timer
+			TEXT("BattleTimer"));   // Name of waitable timer
+
+		if (hTimer != NULL)
+		{
+			__try
+			{
+				qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
+
+				// Copy the relative time into a LARGE_INTEGER.
+				liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
+				liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
+
+				bSuccess = SetWaitableTimer(
+					hTimer,           // Handle to the timer object
+					&liDueTime,       // When timer will become signaled
+					1000,             // Periodic timer interval of 1 seconds
+					TimerAPCProc,     // Completion routine
+					NULL,             // Argument to the completion routine
+					FALSE);           // Do not restore a suspended system
+
+				if (bSuccess)
+				{
+					while (!first_check && !battleEnded && !timerLastError)
+					{
+						SleepEx(
+							INFINITE,     // Wait forever
+							TRUE);        // Put thread in an alertable state
+					}
+
+					if (timerLastError) {
+#if debug_log && extended_debug_log
+						OutputDebugString(_T("Timer got the error\n"));
+#endif
+
+						CancelWaitableTimer(hTimer);
+					}
+				}
+				else
+				{
+#if debug_log && extended_debug_log
+					OutputDebugString(_T("SetWaitableTimer failed\n"));
+#endif
+				}
+			}
+			__finally
+			{
+				CloseHandle(hTimer);
+			}
+		}
+		else
+		{
+			OutputDebugString(_T("CreateWaitableTimer failed\n"));
+		}
+
+		//очищаем ивент
+
+		ResetEvent(EVENT_START_TIMER->hEvent);
+
+		break;
+
+		// An error occurred
+	default:
+		ResetEvent(EVENT_START_TIMER->hEvent);
+
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n"));
+#endif
+
+		return 3U;
+	}
+
+	//закрываем поток
+
+#if debug_log && extended_debug_log
+	wsprintfW(msgBuf, _T("Closing timer thread %d\n"), handlerThreadID);
+
+	OutputDebugString(msgBuf);
+#endif
+
+	ExitThread(NULL); //завершаем поток
+
+	return NULL;
+}
+
+DWORD WINAPI HandlerThread(LPVOID lpParam)
 {
 	UNREFERENCED_PARAMETER(lpParam);
 
@@ -1503,249 +1650,31 @@ DWORD WINAPI SecondThread(LPVOID lpParam)
 		return 4U;
 	}
 
-	/*do {
-		DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
-			EVENT_IN_HANGAR->hEvent, // event handle
-			INFINITE);               // indefinite wait
+	if (hTimerThread) {
+		CloseHandle(hTimerThread);
 
-		switch (EVENT_IN_HANGAR_WaitResult)
-		{
-			// Event object was signaled
-		case WAIT_OBJECT_0:
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("HangarEvent was signaled!\n"));
-#endif
+		hTimerThread = NULL;
+	}
 
-			//место для рабочего кода
+	hTimerThread = CreateThread( //создаем второй поток
+		NULL,                                   // default security attributes
+		0,                                      // use default stack size  
+		TimerThread,                            // thread function name
+		NULL,                                   // argument to thread function 
+		0,                                      // use default creation flags 
+		&handlerThreadID);                       // returns the thread identifier 
 
-			databaseID = EVENT_IN_HANGAR->databaseID;
-			map_ID = EVENT_IN_HANGAR->map_ID;
-			eventID = EVENT_IN_HANGAR->eventID;
-
-			if (eventID != EventsID.IN_HANGAR) {
-				ResetEvent(EVENT_IN_HANGAR);
-
-				return 2U;
-			}
-
-			//рабочая часть
-
-			request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
-
-			//включаем GIL для этого потока
-
-			gstate = PyGILState_Ensure();
-
-			//-----------------------------
-
-			if (eventID == EventsID.IN_HANGAR) {
-				if (request) {
-					if (request > 9U) {
-#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
-#endif
-
-						GUI_setError(request);
-
-						return 4U;
-					}
-
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
-#endif
-
-					GUI_setWarning(request);
-
-					return 3U;
-				}
-			}
-			/*else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
-				if (request) {
-					if (request > 9U) {
-	#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - send_token - Error code %d\n", request);
-	#endif
-
-						GUI_setError(request);
-
-						return 6U;
-					}
-
-	#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - send_token - Warning code %d\n", request);
-	#endif
-
-					GUI_setWarning(request);
-
-					return 5U;
-				}
-
-	#if debug_log && extended_debug_log
-				OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
-	#endif
-
-				request = create_models(eventID);
-
-				if (request) {
-					if (request > 9U) {
-	#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
-	#endif
-
-						GUI_setError(request);
-
-						return 4U;
-					}
-
-	#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - create_models - Warning code %d\n", request);
-	#endif
-
-					GUI_setWarning(request);
-
-					return 3U;
-				}
-			}
-
-
-			//выключаем GIL для этого потока
-
-			PyGILState_Release(gstate);
-
-			//------------------------------
-
-			//очищаем ивент
-
-			ResetEvent(EVENT_IN_HANGAR);
-
-			break;
-
-			// An error occurred
-		default:
-			return NULL;
-		}
-	} //запускаем таймер
-	while (request || !battleEnded);*/
-
-
-	BOOL            bSuccess;
-	__int64         qwDueTime;
-	LARGE_INTEGER   liDueTime;
-
-	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
-		EVENT_START_TIMER->hEvent, // event handle
-		INFINITE);               // indefinite wait
-
-	switch (EVENT_START_TIMER_WaitResult)
+	if (hTimerThread == NULL)
 	{
-		// Event object was signaled
-	case WAIT_OBJECT_0:
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("STEvent was signaled!\n"));
-#endif
+		OutputDebugString(TEXT("CreateThread: error 1\n"));
 
-		//место для рабочего кода
-
-		if (EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_SYNC) {
-			ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
-
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n"));
-#endif
-
-			return 2U;
-		}
-
-		if (first_check || battleEnded) {
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n"));
-#endif
-
-			return 3U;
-		}
-
-		//рабочая часть
-
-		//инициализация таймера для получения полного списка моделей и синхронизации
-
-		hTimer = CreateWaitableTimer(
-			NULL,                   // Default security attributes
-			FALSE,                  // Create auto-reset timer
-			TEXT("BattleTimer"));   // Name of waitable timer
-
-		if (hTimer != NULL)
-		{
-			__try
-			{
-				qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
-
-				// Copy the relative time into a LARGE_INTEGER.
-				liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
-				liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
-
-				bSuccess = SetWaitableTimer(
-					hTimer,           // Handle to the timer object
-					&liDueTime,       // When timer will become signaled
-					1000,             // Periodic timer interval of 1 seconds
-					TimerAPCProc,     // Completion routine
-					NULL,             // Argument to the completion routine
-					FALSE);           // Do not restore a suspended system
-
-				if (bSuccess)
-				{
-					while (!first_check && !battleEnded && !timerLastError)
-					{
-						SleepEx(
-							INFINITE,     // Wait forever
-							TRUE);        // Put thread in an alertable state
-					}
-
-					if (timerLastError) {
-#if debug_log && extended_debug_log
-						OutputDebugString(_T("Timer got the error\n"));
-#endif
-
-						CancelWaitableTimer(hTimer);
-					}
-				}
-				else
-				{
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("SetWaitableTimer failed\n"));
-#endif
-				}
-			}
-			__finally
-			{
-				CloseHandle(hTimer);
-			}
-		}
-		else
-		{
-			printf("CreateWaitableTimer failed with error %d\n", GetLastError());
-		}
-
-		//очищаем ивент
-
-		ResetEvent(EVENT_START_TIMER->hEvent);
-
-		break;
-
-		// An error occurred
-	default:
-		ResetEvent(EVENT_START_TIMER->hEvent);
-
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n"));
-#endif
-
-		return 3U;
+		return false;
 	}
 
 	//закрываем поток
 
 #if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Closing thread %d\n"), secondThreadID);
+	wsprintfW(msgBuf, _T("Closing handler thread %d\n"), handlerThreadID);
 
 	OutputDebugString(msgBuf);
 #endif
@@ -2272,21 +2201,21 @@ bool createEventsAndSecondThread() {
 
 	//Thread creating
 
-	if (hSecondThread) {
-		CloseHandle(hSecondThread);
+	if (hHandlerThread) {
+		CloseHandle(hHandlerThread);
 
-		hSecondThread = NULL;
+		hHandlerThread = NULL;
 	}
 
-	hSecondThread = CreateThread( //создаем второй поток
+	hHandlerThread = CreateThread( //создаем второй поток
 		NULL,                                   // default security attributes
 		0,                                      // use default stack size  
-		SecondThread,                           // thread function name
+		HandlerThread,                           // thread function name
 		NULL,                                   // argument to thread function 
 		0,                                      // use default creation flags 
-		&secondThreadID);                       // returns the thread identifier 
+		&handlerThreadID);                       // returns the thread identifier 
 
-	if (hSecondThread == NULL)
+	if (hHandlerThread == NULL)
 	{
 		OutputDebugString(TEXT("CreateThread: error 1\n"));
 
