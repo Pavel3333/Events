@@ -29,8 +29,6 @@
 #define MANDARINE   8
 #define WOOD_TOILET 9
 
-extern HANDLE hEvents[HEVENTS_COUNT];
-
 extern uint16_t SCORE[SECTIONS_COUNT];
 
 extern LPCWSTR EVENT_NAMES[4];

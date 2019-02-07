@@ -25,11 +25,6 @@ STAGE_ID StagesID;
 
 int8_t scoreID = -1;
 
-HANDLE hEvents[HEVENTS_COUNT] = {
-	NULL, //событие удаления модели
-	NULL  //событие выхода из боя
-};
-
 LPCWSTR EVENT_NAMES[] {
 	L"NY_Event_HangarEvent",
 	L"NY_Event_StartTimerEvent",

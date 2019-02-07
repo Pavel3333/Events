@@ -72,10 +72,20 @@ uint8_t timerLastError = NULL;
 
 PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
 PEVENTDATA_1 EVENT_START_TIMER = NULL;
+PEVENTDATA_1 EVENT_DEL_MODEL   = NULL;
 
 //Второстепенные ивенты
 
 PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
+
+PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
+
+//Мутексы
+
+HANDLE networkMutex = NULL;
+HANDLE modelsMutex  = NULL;
+
+//-------
 
 uint8_t lastStageID = StagesID.COMPETITION;
 uint8_t lastEventID = EventsID.IN_HANGAR;
@@ -1575,8 +1585,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		//место для рабочего кода
 
 		databaseID = EVENT_IN_HANGAR->databaseID;
-		map_ID = EVENT_IN_HANGAR->map_ID;
-		eventID = EVENT_IN_HANGAR->eventID;
+		map_ID     = EVENT_IN_HANGAR->map_ID;
+		eventID    = EVENT_IN_HANGAR->eventID;
 
 		if (eventID != EventsID.IN_HANGAR) {
 			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
@@ -1671,11 +1681,126 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		return false;
 	}
 
-	DWORD EVENT_IN_HANGAR_WaitResult = WaitForMultipleObjects(
+	HANDLE hEvents[HEVENTS_COUNT] = {
+		EVENT_DEL_MODEL->hEvent,  //событие удаления модели
+		EVENT_BATTLE_ENDED->hEvent //событие выхода из боя
+	};
+
+	DWORD EVENTS_WaitResult = WaitForMultipleObjects(
 		HEVENTS_COUNT,
 		hEvents,
 		FALSE,
 		INFINITE);
+
+	switch (EVENTS_WaitResult)
+	{
+	case WAIT_OBJECT_0 + 0: //сработало событие удаления модели
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("DelModelEvent was signaled!\n"));
+#endif
+
+		//место для рабочего кода
+
+		databaseID = EVENT_DEL_MODEL->databaseID;
+		map_ID     = EVENT_DEL_MODEL->map_ID;
+		eventID    = EVENT_DEL_MODEL->eventID;
+
+		if (eventID != EventsID.DEL_LAST_MODEL) {
+			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("[NY_Event][ERROR]: DEL_MODEL - eventID not equal!\n"));
+#endif
+
+			return 2U;
+		}
+
+		//рабочая часть
+
+		uint8_t modelID;
+		float* coords = new float[3];
+
+		uint8_t find_result = findLastModelCoords(5.0, &modelID, &coords);
+
+		if (!find_result) {
+			uint8_t server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
+
+			if (server_req) {
+				if (server_req > 9U) {
+#if debug_log && extended_debug_log
+					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
+#endif
+
+					GUI_setError(server_req);
+
+					return 9U;
+				}
+
+#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
+#endif
+
+				GUI_setWarning(server_req);
+
+				return 8U;
+			}
+
+			uint8_t deleting_py_models = delModelPy(coords);
+
+			if (deleting_py_models) {
+#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", deleting_py_models);
+#endif
+
+				GUI_setError(deleting_py_models);
+
+				return 7U;
+			}
+
+			scoreID = modelID;
+			current_map.stageID = StagesID.GET_SCORE;
+
+			/*
+			uint8_t deleting_coords = delModelCoords(modelID, coords);
+
+			if (deleting_coords) {
+#if debug_log && extended_debug_log
+					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
+#endif
+
+					GUI_setError(deleting_coords);
+
+					return 6U;
+			}
+			*/
+		}
+		else if (find_result == 7U) {
+			current_map.stageID = StagesID.ITEMS_NOT_EXISTS;
+		}
+
+		if (current_map.stageID == StagesID.GET_SCORE && scoreID != -1) {
+			GUI_setMsg(current_map.stageID, scoreID, 5.0f);
+
+			scoreID = -1;
+		}
+		else if (current_map.stageID == StagesID.ITEMS_NOT_EXISTS) {
+			GUI_setMsg(current_map.stageID);
+		}
+
+		ResetEvent(EVENT_DEL_MODEL->hEvent);
+
+		break;
+
+		// An error occurred
+	default:
+		ResetEvent(EVENT_DEL_MODEL->hEvent);
+
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event][ERROR]: DEL_MODEL - something wrong with WaitResult!\n"));
+#endif
+
+		return 5U;
+	}
 
 	//закрываем поток
 
@@ -1726,6 +1851,24 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводи�
 			EVENT_START_TIMER->eventID    = eventID;
 
 			if (!SetEvent(EVENT_START_TIMER->hEvent))
+			{
+#if debug_log && extended_debug_log
+				OutputDebugString(_T("STEvent event not setted!\n"));
+#endif
+
+				return 5;
+			}
+		}
+		else if (eventID == EventsID.DEL_LAST_MODEL) {
+			if (!EVENT_DEL_MODEL) {
+				return 4;
+			}
+
+			EVENT_DEL_MODEL->databaseID = databaseID;
+			EVENT_DEL_MODEL->map_ID = map_ID;
+			EVENT_DEL_MODEL->eventID = eventID;
+
+			if (!SetEvent(EVENT_DEL_MODEL->hEvent))
 			{
 #if debug_log && extended_debug_log
 				OutputDebugString(_T("STEvent event not setted!\n"));
@@ -2117,8 +2260,10 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 
 		closeEvent1(&EVENT_START_TIMER);
 		closeEvent1(&EVENT_IN_HANGAR);
+		closeEvent1(&EVENT_DEL_MODEL);
 
 		closeEvent2(&EVENT_ALL_MODELS_CREATED);
+		closeEvent2(&EVENT_BATTLE_ENDED);
 
 		allModelsCreated = NULL;
 
@@ -2199,13 +2344,44 @@ bool createEventsAndSecondThread() {
 	if (!createEvent1(&EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL)) {
 		return false;
 	}
+	if (!createEvent1(&EVENT_DEL_MODEL, EventsID.DEL_LAST_MODEL)) {
+		return false;
+	}
 
 	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) {
 		return false;
 	}
-	//TODO: сделать ивент - удаление ближайшей модели
+	if (!createEvent2(&EVENT_BATTLE_ENDED, L"NY_Event_BattleEndedEvent")) {
+		return false;
+	}
 
-	//Thread creating
+	//Mutexes creating
+
+	networkMutex = CreateMutex(                                //мутекс для сетевых пакетов
+			NULL,              // default security attributes
+			FALSE,             // initially not owned
+			NULL);             // unnamed mutex
+
+	if (networkMutex == NULL)
+	{
+		OutputDebugString(_T("Error while creating network mutex!\n"));
+
+		return false;
+	}
+
+	modelsMutex = CreateMutex(                                 //мутекс для моделей
+		NULL,              // default security attributes
+		FALSE,             // initially not owned
+		NULL);             // unnamed mutex
+
+	if (modelsMutex == NULL)
+	{
+		OutputDebugString(_T("Error while creating models mutex!\n"));
+
+		return false;
+	}
+
+	//Handler thread creating
 
 	if (hHandlerThread) {
 		CloseHandle(hHandlerThread);
@@ -2216,10 +2392,10 @@ bool createEventsAndSecondThread() {
 	hHandlerThread = CreateThread( //создаем второй поток
 		NULL,                                   // default security attributes
 		0,                                      // use default stack size  
-		HandlerThread,                           // thread function name
+		HandlerThread,                          // thread function name
 		NULL,                                   // argument to thread function 
 		0,                                      // use default creation flags 
-		&handlerThreadID);                       // returns the thread identifier 
+		&handlerThreadID);                      // returns the thread identifier 
 
 	if (hHandlerThread == NULL)
 	{
@@ -2399,77 +2575,15 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	}
 
 	if (isKeyGetted_Space == Py_True) {
-		uint8_t modelID;
-		float* coords = new float[3];
+		request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
 
-		uint8_t find_result = findLastModelCoords(5.0, &modelID, &coords);
-
-		if (!find_result) {
-			uint8_t server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
-
-			if (server_req) {
-				if (server_req > 9U) {
+		if (request) {
 #if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
+			PySys_WriteStdout("[NY_Event]: Error in DelModel: %d\n", request);
 #endif
 
-					GUI_setError(server_req);
-
-					Py_RETURN_NONE;
-				}
-
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
-#endif
-
-				GUI_setWarning(server_req);
-
-				Py_RETURN_NONE;
-			}
-
-			uint8_t deleting_py_models = delModelPy(coords);
-
-			if (deleting_py_models) {
-#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", deleting_py_models);
-#endif
-
-				GUI_setError(deleting_py_models);
-
-				Py_RETURN_NONE;
-			}
-
-			scoreID = modelID;
-			current_map.stageID = StagesID.GET_SCORE;
-
-			/*
-			uint8_t deleting_coords = delModelCoords(modelID, coords);
-
-			if (deleting_coords) {
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
-#endif
-
-					GUI_setError(deleting_coords);
-
-					Py_RETURN_NONE;
-			}
-			*/
+			Py_RETURN_NONE;
 		}
-		else if (find_result == 7U) {
-			current_map.stageID = StagesID.ITEMS_NOT_EXISTS;
-		}
-
-		if (current_map.stageID == StagesID.GET_SCORE && scoreID != -1) {
-			GUI_setMsg(current_map.stageID, scoreID, 5.0f);
-
-			scoreID = -1;
-		}
-		else if (current_map.stageID == StagesID.ITEMS_NOT_EXISTS) {
-			GUI_setMsg(current_map.stageID);
-		}
-
-		//current_map.stageID = StagesID.COMPETITION;
 	}
 
 	Py_XDECREF(isKeyGetted_Space);
