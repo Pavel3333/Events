@@ -76,16 +76,14 @@ PEVENTDATA_1 EVENT_DEL_MODEL   = NULL;
 
 //Второстепенные ивенты
 
+PEVENTDATA_2 EVENT_NETWORK_NOT_USING = NULL;
+PEVENTDATA_2 EVENT_MODELS_NOT_USING  = NULL;
+
 PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
 
 PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 
-//Мутексы
-
-HANDLE networkMutex = NULL;
-HANDLE modelsMutex  = NULL;
-
-//-------
+//---------------------
 
 uint8_t lastStageID = StagesID.COMPETITION;
 uint8_t lastEventID = EventsID.IN_HANGAR;
@@ -2262,6 +2260,9 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 		closeEvent1(&EVENT_IN_HANGAR);
 		closeEvent1(&EVENT_DEL_MODEL);
 
+		closeEvent2(&EVENT_NETWORK_NOT_USING);
+		closeEvent2(&EVENT_MODELS_NOT_USING);
+
 		closeEvent2(&EVENT_ALL_MODELS_CREATED);
 		closeEvent2(&EVENT_BATTLE_ENDED);
 
@@ -2309,7 +2310,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 	return true;
 }
 
-bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName) {
+bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALSE) {
 	closeEvent2(pEvent); //закрываем ивент, если существует
 
 	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
@@ -2323,7 +2324,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName) {
 	(*pEvent)->hEvent = CreateEvent(
 		NULL,                      // default security attributes
 		TRUE,                      // manual-reset event
-		FALSE,                     // initial state is nonsignaled
+		isSignaling,               // initial state is nonsignaled
 		eventName                  // object name
 	);
 
@@ -2348,36 +2349,17 @@ bool createEventsAndSecondThread() {
 		return false;
 	}
 
+
+	if (!createEvent2(&EVENT_NETWORK_NOT_USING, L"NY_Event_NetworkNotUsingEvent", TRUE)) { //изначально сигнализирует
+		return false;
+	}
+	if (!createEvent2(&EVENT_MODELS_NOT_USING,  L"NY_Event_ModelsNotUsingEvent",  TRUE)) { //изначально сигнализирует
+		return false;
+	}
 	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) {
 		return false;
 	}
-	if (!createEvent2(&EVENT_BATTLE_ENDED, L"NY_Event_BattleEndedEvent")) {
-		return false;
-	}
-
-	//Mutexes creating
-
-	networkMutex = CreateMutex(                                //мутекс для сетевых пакетов
-			NULL,              // default security attributes
-			FALSE,             // initially not owned
-			NULL);             // unnamed mutex
-
-	if (networkMutex == NULL)
-	{
-		OutputDebugString(_T("Error while creating network mutex!\n"));
-
-		return false;
-	}
-
-	modelsMutex = CreateMutex(                                 //мутекс для моделей
-		NULL,              // default security attributes
-		FALSE,             // initially not owned
-		NULL);             // unnamed mutex
-
-	if (modelsMutex == NULL)
-	{
-		OutputDebugString(_T("Error while creating models mutex!\n"));
-
+	if (!createEvent2(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) {
 		return false;
 	}
 
