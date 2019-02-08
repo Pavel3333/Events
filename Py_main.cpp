@@ -1812,7 +1812,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 							PyGILState_Release(gstate);
 
-							lastEventError = 5;
+							lastEventError = 6;
 
 							break;
 						}
@@ -1825,7 +1825,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 						PyGILState_Release(gstate);
 
-						lastEventError = 4;
+						lastEventError = 5;
 
 						break;
 					}
@@ -1841,7 +1841,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 						PyGILState_Release(gstate);
 
-						lastEventError = 3;
+						lastEventError = 4;
 
 						break;
 					}
@@ -1869,9 +1869,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					//------------------------------
 
-					lastEventError =
+					lastEventError = 3;
 
-						break;
+					break;
 
 					// An error occurred
 				default:
