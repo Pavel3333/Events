@@ -1005,6 +1005,8 @@ uint8_t set_visible(bool isVisible) {
 
 uint8_t handle_battle_event(uint8_t eventID) {
 	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
+		ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+
 		return 1U;
 	}
 
@@ -1019,6 +1021,10 @@ uint8_t handle_battle_event(uint8_t eventID) {
 	if      (eventID == EventsID.IN_BATTLE_GET_FULL) parsing_result = parse_config();
 	else if (eventID == EventsID.IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
 	else if (eventID == EventsID.DEL_LAST_MODEL)     parsing_result = parse_del_model();
+
+	//Обращение к общему сетевому буферу окончено с этого момента. Сеть не используется.
+
+	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
 
 	Py_END_ALLOW_THREADS
 
@@ -1348,65 +1354,102 @@ VOID CALLBACK TimerAPCProc(
 		isTimerStarted = true;
 	}
 
-	request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+	DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
+		EVENT_NETWORK_NOT_USING->hEvent, // event handle
+		INFINITE);               // indefinite wait
 
-	//включаем GIL для этого потока
+	switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
+	{
+		// Event object was signaled
+	case WAIT_OBJECT_0:
+		ResetEvent(EVENT_NETWORK_NOT_USING->hEvent); //сеть будет использоваться
 
-	PyGILState_STATE gstate = PyGILState_Ensure();
+		//рабочая часть
 
-	//-----------------------------
+		request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 
-	if (request) {
-		if (request > 9U) {
-#if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
-#endif
+		//включаем GIL для этого потока
 
-			GUI_setError(request);
+		PyGILState_STATE gstate = PyGILState_Ensure();
 
-			timerLastError = 1;
+		//-----------------------------
+
+		if (request) {
+			if (request > 9U) {
+	#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
+	#endif
+
+				GUI_setError(request);
+
+				timerLastError = 1;
+
+				PyGILState_Release(gstate);
+
+				return;
+			}
+
+	#if debug_log && extended_debug_log
+			PySys_WriteStdout("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
+	#endif
+
+			GUI_setWarning(request);
 
 			PyGILState_Release(gstate);
 
 			return;
 		}
 
-#if debug_log && extended_debug_log
-		PySys_WriteStdout("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
-#endif
+	#if debug_log && extended_debug_log && super_extended_debug_log
+		OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
+	#endif
 
-		GUI_setWarning(request);
+		request = handle_battle_event(eventID);
+
+		if (request) {
+	#if debug_log && extended_debug_log
+			PySys_WriteStdout("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
+	#endif
+
+			GUI_setError(request);
+
+			timerLastError = 2;
+
+			PyGILState_Release(gstate);
+
+			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+			{
+	#if debug_log && extended_debug_log
+				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+	#endif
+			}
+
+			return;
+		}
+
+		//выключаем GIL для этого потока
 
 		PyGILState_Release(gstate);
 
-		return;
-	}
+		//------------------------------
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
-#endif
+		break;
 
-	request = handle_battle_event(eventID);
-
-	if (request) {
+		// An error occurred
+	default:
+		if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+		{
 #if debug_log && extended_debug_log
-		PySys_WriteStdout("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
+			OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
 #endif
+		}
 
-		GUI_setError(request);
-
-		timerLastError = 2;
-
-		PyGILState_Release(gstate);
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
+#endif
 
 		return;
 	}
-
-	//выключаем GIL для этого потока
-
-	PyGILState_Release(gstate);
-
-	//------------------------------
 }
 
 DWORD WINAPI TimerThread(LPVOID lpParam)
@@ -1598,46 +1641,80 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		//рабочая часть
 
-		first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+		DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
+			EVENT_NETWORK_NOT_USING->hEvent, // event handle
+			INFINITE);               // indefinite wait
 
-		//включаем GIL для этого потока
+		switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
+		{
+			// Event object was signaled
+		case WAIT_OBJECT_0:
+			ResetEvent(EVENT_NETWORK_NOT_USING->hEvent); //сеть будет использоваться; TODO: сделать макросом
 
-		gstate = PyGILState_Ensure();
+			//рабочая часть
 
-		//-----------------------------
+			first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 
-		if (first_check) {
-			if (first_check > 9U) {
+			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+			{
 #if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
 #endif
+			}
 
-				GUI_setError(first_check);
+			//включаем GIL для этого потока
 
-				return 5U;
+			gstate = PyGILState_Ensure();
+
+			//-----------------------------
+
+			if (first_check) {
+				if (first_check > 9U) {
+	#if debug_log && extended_debug_log
+					PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+	#endif
+
+					GUI_setError(first_check);
+
+					return 5U;
+				}
+
+	#if debug_log && extended_debug_log
+				PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
+	#endif
+
+				GUI_setWarning(first_check);
+
+				return 4U;
+			}
+
+			//выключаем GIL для этого потока
+
+			PyGILState_Release(gstate);
+
+			//------------------------------
+
+			//очищаем ивент
+
+			ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+			break;
+
+			// An error occurred
+		default:
+			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+			{
+#if debug_log && extended_debug_log
+				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
 			}
 
 #if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
+			OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
 #endif
 
-			GUI_setWarning(first_check);
-
-			return 4U;
+			return;
 		}
-
-		//выключаем GIL для этого потока
-
-		PyGILState_Release(gstate);
-
-		//------------------------------
-
-		//очищаем ивент
-
-		ResetEvent(EVENT_IN_HANGAR->hEvent);
-
-		break;
-
 		// An error occurred
 	default:
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
@@ -1721,56 +1798,103 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		uint8_t find_result = findLastModelCoords(5.0, &modelID, &coords);
 
 		if (!find_result) {
-			uint8_t server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
+			DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
+				EVENT_NETWORK_NOT_USING->hEvent, // event handle
+				INFINITE);               // indefinite wait
 
-			if (server_req) {
-				if (server_req > 9U) {
+			switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
+			{
+				// Event object was signaled
+			case WAIT_OBJECT_0:
+				ResetEvent(EVENT_NETWORK_NOT_USING->hEvent); //сеть будет использоваться; TODO: сделать макросом
+
+				//рабочая часть
+
+				uint8_t server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
+
+				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+				{
 #if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
+					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
 #endif
-
-					GUI_setError(server_req);
-
-					return 9U;
 				}
 
+				//включаем GIL для этого потока
+
+				gstate = PyGILState_Ensure();
+
+				//-----------------------------
+
+				if (server_req) {
+					if (server_req > 9U) {
 #if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
+						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
 #endif
 
-				GUI_setWarning(server_req);
+						GUI_setError(server_req);
 
-				return 8U;
-			}
+						return 9U;
+					}
 
-			uint8_t deleting_py_models = delModelPy(coords);
-
-			if (deleting_py_models) {
 #if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", deleting_py_models);
+					PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
 #endif
 
-				GUI_setError(deleting_py_models);
+					GUI_setWarning(server_req);
 
-				return 7U;
-			}
+					return 8U;
+				}
 
-			scoreID = modelID;
-			current_map.stageID = StagesID.GET_SCORE;
+				uint8_t deleting_py_models = delModelPy(coords);
 
-			/*
-			uint8_t deleting_coords = delModelCoords(modelID, coords);
-
-			if (deleting_coords) {
+				if (deleting_py_models) {
 #if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
+					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", deleting_py_models);
 #endif
 
-					GUI_setError(deleting_coords);
+					GUI_setError(deleting_py_models);
 
-					return 6U;
+					return 7U;
+				}
+
+				scoreID = modelID;
+				current_map.stageID = StagesID.GET_SCORE;
+
+				/*
+				uint8_t deleting_coords = delModelCoords(modelID, coords);
+
+				if (deleting_coords) {
+	#if debug_log && extended_debug_log
+						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
+	#endif
+
+						GUI_setError(deleting_coords);
+
+						return 6U;
+				}
+				*/
+
+				//выключаем GIL для этого потока
+
+				PyGILState_Release(gstate);
+
+				//------------------------------
+
+				//очищаем ивент
+
+				ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+				break;
+
+				// An error occurred
+			default:
+				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+				{
+#if debug_log && extended_debug_log
+					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
+				}
 			}
-			*/
 		}
 		else if (find_result == 7U) {
 			current_map.stageID = StagesID.ITEMS_NOT_EXISTS;
@@ -1797,7 +1921,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		OutputDebugString(_T("[NY_Event][ERROR]: DEL_MODEL - something wrong with WaitResult!\n"));
 #endif
 
-		return 5U;
+		return 4U;
 	}
 
 	//закрываем поток
