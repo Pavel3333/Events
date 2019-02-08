@@ -1005,13 +1005,6 @@ uint8_t set_visible(bool isVisible) {
 
 uint8_t handle_battle_event(uint8_t eventID) {
 	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
-		if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-		{
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-		}
-
 		return 1U;
 	}
 
@@ -1027,12 +1020,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 	else if (eventID == EventsID.IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
 	else if (eventID == EventsID.DEL_LAST_MODEL)     parsing_result = parse_del_model();
 
-	if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-	{
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-	}
+	NETWORK_NOT_USING;
 
 	Py_END_ALLOW_THREADS
 
@@ -1372,7 +1360,7 @@ VOID CALLBACK TimerAPCProc(
 	{
 		// Event object was signaled
 	case WAIT_OBJECT_0:
-		ResetEvent(EVENT_NETWORK_NOT_USING->hEvent); //сеть будет использоваться
+		NETWORK_USING;
 
 		//рабочая часть
 
@@ -1396,12 +1384,7 @@ VOID CALLBACK TimerAPCProc(
 
 				PyGILState_Release(gstate);
 
-				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-				{
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-				}
+				NETWORK_NOT_USING;
 
 				return;
 			}
@@ -1414,12 +1397,7 @@ VOID CALLBACK TimerAPCProc(
 
 			PyGILState_Release(gstate);
 
-			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-			{
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-			}
+			NETWORK_NOT_USING;
 
 			return;
 		}
@@ -1441,12 +1419,7 @@ VOID CALLBACK TimerAPCProc(
 
 			PyGILState_Release(gstate);
 
-			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-			{
-	#if debug_log && extended_debug_log
-				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-	#endif
-			}
+			NETWORK_NOT_USING;
 
 			return;
 		}
@@ -1457,23 +1430,13 @@ VOID CALLBACK TimerAPCProc(
 
 		//------------------------------
 
-		if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-		{
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-		}
+		NETWORK_NOT_USING;
 
 		break;
 
 		// An error occurred
 	default:
-		if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-		{
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-		}
+		NETWORK_NOT_USING;
 
 #if debug_log && extended_debug_log
 		OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
@@ -1676,18 +1639,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		{
 			// Event object was signaled
 		case WAIT_OBJECT_0:
-			ResetEvent(EVENT_NETWORK_NOT_USING->hEvent); //сеть будет использоваться; TODO: сделать макросом
-
-			//рабочая часть
-
-			first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
-
-			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-			{
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-			}
+			BEGIN_NETWORK_USING
+				first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+			END_NETWORK_USING
 
 			//включаем GIL для этого потока
 
@@ -1725,12 +1679,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			// An error occurred
 		default:
-			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-			{
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-			}
+			NETWORK_NOT_USING;
 
 #if debug_log && extended_debug_log
 			OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
@@ -1839,18 +1788,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			{
 				// Event object was signaled
 			case WAIT_OBJECT_0:
-				ResetEvent(EVENT_NETWORK_NOT_USING->hEvent); //сеть будет использоваться; TODO: сделать макросом
-
-				//рабочая часть
-
+				BEGIN_NETWORK_USING
 				server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
-
-				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-				{
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-				}
+				END_NETWORK_USING
 
 				//включаем GIL для этого потока
 
@@ -1913,23 +1853,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 				//------------------------------
 
-				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-				{
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-				}
+				NETWORK_NOT_USING;
 
 				break;
 
 				// An error occurred
 			default:
-				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
-				{
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
-#endif
-				}
+				NETWORK_NOT_USING;
 
 				return 5;
 			}
