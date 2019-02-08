@@ -4,7 +4,7 @@
 #include "Py_config.h"
 #include "BW_native.h"
 #include "GUI.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <direct.h>
 
 #define debug_log true
@@ -42,9 +42,6 @@ uint32_t request     = 100U;
 
 uint8_t  mapID      = NULL;
 uint32_t databaseID = NULL;
-
-extern EVENT_ID EventsID;
-extern STAGE_ID StagesID;
 
 bool isInited = false;
 
@@ -85,7 +82,7 @@ PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 
 //---------------------
 
-uint8_t lastStageID = StagesID.COMPETITION;
+STAGE_ID lastStageID = STAGE_ID::COMPETITION;
 uint8_t lastEventID = EventsID.IN_HANGAR;
 
 uint8_t makeEventInThread(uint8_t, uint8_t);
@@ -1046,21 +1043,21 @@ uint8_t handle_battle_event(uint8_t eventID) {
 		
 	if (current_map.stageID >= 0 && current_map.stageID < STAGES_COUNT) {    //выводим сообщение
 		if (
-			current_map.stageID == StagesID.WAITING      ||
-			current_map.stageID == StagesID.START        ||
-			current_map.stageID == StagesID.COMPETITION  ||
-			current_map.stageID == StagesID.END_BY_TIME  ||
-			current_map.stageID == StagesID.END_BY_COUNT ||
-			current_map.stageID == StagesID.STREAMER_MODE
+			current_map.stageID == STAGE_ID::WAITING      ||
+			current_map.stageID == STAGE_ID::START        ||
+			current_map.stageID == STAGE_ID::COMPETITION  ||
+			current_map.stageID == STAGE_ID::END_BY_TIME  ||
+			current_map.stageID == STAGE_ID::END_BY_COUNT ||
+			current_map.stageID == STAGE_ID::STREAMER_MODE
 			) {
-			if (lastStageID != StagesID.GET_SCORE && lastStageID != StagesID.ITEMS_NOT_EXISTS) GUI_setMsg(current_map.stageID);
+			if (lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) GUI_setMsg(current_map.stageID);
 
-			if(current_map.stageID == StagesID.END_BY_TIME || current_map.stageID == StagesID.END_BY_COUNT) {
+			if(current_map.stageID == STAGE_ID::END_BY_TIME || current_map.stageID == STAGE_ID::END_BY_COUNT) {
 				current_map.time_preparing = NULL;
 
 				GUI_setTime(NULL);
 
-				if (current_map.stageID == StagesID.END_BY_COUNT) {
+				if (current_map.stageID == STAGE_ID::END_BY_COUNT) {
 					GUI_setTimerVisible(false);
 
 					isTimeVisible = false;
@@ -1086,9 +1083,9 @@ uint8_t handle_battle_event(uint8_t eventID) {
 				}
 			}
 
-			if (current_map.stageID == StagesID.START          ||
-				current_map.stageID == StagesID.COMPETITION    || 
-				current_map.stageID == StagesID.STREAMER_MODE) {
+			if (current_map.stageID == STAGE_ID::START          ||
+				current_map.stageID == STAGE_ID::COMPETITION    || 
+				current_map.stageID == STAGE_ID::STREAMER_MODE) {
 				if (isModelsAlreadyCreated && !isModelsAlreadyInited && current_map.minimap_count && current_map.modelsSects.size()) {
 					if      (eventID == EventsID.IN_BATTLE_GET_FULL) {
 #if debug_log && extended_debug_log && super_extended_debug_log
@@ -1846,8 +1843,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 						break;
 					}
 
-					scoreID = modelID;
-					current_map.stageID = StagesID.GET_SCORE;
+				scoreID = modelID;
+				current_map.stageID = STAGE_ID::GET_SCORE;
 
 					/*
 					uint8_t deleting_coords = delModelCoords(modelID, coords);
@@ -1881,27 +1878,28 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					lastEventError = 2;
 
-					break;
-				}
+				break;
 			}
-			else if (find_result == 7U) {
-				current_map.stageID = StagesID.ITEMS_NOT_EXISTS;
-			}
+		}
+		else if (find_result == 7U) {
+			current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
+		}
 
-			//включаем GIL
+		//включаем GIL
 
-			gstate = PyGILState_Ensure();
+		gstate = PyGILState_Ensure();
 
-			//-----------------------------
+		//-----------------------------
 
-			if (current_map.stageID == StagesID.GET_SCORE && scoreID != -1) {
-				GUI_setMsg(current_map.stageID, scoreID, 5.0f);
 
-				scoreID = -1;
-			}
-			else if (current_map.stageID == StagesID.ITEMS_NOT_EXISTS) {
-				GUI_setMsg(current_map.stageID);
-			}
+		if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) {
+			GUI_setMsg(current_map.stageID, scoreID, 5.0f);
+
+			scoreID = -1;
+		}
+		else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) {
+			GUI_setMsg(current_map.stageID);
+		}
 
 			//выключаем GIL для этого потока
 
@@ -2366,7 +2364,7 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 	else {
 		battleEnded = true;
 
-		current_map.stageID = StagesID.COMPETITION;
+		current_map.stageID = STAGE_ID::COMPETITION;
 
 		PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
 

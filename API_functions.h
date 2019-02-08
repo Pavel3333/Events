@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <windows.h>
+#include <Windows.h>
 #include <tchar.h>
 
 #define NETWORK_USING     ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
@@ -44,6 +44,18 @@
 #define MANDARINE   8
 #define WOOD_TOILET 9
 
+
+enum STAGE_ID {
+	WAITING = 0,
+	START,
+	COMPETITION,
+	GET_SCORE,
+	ITEMS_NOT_EXISTS,
+	END_BY_TIME,
+	END_BY_COUNT,
+	STREAMER_MODE
+};
+
 extern uint16_t SCORE[SECTIONS_COUNT];
 
 extern LPCWSTR EVENT_NAMES[4];
@@ -59,19 +71,9 @@ extern bool battleEnded;
 extern bool isModelsAlreadyCreated;
 
 extern int8_t scoreID;
-extern uint8_t lastStageID;
+extern STAGE_ID lastStageID;
 extern bool isStreamer;
 
-typedef struct {
-	uint8_t WAITING          = 0U;
-	uint8_t START            = 1U;
-	uint8_t COMPETITION      = 2U;
-	uint8_t GET_SCORE        = 3U;
-	uint8_t ITEMS_NOT_EXISTS = 4U;
-	uint8_t END_BY_TIME      = 5U;
-	uint8_t END_BY_COUNT     = 6U;
-	uint8_t STREAMER_MODE    = 7U;
-} STAGE_ID;
 
 typedef struct {
 	uint8_t IN_HANGAR          = 0U;
@@ -87,27 +89,27 @@ typedef struct {
 
 extern MODS_ID  ModsID;
 extern EVENT_ID EventsID;
-extern STAGE_ID StagesID;
 
-typedef struct {
+
+struct ModelsSection  {
 	bool isInitialised = false;
 
 	uint8_t ID    = NULL;
 	char* path    = nullptr;
 
 	std::vector<float*> models;
-} ModelsSection;
+};
 
-typedef struct {
-	uint16_t minimap_count  = NULL;
+struct map {
+	uint16_t minimap_count  = 0;
 
-	uint8_t stageID         = 2U;
-	uint32_t time_preparing = NULL;
+	STAGE_ID stageID        = STAGE_ID::COMPETITION;
+	uint32_t time_preparing = 0;
 
 	//types of positions sections
 
 	std::vector<ModelsSection> modelsSects;
-} map;
+};
 
 typedef struct {
 	uint16_t all_models_count = NULL;

@@ -1,9 +1,6 @@
-﻿// ConsoleApplication2.cpp: определяет точку входа для консольного приложения.
-//
+﻿#include "API_functions.h"
 
-#include "API_functions.h"
-
-#include <math.h>
+#include <cmath>
 #include <io.h>
 #include <sstream>
 #include "curl/curl.h"
@@ -21,7 +18,6 @@ CURL *  curl_handle = NULL;
 
 MODS_ID  ModsID;
 EVENT_ID EventsID;
-STAGE_ID StagesID;
 
 int8_t scoreID = -1;
 
@@ -244,17 +240,17 @@ uint8_t parse_config() { // при входе в бой
 
 		if (error_code < 10U) {
 			if (error_code == 7U) {
-				current_map.stageID = StagesID.WAITING;
+				current_map.stageID = STAGE_ID::WAITING;
 
 				return NULL;
 			}
 			else if (error_code == 8U) {
-				current_map.stageID = StagesID.END_BY_TIME;
+				current_map.stageID = STAGE_ID::END_BY_TIME;
 
 				return NULL;
 			}
 			else if (error_code == 9U) {
-				current_map.stageID = StagesID.END_BY_COUNT;
+				current_map.stageID = STAGE_ID::END_BY_COUNT;
 
 				return NULL;
 			}
@@ -276,11 +272,11 @@ uint8_t parse_config() { // при входе в бой
 			return 23U;
 		}
 
-		current_map.stageID = wr_buf[offset + 1];
+		current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
 
-		if (current_map.stageID == StagesID.COMPETITION)
+		if (current_map.stageID == STAGE_ID::COMPETITION)
 			isStreamer = false;
-		else if (current_map.stageID == StagesID.STREAMER_MODE)
+		else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
 			isStreamer = true;
 
 		memcpy(&(current_map.time_preparing), wr_buf + offset + 2U, 4U);
@@ -389,17 +385,17 @@ uint8_t parse_sync() { // синхронизация
 
 		if (error_code < 10U) {
 			if (error_code == 7U) {
-				current_map.stageID = StagesID.WAITING;
+				current_map.stageID = STAGE_ID::WAITING;
 
 				return NULL;
 			}
 			else if (error_code == 8U) {
-				current_map.stageID = StagesID.END_BY_TIME;
+				current_map.stageID = STAGE_ID::END_BY_TIME;
 
 				return NULL;
 			}
 			else if (error_code == 9U) {
-				current_map.stageID = StagesID.END_BY_COUNT;
+				current_map.stageID = STAGE_ID::END_BY_COUNT;
 
 				return NULL;
 			}
@@ -430,11 +426,11 @@ uint8_t parse_sync() { // синхронизация
 			return 23U;
 		}
 
-		current_map.stageID = wr_buf[offset + 1];
+		current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
 
-		if (current_map.stageID == StagesID.COMPETITION)
+		if (current_map.stageID == STAGE_ID::COMPETITION)
 			isStreamer = false;
-		else if (current_map.stageID == StagesID.STREAMER_MODE)
+		else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
 			isStreamer = true;
 
 		memcpy(&(current_map.time_preparing), wr_buf + offset + 2U, 4U);
@@ -557,13 +553,13 @@ uint8_t parse_del_model() {
 
 		if (error_code < 10U) {
 			if (error_code == 7U) {
-				current_map.stageID = StagesID.WAITING;
+				current_map.stageID = STAGE_ID::WAITING;
 			}
 			else if (error_code == 8U) {
-				current_map.stageID = StagesID.END_BY_TIME;
+				current_map.stageID = STAGE_ID::END_BY_TIME;
 			}
 			else if (error_code == 9U) {
-				current_map.stageID = StagesID.END_BY_COUNT;
+				current_map.stageID = STAGE_ID::END_BY_COUNT;
 			}
 
 			return error_code;
@@ -583,7 +579,7 @@ uint8_t parse_del_model() {
 			return 23U;
 		}
 
-		current_map.stageID = wr_buf[offset + 1];
+		current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
 
 		memcpy(&(current_map.time_preparing), wr_buf + offset + 2U, 4U);
 

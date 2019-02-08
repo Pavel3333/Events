@@ -143,7 +143,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 		return;
 	}
 
-	if (lastStageID == current_map.stageID && lastStageID != StagesID.GET_SCORE && lastStageID != StagesID.ITEMS_NOT_EXISTS) {
+	if (lastStageID == current_map.stageID && lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) {
 		return;
 	}
 
@@ -184,7 +184,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 
 	char new_msg[255];
 
-	if (msgID == StagesID.GET_SCORE) { // если это - сообщение о том, что получили баллы
+	if (msgID == STAGE_ID::GET_SCORE) { // если это - сообщение о том, что получили баллы
 		sprintf_s(new_msg, 255U, msg, COLOURS[msgID], SCORE[scoreID]);
 	}
 	else {
@@ -207,7 +207,7 @@ void GUI_clearText() {
 	Py_DECREF(__clearText);
 	Py_XDECREF(res);
 
-	lastStageID = StagesID.COMPETITION;
+	lastStageID = STAGE_ID::COMPETITION;
 
 	delLabelCBID = NULL;
 }
