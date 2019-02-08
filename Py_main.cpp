@@ -1005,7 +1005,12 @@ uint8_t set_visible(bool isVisible) {
 
 uint8_t handle_battle_event(uint8_t eventID) {
 	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
-		ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+		if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+		{
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
+		}
 
 		return 1U;
 	}
@@ -1022,9 +1027,12 @@ uint8_t handle_battle_event(uint8_t eventID) {
 	else if (eventID == EventsID.IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
 	else if (eventID == EventsID.DEL_LAST_MODEL)     parsing_result = parse_del_model();
 
-	//Обращение к общему сетевому буферу окончено с этого момента. Сеть не используется.
-
-	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+	if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+	{
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
+	}
 
 	Py_END_ALLOW_THREADS
 
@@ -1354,6 +1362,8 @@ VOID CALLBACK TimerAPCProc(
 		isTimerStarted = true;
 	}
 
+	PyGILState_STATE gstate;
+
 	DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
 		EVENT_NETWORK_NOT_USING->hEvent, // event handle
 		INFINITE);               // indefinite wait
@@ -1370,7 +1380,7 @@ VOID CALLBACK TimerAPCProc(
 
 		//включаем GIL для этого потока
 
-		PyGILState_STATE gstate = PyGILState_Ensure();
+		gstate = PyGILState_Ensure();
 
 		//-----------------------------
 
@@ -1386,6 +1396,13 @@ VOID CALLBACK TimerAPCProc(
 
 				PyGILState_Release(gstate);
 
+				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+				{
+#if debug_log && extended_debug_log
+					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
+				}
+
 				return;
 			}
 
@@ -1396,6 +1413,13 @@ VOID CALLBACK TimerAPCProc(
 			GUI_setWarning(request);
 
 			PyGILState_Release(gstate);
+
+			if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+			{
+#if debug_log && extended_debug_log
+				OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
+			}
 
 			return;
 		}
@@ -1433,6 +1457,13 @@ VOID CALLBACK TimerAPCProc(
 
 		//------------------------------
 
+		if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+		{
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
+		}
+
 		break;
 
 		// An error occurred
@@ -1461,12 +1492,6 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 	}
 
 	wchar_t msgBuf[255];
-
-	uint32_t databaseID;
-	uint8_t  map_ID;
-	uint8_t  eventID;
-
-	PyGILState_STATE gstate;
 
 	BOOL            bSuccess;
 	__int64         qwDueTime;
@@ -1611,6 +1636,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	PyGILState_STATE gstate;
 
+	DWORD EVENT_NETWORK_NOT_USING_WaitResult;
+
 	DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
 		EVENT_IN_HANGAR->hEvent, // event handle
 		INFINITE);               // indefinite wait
@@ -1641,7 +1668,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		//рабочая часть
 
-		DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
+		EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
 			EVENT_NETWORK_NOT_USING->hEvent, // event handle
 			INFINITE);               // indefinite wait
 
@@ -1676,7 +1703,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					GUI_setError(first_check);
 
-					return 5U;
+					return 6U;
 				}
 
 	#if debug_log && extended_debug_log
@@ -1685,7 +1712,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 				GUI_setWarning(first_check);
 
-				return 4U;
+				return 5U;
 			}
 
 			//выключаем GIL для этого потока
@@ -1693,10 +1720,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			PyGILState_Release(gstate);
 
 			//------------------------------
-
-			//очищаем ивент
-
-			ResetEvent(EVENT_IN_HANGAR->hEvent);
 
 			break;
 
@@ -1713,8 +1736,12 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
 #endif
 
-			return;
+			return 4;
 		}
+
+		ResetEvent(EVENT_IN_HANGAR->hEvent);
+
+		break;
 		// An error occurred
 	default:
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
@@ -1723,7 +1750,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
 #endif
 
-		return 3U;
+		return 3;
 	}
 	if (first_check) {
 #if debug_log && extended_debug_log
@@ -1732,7 +1759,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		OutputDebugString(msgBuf);
 #endif
 
-		return 4U;
+		return 4;
 	}
 
 	if (hTimerThread) {
@@ -1753,7 +1780,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	{
 		OutputDebugString(TEXT("CreateThread: error 1\n"));
 
-		return false;
+		return 5;
 	}
 
 	HANDLE hEvents[HEVENTS_COUNT] = {
@@ -1766,6 +1793,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		hEvents,
 		FALSE,
 		INFINITE);
+
+	uint8_t find_result;
+	uint8_t server_req;
+	uint8_t deleting_py_models;
+
+	uint8_t modelID;
+	float* coords;
 
 	switch (EVENTS_WaitResult)
 	{
@@ -1792,13 +1826,12 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		//рабочая часть
 
-		uint8_t modelID;
-		float* coords = new float[3];
+		coords = new float[3];
 
-		uint8_t find_result = findLastModelCoords(5.0, &modelID, &coords);
+		find_result = findLastModelCoords(5.0, &modelID, &coords);
 
 		if (!find_result) {
-			DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
+			EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
 				EVENT_NETWORK_NOT_USING->hEvent, // event handle
 				INFINITE);               // indefinite wait
 
@@ -1810,7 +1843,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 				//рабочая часть
 
-				uint8_t server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
+				server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
 
 				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
 				{
@@ -1845,7 +1878,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					return 8U;
 				}
 
-				uint8_t deleting_py_models = delModelPy(coords);
+				deleting_py_models = delModelPy(coords);
 
 				if (deleting_py_models) {
 #if debug_log && extended_debug_log
@@ -1880,9 +1913,12 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 				//------------------------------
 
-				//очищаем ивент
-
-				ResetEvent(EVENT_IN_HANGAR->hEvent);
+				if (!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) //сеть и буфер не будут использоваться
+				{
+#if debug_log && extended_debug_log
+					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
+#endif
+				}
 
 				break;
 
@@ -1894,6 +1930,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));
 #endif
 				}
+
+				return 5;
 			}
 		}
 		else if (find_result == 7U) {
@@ -2681,7 +2719,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	}
 
 	if (isKeyGetted_Space == Py_True) {
-		request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
+		request = makeEventInThread(mapID, EventsID.DEL_LAST_MODEL);
 
 		if (request) {
 #if debug_log && extended_debug_log
