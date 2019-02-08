@@ -1005,6 +1005,8 @@ uint8_t set_visible(bool isVisible) {
 
 uint8_t handle_battle_event(uint8_t eventID) {
 	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
+		NETWORK_NOT_USING;
+
 		return 1U;
 	}
 
@@ -1430,14 +1432,10 @@ VOID CALLBACK TimerAPCProc(
 
 		//------------------------------
 
-		NETWORK_NOT_USING;
-
 		break;
 
 		// An error occurred
 	default:
-		NETWORK_NOT_USING;
-
 #if debug_log && extended_debug_log
 		OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
 #endif
@@ -1737,12 +1735,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		EVENT_BATTLE_ENDED->hEvent //событие выхода из боя
 	};
 
-	DWORD EVENTS_WaitResult = WaitForMultipleObjects(
-		HEVENTS_COUNT,
-		hEvents,
-		FALSE,
-		INFINITE);
-
 	uint8_t find_result;
 	uint8_t server_req;
 	uint8_t deleting_py_models;
@@ -1750,146 +1742,197 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	uint8_t modelID;
 	float* coords;
 
-	switch (EVENTS_WaitResult)
+	uint8_t lastEventError = NULL;
+
+	while (!first_check && !battleEnded && !lastEventError)
 	{
-	case WAIT_OBJECT_0 + 0: //сработало событие удаления модели
+		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
+			HEVENTS_COUNT,
+			hEvents,
+			FALSE,
+			INFINITE);
+
+		switch (EVENTS_WaitResult)
+		{
+		case WAIT_OBJECT_0 + 0: //сработало событие удаления модели
 #if debug_log && extended_debug_log
-		OutputDebugString(_T("DelModelEvent was signaled!\n"));
+			OutputDebugString(_T("DelModelEvent was signaled!\n"));
 #endif
 
-		//место для рабочего кода
+			//место для рабочего кода
 
-		databaseID = EVENT_DEL_MODEL->databaseID;
-		map_ID     = EVENT_DEL_MODEL->map_ID;
-		eventID    = EVENT_DEL_MODEL->eventID;
+			databaseID = EVENT_DEL_MODEL->databaseID;
+			map_ID = EVENT_DEL_MODEL->map_ID;
+			eventID = EVENT_DEL_MODEL->eventID;
 
-		if (eventID != EventsID.DEL_LAST_MODEL) {
-			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
-
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: DEL_MODEL - eventID not equal!\n"));
-#endif
-
-			return 2U;
-		}
-
-		//рабочая часть
-
-		coords = new float[3];
-
-		find_result = findLastModelCoords(5.0, &modelID, &coords);
-
-		if (!find_result) {
-			EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
-				EVENT_NETWORK_NOT_USING->hEvent, // event handle
-				INFINITE);               // indefinite wait
-
-			switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
-			{
-				// Event object was signaled
-			case WAIT_OBJECT_0:
-				BEGIN_NETWORK_USING
-				server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
-				END_NETWORK_USING
-
-				//включаем GIL для этого потока
-
-				gstate = PyGILState_Ensure();
-
-				//-----------------------------
-
-				if (server_req) {
-					if (server_req > 9U) {
-#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
-#endif
-
-						GUI_setError(server_req);
-
-						return 9U;
-					}
+			if (eventID != EventsID.DEL_LAST_MODEL) {
+				ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
 #if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
+				OutputDebugString(_T("[NY_Event][ERROR]: DEL_MODEL - eventID not equal!\n"));
 #endif
 
-					GUI_setWarning(server_req);
-
-					return 8U;
-				}
-
-				deleting_py_models = delModelPy(coords);
-
-				if (deleting_py_models) {
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", deleting_py_models);
-#endif
-
-					GUI_setError(deleting_py_models);
-
-					return 7U;
-				}
-
-				scoreID = modelID;
-				current_map.stageID = StagesID.GET_SCORE;
-
-				/*
-				uint8_t deleting_coords = delModelCoords(modelID, coords);
-
-				if (deleting_coords) {
-	#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
-	#endif
-
-						GUI_setError(deleting_coords);
-
-						return 6U;
-				}
-				*/
-
-				//выключаем GIL для этого потока
-
-				PyGILState_Release(gstate);
-
-				//------------------------------
-
-				NETWORK_NOT_USING;
+				lastEventError = 6;
 
 				break;
-
-				// An error occurred
-			default:
-				NETWORK_NOT_USING;
-
-				return 5;
 			}
-		}
-		else if (find_result == 7U) {
-			current_map.stageID = StagesID.ITEMS_NOT_EXISTS;
-		}
 
-		if (current_map.stageID == StagesID.GET_SCORE && scoreID != -1) {
-			GUI_setMsg(current_map.stageID, scoreID, 5.0f);
+			//рабочая часть
 
-			scoreID = -1;
-		}
-		else if (current_map.stageID == StagesID.ITEMS_NOT_EXISTS) {
-			GUI_setMsg(current_map.stageID);
-		}
+			coords = new float[3];
 
-		ResetEvent(EVENT_DEL_MODEL->hEvent);
+			find_result = findLastModelCoords(5.0, &modelID, &coords);
 
-		break;
+			if (!find_result) {
+				EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
+					EVENT_NETWORK_NOT_USING->hEvent, // event handle
+					INFINITE);               // indefinite wait
 
-		// An error occurred
-	default:
-		ResetEvent(EVENT_DEL_MODEL->hEvent);
+				switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
+				{
+					// Event object was signaled
+				case WAIT_OBJECT_0:
+					BEGIN_NETWORK_USING
+						server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
+					END_NETWORK_USING
 
+						//включаем GIL для этого потока
+
+						gstate = PyGILState_Ensure();
+
+					//-----------------------------
+
+					if (server_req) {
+						if (server_req > 9U) {
 #if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event][ERROR]: DEL_MODEL - something wrong with WaitResult!\n"));
+							PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
 #endif
 
-		return 4U;
+							GUI_setError(server_req);
+
+							PyGILState_Release(gstate);
+
+							lastEventError = 5;
+
+							break;
+						}
+
+#if debug_log && extended_debug_log
+						PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
+#endif
+
+						GUI_setWarning(server_req);
+
+						PyGILState_Release(gstate);
+
+						lastEventError = 4;
+
+						break;
+					}
+
+					deleting_py_models = delModelPy(coords);
+
+					if (deleting_py_models) {
+#if debug_log && extended_debug_log
+						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", deleting_py_models);
+#endif
+
+						GUI_setError(deleting_py_models);
+
+						PyGILState_Release(gstate);
+
+						lastEventError = 3;
+
+						break;
+					}
+
+					scoreID = modelID;
+					current_map.stageID = StagesID.GET_SCORE;
+
+					/*
+					uint8_t deleting_coords = delModelCoords(modelID, coords);
+
+					if (deleting_coords) {
+		#if debug_log && extended_debug_log
+							PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
+		#endif
+
+							GUI_setError(deleting_coords);
+
+							return 6U;
+					}
+					*/
+
+					//выключаем GIL для этого потока
+
+					PyGILState_Release(gstate);
+
+					//------------------------------
+
+					lastEventError =
+
+						break;
+
+					// An error occurred
+				default:
+#if debug_log && extended_debug_log
+					OutputDebugString(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n"));
+#endif
+
+					lastEventError = 2;
+
+					break;
+				}
+			}
+			else if (find_result == 7U) {
+				current_map.stageID = StagesID.ITEMS_NOT_EXISTS;
+			}
+
+			//включаем GIL
+
+			gstate = PyGILState_Ensure();
+
+			//-----------------------------
+
+			if (current_map.stageID == StagesID.GET_SCORE && scoreID != -1) {
+				GUI_setMsg(current_map.stageID, scoreID, 5.0f);
+
+				scoreID = -1;
+			}
+			else if (current_map.stageID == StagesID.ITEMS_NOT_EXISTS) {
+				GUI_setMsg(current_map.stageID);
+			}
+
+			//выключаем GIL для этого потока
+
+			PyGILState_Release(gstate);
+
+			//------------------------------
+
+			ResetEvent(EVENT_DEL_MODEL->hEvent);
+
+			break;
+
+			// An error occurred
+		default:
+			ResetEvent(EVENT_DEL_MODEL->hEvent);
+
+#if debug_log && extended_debug_log
+			OutputDebugString(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n"));
+#endif
+
+			lastEventError = 1;
+
+			break;
+		}
+	}
+
+	if (lastEventError) {
+#if debug_log && extended_debug_log
+		wsprintfW(msgBuf, _T("Error in event: %d\n"), lastEventError);
+
+		OutputDebugString(msgBuf);
+#endif
 	}
 
 	//закрываем поток
@@ -1912,7 +1955,7 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводи�
 		return 1U;
 	}
 
-	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { //посылаем ивент и обрабатываем в треде
+	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC || eventID == EventsID.DEL_LAST_MODEL) { //посылаем ивент и обрабатываем в треде
 		if      (eventID == EventsID.IN_HANGAR) {
 			if (!EVENT_IN_HANGAR) {
 				return 4;
