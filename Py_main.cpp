@@ -7,12 +7,6 @@
 #include <cstdlib>
 #include <direct.h>
 
-#define debug_log true
-
-#define extended_debug_log true
-
-#define super_extended_debug_log false
-
 typedef struct {
 	bool processed = false;
 	PyObject* model = NULL;
@@ -64,6 +58,8 @@ HANDLE hHandlerThread  = NULL;
 DWORD  handlerThreadID = NULL;
 
 uint8_t timerLastError = NULL;
+
+wchar_t msgBuf[512];
 
 //Главные ивенты
 
@@ -765,9 +761,7 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //при
 	}
 
 	if (!EVENT_ALL_MODELS_CREATED->hEvent) {
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("AMCEvent or createModelsPyMeth event is NULL!\n"));
-#endif
+		extendedDebugLog("[NY_Event][ERROR]: AMCEvent or createModelsPyMeth event is NULL!\n");
 
 		Py_RETURN_NONE;
 	}
@@ -829,9 +823,7 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //при
 
 		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
 		{
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("AMCEvent event not setted!\n"));
-#endif
+			extendedDebugLog("[NY_Event][ERROR]: AMCEvent event not setted!\n");
 
 			Py_RETURN_NONE;
 		}
@@ -898,9 +890,8 @@ uint8_t init_models() {
 	if (!isInited || first_check || request || battleEnded || models.empty()) {
 		return 1U;
 	}
-#if debug_log  && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: models adding...\n"));
-#endif
+
+	extendedDebugLog("[NY_Event]: models adding...\n");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) {
@@ -948,9 +939,7 @@ uint8_t init_models() {
 #endif
 	}
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: models adding OK!\n"));
-#endif
+	extendedDebugLog("[NY_Event]: models adding OK!\n");
 
 	return NULL;
 }
@@ -962,9 +951,7 @@ uint8_t set_visible(bool isVisible) {
 
 	PyObject* py_visible = PyBool_FromLong(isVisible);
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: Models visiblity changing...\n"));
-#endif
+	extendedDebugLog("[NY_Event]: Models visiblity changing...\n");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) {
@@ -993,9 +980,7 @@ uint8_t set_visible(bool isVisible) {
 
 	Py_DECREF(py_visible);
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: Models visiblity changing OK!\n"));
-#endif
+	extendedDebugLog("[NY_Event]: Models visiblity changing OK!\n");
 
 	return NULL;
 };
@@ -1007,9 +992,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 		return 1U;
 	}
 
-#if debug_log  && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: parsing...\n"));
-#endif
+	extendedDebugLog("[NY_Event]: parsing...\n");
 
 	uint8_t parsing_result = NULL;
 
@@ -1024,9 +1007,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 	Py_END_ALLOW_THREADS
 
 	if (parsing_result) {
-#if debug_log && extended_debug_log
-		PySys_WriteStdout("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
-#endif
+		extendedDebugLogFmt(_T("[NY_Event]: parsing FAILED! Error code: %d\n"), (uint32_t)parsing_result);
 
 		GUI_setError(parsing_result);
 
@@ -1068,9 +1049,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 				uint8_t event_result = event_fini();
 
 				if (event_result) {
-#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n", event_result);
-#endif
+					extendedDebugLogFmt(_T("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n"), (uint32_t)event_result);
 
 					GUI_setWarning(event_result);
 				}
@@ -1094,9 +1073,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 						Py_BEGIN_ALLOW_THREADS;
 
-#if debug_log && extended_debug_log
-						OutputDebugString(_T("[NY_Event]: creating...\n"));
-#endif
+						extendedDebugLog("[NY_Event]: creating...\n");
 
 						models.~vector();
 						lights.~vector();
@@ -1126,9 +1103,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 						request = create_models();
 
 						if (request) {
-#if debug_log && extended_debug_log
-							PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
-#endif
+							extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n"), request);
 
 							return 3U;
 						}
@@ -1138,9 +1113,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 						//ожидаем события полного создания моделей
 
-#if debug_log && extended_debug_log
-						OutputDebugString(_T("[NY_Event]: waiting EVENT_ALL_MODELS_CREATED\n"));
-#endif
+						extendedDebugLog("[NY_Event]: waiting EVENT_ALL_MODELS_CREATED\n");
 
 						DWORD EVENT_ALL_MODELS_CREATED_WaitResult = WaitForSingleObject(
 							EVENT_ALL_MODELS_CREATED->hEvent, // event handle
@@ -1150,9 +1123,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 						{
 							// Event object was signaled
 						case WAIT_OBJECT_0:
-#if debug_log && extended_debug_log
-							OutputDebugString(_T("[NY_Event]: EVENT_ALL_MODELS_CREATED signaled!\n"));
-#endif
+							extendedDebugLog("[NY_Event]: EVENT_ALL_MODELS_CREATED signaled!\n");
 
 							//очищаем ивент
 
@@ -1164,26 +1135,20 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 							Py_BLOCK_THREADS;
 
-#if debug_log  && extended_debug_log
-							OutputDebugString(_T("[NY_Event]: creating OK!\n"));
-#endif
+							extendedDebugLog("[NY_Event]: creating OK!\n");
 
 							request = init_models();
 
 							if (request) {
 								if (request > 9U) {
-#if debug_log && extended_debug_log
-									PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
-#endif
+									extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n"), request);
 
 									GUI_setError(request);
 
 									return 5U;
 								}
 
-#if debug_log && extended_debug_log
-								PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
-#endif
+								extendedDebugLogFmt(_T("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n"), request);
 
 								GUI_setWarning(request);
 
@@ -1194,18 +1159,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 							if (request) {
 								if (request > 9U) {
-#if debug_log && extended_debug_log
-									PySys_WriteStdout("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
-#endif
+									extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n"), request);
 
 									GUI_setError(request);
 
 									return 5U;
 								}
 
-#if debug_log && extended_debug_log
-								PySys_WriteStdout("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
-#endif
+								extendedDebugLogFmt(_T("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n"), request);
 
 								GUI_setWarning(request);
 
@@ -1220,9 +1181,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 						default:
 							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
 
-#if debug_log && extended_debug_log
-							OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
-#endif
+							extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
 
 							Py_BLOCK_THREADS;
 
@@ -1253,9 +1212,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 							res = delModelPy(*it_model);
 
 							if (res) {
-#if debug_log && extended_debug_log
-								PySys_WriteStdout("[NY_Event]: Error - create_models - delModelPy - Error code %d\n", (uint32_t)res);
-#endif
+								extendedDebugLogFmt(_T("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n"), (uint32_t)res);
 
 								GUI_setError(res);
 
@@ -1306,17 +1263,9 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 				return NULL;
 			}
 		}
-		else {
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event]: Warning - StageID is not right for this event\n"));
-#endif
-		}
+		else extendedDebugLog("[NY_Event]: Warning - StageID is not right for this event\n");
 	}
-	else {
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event]: Warning - StageID is not correct\n"));
-#endif
-	}
+	else extendedDebugLog("[NY_Event]: Warning - StageID is not correct\n");
 
 	return NULL;
 }
@@ -1336,119 +1285,13 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 VOID CALLBACK TimerAPCProc(
 	LPVOID lpArg,               // Data value
 	DWORD dwTimerLowValue,      // Timer low value
-	DWORD dwTimerHighValue)    // Timer high value
-
+	DWORD dwTimerHighValue)     // Timer high value
 {
 	// Formal parameters not used in this example.
 	UNREFERENCED_PARAMETER(lpArg);
 
 	UNREFERENCED_PARAMETER(dwTimerLowValue);
 	UNREFERENCED_PARAMETER(dwTimerHighValue);
-
-	uint32_t databaseID = EVENT_START_TIMER->databaseID;
-	uint32_t map_ID     = EVENT_START_TIMER->map_ID;
-	EVENT_ID eventID    = EVENT_START_TIMER->eventID;
-
-	if (!isTimerStarted) {
-		isTimerStarted = true;
-	}
-
-	PyGILState_STATE gstate;
-
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: timer: waiting EVENT_NETWORK_NOT_USING\n"));
-#endif
-
-	DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
-		EVENT_NETWORK_NOT_USING->hEvent, // event handle
-		INFINITE);               // indefinite wait
-
-	switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
-	{
-		// Event object was signaled
-	case WAIT_OBJECT_0:
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event]: timer: EVENT_NETWORK_NOT_USING signaled!\n"));
-#endif
-
-		NETWORK_USING;
-
-		//рабочая часть
-
-		request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
-
-		//включаем GIL для этого потока
-
-		gstate = PyGILState_Ensure();
-
-		//-----------------------------
-
-		if (request) {
-			if (request > 9U) {
-	#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
-	#endif
-
-				GUI_setError(request);
-
-				timerLastError = 1;
-
-				PyGILState_Release(gstate);
-
-				NETWORK_NOT_USING;
-
-				return;
-			}
-
-	#if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
-	#endif
-
-			GUI_setWarning(request);
-
-			PyGILState_Release(gstate);
-
-			NETWORK_NOT_USING;
-
-			return;
-		}
-
-	#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
-	#endif
-
-		request = handle_battle_event(eventID);
-
-		if (request) {
-	#if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
-	#endif
-
-			GUI_setError(request);
-
-			timerLastError = 2;
-
-			PyGILState_Release(gstate);
-
-			return;
-		}
-
-		//выключаем GIL для этого потока
-
-		PyGILState_Release(gstate);
-
-		//------------------------------
-
-		break;
-
-		// An error occurred
-	default:
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
-#endif
-
-		return;
-	}
 }
 
 DWORD WINAPI TimerThread(LPVOID lpParam)
@@ -1459,15 +1302,11 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		return 1U;
 	}
 
-	wchar_t msgBuf[255];
-
 	BOOL            bSuccess;
 	__int64         qwDueTime;
 	LARGE_INTEGER   liDueTime;
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: waiting EVENT_START_TIMER\n"));
-#endif
+	extendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
 
 	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
 		EVENT_START_TIMER->hEvent, // event handle
@@ -1477,26 +1316,20 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 	{
 		// Event object was signaled
 	case WAIT_OBJECT_0:
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event]: EVENT_START_TIMER signaled!\n"));
-#endif
+		extendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
 
 		//место для рабочего кода
 
 		if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) {
 			ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n"));
-#endif
+			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n");
 
 			return 2U;
 		}
 
 		if (first_check || battleEnded) {
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n"));
-#endif
+			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n");
 
 			return 3U;
 		}
@@ -1530,32 +1363,115 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 			{
 				while (!first_check && !battleEnded && !timerLastError)
 				{
+					uint32_t databaseID = EVENT_START_TIMER->databaseID;
+					uint32_t map_ID = EVENT_START_TIMER->map_ID;
+					EVENT_ID eventID = EVENT_START_TIMER->eventID;
+
+					if (!isTimerStarted) {
+						isTimerStarted = true;
+					}
+
+					PyGILState_STATE gstate;
+
+					extendedDebugLog("[NY_Event]: timer: waiting EVENT_NETWORK_NOT_USING\n");
+
+					DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
+						EVENT_NETWORK_NOT_USING->hEvent, // event handle
+						INFINITE);               // indefinite wait
+
+					switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
+					{
+						// Event object was signaled
+					case WAIT_OBJECT_0:
+						extendedDebugLog("[NY_Event]: timer: EVENT_NETWORK_NOT_USING signaled!\n");
+
+						NETWORK_USING;
+
+						//рабочая часть
+
+						request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+
+						//включаем GIL для этого потока
+
+						gstate = PyGILState_Ensure();
+
+						//-----------------------------
+
+						if (request) {
+							if (request > 9U) {
+								extendedDebugLogFmt(_T("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n"), request)
+
+								GUI_setError(request);
+
+								timerLastError = 1;
+
+								PyGILState_Release(gstate);
+
+								NETWORK_NOT_USING;
+
+								break;
+							}
+
+							extendedDebugLogFmt(_T("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n"), request)
+
+							GUI_setWarning(request);
+
+							PyGILState_Release(gstate);
+
+							NETWORK_NOT_USING;
+
+							break;
+						}
+
+#if debug_log && extended_debug_log && super_extended_debug_log
+						OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
+#endif
+
+						request = handle_battle_event(eventID);
+
+						if (request) {
+							extendedDebugLogFmt(_T("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n"), request)
+
+							GUI_setError(request);
+
+							timerLastError = 2;
+
+							PyGILState_Release(gstate);
+
+							break;
+						}
+
+						//выключаем GIL для этого потока
+
+						PyGILState_Release(gstate);
+
+						//------------------------------
+
+						break;
+
+						// An error occurred
+					default:
+						extendedDebugLog("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n");
+
+						break;
+					}
+
 					SleepEx(
 						INFINITE,     // Wait forever
 						TRUE);        // Put thread in an alertable state
 				}
 
 				if (timerLastError) {
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("Timer got the error\n"));
-#endif
+					extendedDebugLog("[NY_Event][ERROR]: Timer got the error\n");
 
 					CancelWaitableTimer(hTimer);
 				}
 			}
-			else
-			{
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("SetWaitableTimer failed\n"));
-#endif
-			}
+			else extendedDebugLog("[NY_Event][ERROR]: SetWaitableTimer failed\n");
 
 			CloseHandle(hTimer);
 		}
-		else
-		{
-			OutputDebugString(_T("CreateWaitableTimer failed\n"));
-		}
+		else extendedDebugLog("[NY_Event][ERROR]: CreateWaitableTimer failed\n");
 
 		//очищаем ивент
 
@@ -1567,20 +1483,14 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 	default:
 		ResetEvent(EVENT_START_TIMER->hEvent);
 
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n"));
-#endif
+		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
 
 		return 3U;
 	}
 
 	//закрываем поток
 
-#if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Closing timer thread %d\n"), handlerThreadID);
-
-	OutputDebugString(msgBuf);
-#endif
+	extendedDebugLogFmt(_T("[NY_Event]: Closing timer thread %d\n"), handlerThreadID);
 
 	ExitThread(NULL); //завершаем поток
 
@@ -1595,8 +1505,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		return 1U;
 	}
 
-	wchar_t msgBuf[255];
-
 	uint32_t databaseID;
 	uint8_t  map_ID;
 	EVENT_ID eventID;
@@ -1605,9 +1513,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	DWORD EVENT_NETWORK_NOT_USING_WaitResult;
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: waiting EVENT_IN_HANGAR\n"));
-#endif
+	extendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR\n");
 
 	DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
 		EVENT_IN_HANGAR->hEvent, // event handle
@@ -1617,9 +1523,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	{
 		// Event object was signaled
 	case WAIT_OBJECT_0:
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event]: EVENT_IN_HANGAR signaled!\n"));
-#endif
+		extendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!\n");
 
 		//место для рабочего кода
 
@@ -1630,9 +1534,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		if (eventID != EVENT_ID::IN_HANGAR) {
 			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n"));
-#endif
+			extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n");
 
 			return 2U;
 		}
@@ -1647,9 +1549,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		{
 			// Event object was signaled
 		case WAIT_OBJECT_0:
-			BEGIN_NETWORK_USING
+			BEGIN_NETWORK_USING;
 				first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
-			END_NETWORK_USING
+			END_NETWORK_USING;
 
 			//включаем GIL для этого потока
 
@@ -1659,18 +1561,14 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			if (first_check) {
 				if (first_check > 9U) {
-	#if debug_log && extended_debug_log
-					PySys_WriteStdout("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
-	#endif
+					extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n"), request);
 
 					GUI_setError(first_check);
 
 					return 6U;
 				}
 
-	#if debug_log && extended_debug_log
-				PySys_WriteStdout("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
-	#endif
+				extendedDebugLogFmt(_T("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n"), request);
 
 				GUI_setWarning(first_check);
 
@@ -1689,9 +1587,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		default:
 			NETWORK_NOT_USING;
 
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n"));
-#endif
+			extendedDebugLog("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n");
 
 			return 4;
 		}
@@ -1703,18 +1599,12 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	default:
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
 
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n"));
-#endif
+		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
 
 		return 3;
 	}
 	if (first_check) {
-#if debug_log && extended_debug_log
-		wsprintfW(msgBuf, _T("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n"), (uint32_t)first_check);
-
-		OutputDebugString(msgBuf);
-#endif
+		extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n"), (uint32_t)first_check);
 
 		return 4;
 	}
@@ -1735,7 +1625,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	if (hTimerThread == NULL)
 	{
-		OutputDebugString(TEXT("CreateThread: error 1\n"));
+		extendedDebugLogFmt(_T("[NY_Event][ERROR]: CreateThread: error %d\n"), GetLastError());
 
 		return 5;
 	}
@@ -1756,9 +1646,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	while (!first_check && !battleEnded && !lastEventError)
 	{
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[NY_Event]: waiting EVENTS\n"));
-#endif
+		extendedDebugLog("[NY_Event]: waiting EVENTS\n");
 
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
 			HEVENTS_COUNT,
@@ -1769,9 +1657,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		switch (EVENTS_WaitResult)
 		{
 		case WAIT_OBJECT_0 + 0: //сработало событие удаления модели
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event]: DelModelEvent signaled!\n"));
-#endif
+			extendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!\n");
 
 			//место для рабочего кода
 
@@ -1782,9 +1668,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			if (eventID != EVENT_ID::DEL_LAST_MODEL) {
 				ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("[NY_Event][ERROR]: DEL_MODEL - eventID not equal!\n"));
-#endif
+				extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - eventID not equal!\n");
 
 				lastEventError = 6;
 
@@ -1826,9 +1710,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					if (server_req) {
 						if (server_req > 9U) {
-#if debug_log && extended_debug_log
-							PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", server_req);
-#endif
+							extendedDebugLogFmt(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n"), (uint32_t)server_req);
 
 							GUI_setError(server_req);
 
@@ -1839,9 +1721,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 							break;
 						}
 
-#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", server_req);
-#endif
+						extendedDebugLogFmt(_T("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n"), (uint32_t)server_req);
 
 						GUI_setWarning(server_req);
 
@@ -1855,9 +1735,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					deleting_py_models = delModelPy(coords);
 
 					if (deleting_py_models) {
-#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", deleting_py_models);
-#endif
+						extendedDebugLogFmt(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n"), (uint32_t)deleting_py_models);
 
 						GUI_setError(deleting_py_models);
 
@@ -1895,9 +1773,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					// An error occurred
 				default:
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n"));
-#endif
+					extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
 
 					lastEventError = 2;
 
@@ -1938,9 +1814,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		default:
 			ResetEvent(EVENT_DEL_MODEL->hEvent);
 
-#if debug_log && extended_debug_log
-			OutputDebugString(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n"));
-#endif
+			extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
 
 			lastEventError = 1;
 
@@ -1948,21 +1822,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		}
 	}
 
-	if (lastEventError) {
-#if debug_log && extended_debug_log
-		wsprintfW(msgBuf, _T("Error in event: %d\n"), lastEventError);
-
-		OutputDebugString(msgBuf);
-#endif
-	}
+	if (lastEventError) extendedDebugLogFmt(_T("Error in event: %d\n"), lastEventError);
 
 	//закрываем поток
 
-#if debug_log && extended_debug_log
-	wsprintfW(msgBuf, _T("Closing handler thread %d\n"), handlerThreadID);
-
-	OutputDebugString(msgBuf);
-#endif
+	extendedDebugLogFmt(_T("Closing handler thread %d\n"), handlerThreadID);
 
 	ExitThread(NULL); //завершаем поток
 
@@ -1988,9 +1852,7 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 
 			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
 			{
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("HangarEvent not setted!\n"));
-#endif
+				extendedDebugLog("[NY_Event][ERROR]: EVENT_IN_HANGAR not setted!\n");
 
 				return 5;
 			}
@@ -2006,9 +1868,7 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 
 			if (!SetEvent(EVENT_START_TIMER->hEvent))
 			{
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("STEvent event not setted!\n"));
-#endif
+				extendedDebugLog("[NY_Event][ERROR]: EVENT_START_TIMER not setted!\n");
 
 				return 5;
 			}
@@ -2024,9 +1884,7 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 
 			if (!SetEvent(EVENT_DEL_MODEL->hEvent))
 			{
-#if debug_log && extended_debug_log
-				OutputDebugString(_T("STEvent event not setted!\n"));
-#endif
+				extendedDebugLog("[NY_Event][ERROR]: EVENT_DEL_MODEL not setted!\n");
 
 				return 5;
 			}
@@ -2105,9 +1963,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 
 	mapID = atoi(map_ID_s);
 
-#if debug_log && extended_debug_log
-	PySys_WriteStdout("mapID = %d\n", (uint32_t)mapID);
-#endif
+	extendedDebugLogFmt(_T("[NY_Event]: mapID = %d\n"), (uint32_t)mapID);
 
 	battleEnded = false;
 
@@ -2119,9 +1975,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	request = makeEventInThread(mapID, EVENT_ID::IN_BATTLE_GET_FULL);
 
 	if (request) {
-#if debug_log && extended_debug_log
-		PySys_WriteStdout("[NY_Event]: Error in get: %d\n", request);
-#endif
+		extendedDebugLogFmt(_T("[NY_Event][ERROR]: start - error %d\n"), request);
 
 		return PyInt_FromSize_t(6U);
 	}
@@ -2134,9 +1988,7 @@ uint8_t del_models() {
 		return 1U;
 	}
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: models deleting...\n"));
-#endif
+	extendedDebugLog("[NY_Event]: models deleting...\n");
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
 
@@ -2233,9 +2085,7 @@ uint8_t del_models() {
 #endif
 	}
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: models deleting OK!\n"));
-#endif
+	extendedDebugLog("[NY_Event]: models deleting OK!\n");
 
 	return NULL;
 }
@@ -2245,9 +2095,7 @@ uint8_t event_fini() {
 		return 1U;
 	}
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: fini...\n"));
-#endif
+	extendedDebugLog("[NY_Event]: fini...\n");
 
 	if (!models.empty()) {
 		request = NULL;
@@ -2255,9 +2103,7 @@ uint8_t event_fini() {
 		uint8_t delete_models = del_models();
 
 		if (delete_models) {
-#if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event]: Warning: del_models: %d\n", (uint32_t)delete_models);
-#endif
+			extendedDebugLogFmt(_T("[NY_Event][WARNING]: del_models: %d\n"), (uint32_t)delete_models);
 		}
 
 		std::vector<ModModel*>::iterator it_model = models.begin();
@@ -2317,15 +2163,13 @@ uint8_t event_fini() {
 #endif
 
 	if (!current_map.modelsSects.empty() && current_map.minimap_count) {
-#if debug_log && extended_debug_log
-		OutputDebugString(_T("[PositionsMod_Free]: fini debug 3\n"));
+#if debug_log && extended_debug_log && super_extended_debug_log
+		OutputDebugString(_T("[PositionsMod_Free]: fini debug 2\n"));
 #endif
 
 		Py_BEGIN_ALLOW_THREADS;
-		clearModelsSections();
+			clearModelsSections();
 		Py_END_ALLOW_THREADS;
-
-
 	}
 
 	isModelsAlreadyCreated = false;
@@ -2341,9 +2185,7 @@ uint8_t event_fini() {
 		current_map.time_preparing = NULL;
 	}
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: fini OK!\n"));
-#endif
+	extendedDebugLog("[NY_Event]: fini OK!\n");
 
 	return NULL;
 }
@@ -2456,7 +2298,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 	if ((*pEvent)->hEvent == NULL)
 	{
-		OutputDebugString(TEXT("Primary event creating error\n"));
+		extendedDebugLogFmt(_T("[NY_Event][ERROR]: Primary event creating: error %d\n"), GetLastError());
 
 		return false;
 	}
@@ -2484,7 +2326,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 
 	if ((*pEvent)->hEvent == NULL)
 	{
-		OutputDebugString(TEXT("Secondary event creating error\n"));
+		extendedDebugLogFmt(_T("[NY_Event][ERROR]: Secondary event creating: error %d\n"), GetLastError());
 
 		return false;
 	}
@@ -2535,7 +2377,7 @@ bool createEventsAndSecondThread() {
 
 	if (hHandlerThread == NULL)
 	{
-		OutputDebugString(TEXT("CreateThread: error 1\n"));
+		extendedDebugLogFmt(_T("[NY_Event][ERROR]: Handler thread creating: error %d\n"), GetLastError());
 
 		return false;
 	}
@@ -2556,9 +2398,7 @@ uint8_t event_сheck() {
 
 	//------------------------------------------------------------------------------------------------
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: checking...\n"));
-#endif
+	extendedDebugLog("[NY_Event]: checking...\n");
 
 	PyObject* __player = PyString_FromStringAndSize("player", 6U);
 	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
@@ -2591,9 +2431,7 @@ uint8_t event_сheck() {
 
 	Py_DECREF(DBID_int);
 
-#if debug_log && extended_debug_log
-	OutputDebugString(_T("[NY_Event]: DBID created\n"));
-#endif
+	extendedDebugLog("[NY_Event]: DBID created\n");
 
 	battleEnded = false;
 
@@ -2714,9 +2552,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 		request = makeEventInThread(mapID, EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) {
-#if debug_log && extended_debug_log
-			PySys_WriteStdout("[NY_Event]: Error in DelModel: %d\n", request);
-#endif
+			extendedDebugLogFmt(_T("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n"), request);
 
 			Py_RETURN_NONE;
 		}
@@ -2783,9 +2619,7 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	}
 
-#if debug_log
-	OutputDebugString(_T("Config init...\n"));
-#endif
+	debugLog("[NY_Event]: Config init...\n");
 
 	if (PyType_Ready(&Config_p)) {
 		Py_DECREF(g_appLoader);
@@ -2794,9 +2628,7 @@ PyMODINIT_FUNC initevent(void)
 
 	Py_INCREF(&Config_p);
 
-#if debug_log
-	OutputDebugString(_T("Config init OK\n"));
-#endif
+	debugLog("[NY_Event]: Config init OK\n");
 
 	PyObject* g_config = PyObject_CallObject((PyObject*)&Config_p, NULL);
 
@@ -2820,8 +2652,6 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(g_appLoader);
 		return;
 	}
-
-	//
 
 	PyObject* __omc = PyString_FromStringAndSize("omc", 3);
 
@@ -2855,9 +2685,7 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	}
 
-#if debug_log
-	OutputDebugString(_T("Mod_GUI class loading...\n"));
-#endif
+	debugLog("[NY_Event]: Mod_GUI class loading...\n");
 
 	PyObject* __Mod_GUI = PyString_FromStringAndSize("Mod_GUI", 7U);
 
@@ -2871,22 +2699,17 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	}
 
-#if debug_log
-	OutputDebugString(_T("Mod_GUI class loaded OK!\n"));
-#endif
+	debugLog("[NY_Event]: Mod_GUI class loaded OK!\n");
 
-#if debug_log
-	OutputDebugString(_T("g_gui module loading...\n"));
-#endif
+	debugLog("[NY_Event]: g_gui module loading...\n");
 
 	PyObject* mod_mods_gui = PyImport_ImportModule("gui.mods.mod_mods_gui");
 
 	if (!mod_mods_gui) {
 		PyErr_Clear();
 		g_gui = NULL;
-#if debug_log
-		OutputDebugString(_T("mod_mods_gui is NULL!\n"));
-#endif
+
+		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
 	}
 	else {
 		PyObject* __g_gui = PyString_FromStringAndSize("g_gui", 5U);
@@ -2902,9 +2725,7 @@ PyMODINIT_FUNC initevent(void)
 			return;
 		}
 
-#if debug_log
-		OutputDebugString(_T("mod_mods_gui loaded OK!\n"));
-#endif
+		debugLog("[NY_Event]: mod_mods_gui loaded OK!\n");
 	}
 
 	if (!g_gui) {
@@ -2966,7 +2787,7 @@ PyMODINIT_FUNC initevent(void)
 	uint32_t curl_init_result = curl_init();
 
 	if (curl_init_result) {
-		OutputDebugString(_T("Error while initialising CURL handle!\n"));
+		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
 
 		return;
 	}

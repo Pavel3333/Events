@@ -6,25 +6,83 @@
 #include <Windows.h>
 #include <tchar.h>
 
-#define NETWORK_USING                                     \
-	OutputDebugString(_T("[NY_Event]: NETWORK_USING\n")); \
+#define debug_log true
+
+#define extended_debug_log true
+
+#define super_extended_debug_log false
+
+#if debug_log
+#define debugLog(X)                                        \
+	OutputDebugString(_T(X));                              \
+	PySys_WriteStdout(X);
+
+#define debugLogFmt(msg, args)                             \
+	wsprintfW(msgBuf, _T(msg), args);                      \
+	OutputDebugString(msgBuf);                             \
+	PySys_WriteStdout(msg, args);
+
+#if extended_debug_log
+#define extendedDebugLog(X) OutputDebugString(_T(X));
+#define extendedDebugLogFmt(X)                             \
+	wsprintfW(msgBuf, X);                                  \
+	OutputDebugString(msgBuf);
+
+#if super_extended_debug_log
+#define superExtendedDebugLog(X) OutputDebugString(_T(X));
+#define superExtendedDebugLog(X)                           \
+	wsprintfW(msgBuf, X);                                  \
+	OutputDebugString(msgBuf);
+#else
+#define superExtendedDebugLog(X)    0;
+#define superExtendedDebugLogFmt(X) 0;
+#endif
+#else
+#define extendedDebugLog(X)         0;
+#define extendedDebugLogFmt(X)      0;
+#define superExtendedDebugLog(X)    0;
+#define superExtendedDebugLogFmt(X) 0;
+#endif
+#else
+#define debugLog(X)                 0;
+#define debugLogFmt(X)              0;
+#define extendedDebugLog(X)         0;
+#define extendedDebugLogFmt(X)      0;
+#define superExtendedDebugLog(X)    0;
+#define superExtendedDebugLogFmt(X) 0;
+#endif
+
+#if debug_log && extended_debug_log
+#define NETWORK_USING                                                                \
+	OutputDebugString(_T("[NY_Event]: NETWORK_USING\n"));                            \
     ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
-#define NETWORK_NOT_USING                                            \
-	OutputDebugString(_T("[NY_Event]: NETWORK_NOT_USING\n"));        \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                 \
-		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n")); \
+#define NETWORK_NOT_USING                                                            \
+	OutputDebugString(_T("[NY_Event]: NETWORK_NOT_USING\n"));                        \
+	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                                 \
+		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));                 \
 	}
 
 #define BEGIN_NETWORK_USING {                                                        \
 	OutputDebugString(_T("[NY_Event]: timer: beginning EVENT_NETWORK_NOT_USING\n")); \
 	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
 
-#define END_NETWORK_USING                                                         \
-	OutputDebugString(_T("[NY_Event]: timer: ending EVENT_NETWORK_NOT_USING\n")); \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                              \
-		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));              \
-	}                                                                             \
+#define END_NETWORK_USING                                                            \
+	OutputDebugString(_T("[NY_Event]: timer: ending EVENT_NETWORK_NOT_USING\n"));    \
+	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                                 \
+		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));                 \
+	}                                                                                \
 }
+#else
+#define NETWORK_USING     ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+#define NETWORK_NOT_USING SetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+
+#define BEGIN_NETWORK_USING {                                                        \
+	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+
+#define END_NETWORK_USING                                                            \
+	SetEvent(EVENT_NETWORK_NOT_USING->hEvent);                                       \
+}
+#endif
 
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12
