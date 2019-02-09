@@ -9,7 +9,7 @@
 
 #define debug_log true
 #define extended_debug_log true
-#define super_extended_debug_log true
+#define super_extended_debug_log false
 
 
 #if debug_log
@@ -42,22 +42,22 @@
 	}
 
 #else
-#define superExtendedDebugLog(X)    0
-#define superExtendedDebugLogFmt(X) 0
+#define superExtendedDebugLog(X)      0
+#define superExtendedDebugLogFmt(...) 0
 #endif
 #else
-#define extendedDebugLog(X)         0
-#define extendedDebugLogFmt(X)      0
-#define superExtendedDebugLog(X)    0
-#define superExtendedDebugLogFmt(X) 0
+#define extendedDebugLog(X)           0
+#define extendedDebugLogFmt(...)      0
+#define superExtendedDebugLog(X)      0
+#define superExtendedDebugLogFmt(...) 0
 #endif
 #else
-#define debugLog(X)                 0
-#define debugLogFmt(X)              0
-#define extendedDebugLog(X)         0
-#define extendedDebugLogFmt(X)      0
-#define superExtendedDebugLog(X)    0
-#define superExtendedDebugLogFmt(X) 0
+#define debugLog(X)                   0
+#define debugLogFmt(...)              0
+#define extendedDebugLog(X)           0
+#define extendedDebugLogFmt(...)      0
+#define superExtendedDebugLog(X)      0
+#define superExtendedDebugLogFmt(...) 0
 #endif
 
 #if debug_log && extended_debug_log
