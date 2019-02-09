@@ -6,18 +6,23 @@
 #include <Windows.h>
 #include <tchar.h>
 
-#define NETWORK_USING     ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
-#define NETWORK_NOT_USING \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) { \
+#define NETWORK_USING                                     \
+	OutputDebugString(_T("[NY_Event]: NETWORK_USING\n")); \
+    ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+#define NETWORK_NOT_USING                                            \
+	OutputDebugString(_T("[NY_Event]: NETWORK_NOT_USING\n"));        \
+	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                 \
 		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n")); \
 	}
 
-#define BEGIN_NETWORK_USING { \
+#define BEGIN_NETWORK_USING {                                                        \
+	OutputDebugString(_T("[NY_Event]: timer: beginning EVENT_NETWORK_NOT_USING\n")); \
 	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
 
-#define END_NETWORK_USING \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) { \
-		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n")); \
+#define END_NETWORK_USING                                                         \
+	OutputDebugString(_T("[NY_Event]: timer: ending EVENT_NETWORK_NOT_USING\n")); \
+	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                              \
+		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));              \
 	}\
 }
 

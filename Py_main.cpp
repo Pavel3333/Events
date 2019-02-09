@@ -1138,6 +1138,10 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 						//ожидаем события полного создания моделей
 
+#if debug_log && extended_debug_log
+						OutputDebugString(_T("[NY_Event]: waiting EVENT_ALL_MODELS_CREATED\n"));
+#endif
+
 						DWORD EVENT_ALL_MODELS_CREATED_WaitResult = WaitForSingleObject(
 							EVENT_ALL_MODELS_CREATED->hEvent, // event handle
 							INFINITE);                        // indefinite wait
@@ -1147,7 +1151,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 							// Event object was signaled
 						case WAIT_OBJECT_0:
 #if debug_log && extended_debug_log
-							OutputDebugString(_T("AllModelsCreatedEvent was signaled!\n"));
+							OutputDebugString(_T("[NY_Event]: EVENT_ALL_MODELS_CREATED signaled!\n"));
 #endif
 
 							//очищаем ивент
@@ -1351,6 +1355,10 @@ VOID CALLBACK TimerAPCProc(
 
 	PyGILState_STATE gstate;
 
+#if debug_log && extended_debug_log
+	OutputDebugString(_T("[NY_Event]: timer: waiting EVENT_NETWORK_NOT_USING\n"));
+#endif
+
 	DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
 		EVENT_NETWORK_NOT_USING->hEvent, // event handle
 		INFINITE);               // indefinite wait
@@ -1359,6 +1367,10 @@ VOID CALLBACK TimerAPCProc(
 	{
 		// Event object was signaled
 	case WAIT_OBJECT_0:
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event]: timer: EVENT_NETWORK_NOT_USING signaled!\n"));
+#endif
+
 		NETWORK_USING;
 
 		//рабочая часть
@@ -1455,6 +1467,10 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 	__int64         qwDueTime;
 	LARGE_INTEGER   liDueTime;
 
+#if debug_log && extended_debug_log
+	OutputDebugString(_T("[NY_Event]: waiting EVENT_START_TIMER\n"));
+#endif
+
 	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
 		EVENT_START_TIMER->hEvent, // event handle
 		INFINITE);               // indefinite wait
@@ -1464,7 +1480,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		// Event object was signaled
 	case WAIT_OBJECT_0:
 #if debug_log && extended_debug_log
-		OutputDebugString(_T("STEvent was signaled!\n"));
+		OutputDebugString(_T("[NY_Event]: EVENT_START_TIMER signaled!\n"));
 #endif
 
 		//место для рабочего кода
@@ -1596,6 +1612,10 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	DWORD EVENT_NETWORK_NOT_USING_WaitResult;
 
+#if debug_log && extended_debug_log
+	OutputDebugString(_T("[NY_Event]: waiting EVENT_IN_HANGAR\n"));
+#endif
+
 	DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
 		EVENT_IN_HANGAR->hEvent, // event handle
 		INFINITE);               // indefinite wait
@@ -1605,7 +1625,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		// Event object was signaled
 	case WAIT_OBJECT_0:
 #if debug_log && extended_debug_log
-		OutputDebugString(_T("HangarEvent was signaled!\n"));
+		OutputDebugString(_T("[NY_Event]: EVENT_IN_HANGAR signaled!\n"));
 #endif
 
 		//место для рабочего кода
@@ -1743,6 +1763,10 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	while (!first_check && !battleEnded && !lastEventError)
 	{
+#if debug_log && extended_debug_log
+		OutputDebugString(_T("[NY_Event]: waiting EVENTS\n"));
+#endif
+
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
 			HEVENTS_COUNT,
 			hEvents,
@@ -1753,7 +1777,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		{
 		case WAIT_OBJECT_0 + 0: //сработало событие удаления модели
 #if debug_log && extended_debug_log
-			OutputDebugString(_T("DelModelEvent was signaled!\n"));
+			OutputDebugString(_T("[NY_Event]: DelModelEvent signaled!\n"));
 #endif
 
 			//место для рабочего кода
@@ -1778,7 +1802,15 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			coords = new float[3];
 
+			//включаем GIL для этого потока
+
+			gstate = PyGILState_Ensure();
+
+			//-----------------------------
+
 			find_result = findLastModelCoords(5.0, &modelID, &coords);
+
+			PyGILState_Release(gstate);
 
 			if (!find_result) {
 				EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
@@ -1789,13 +1821,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				{
 					// Event object was signaled
 				case WAIT_OBJECT_0:
-					BEGIN_NETWORK_USING
+					BEGIN_NETWORK_USING;
 						server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
-					END_NETWORK_USING
+					END_NETWORK_USING;
 
-						//включаем GIL для этого потока
+					//включаем GIL для этого потока
 
-						gstate = PyGILState_Ensure();
+					gstate = PyGILState_Ensure();
 
 					//-----------------------------
 
@@ -1809,7 +1841,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 							PyGILState_Release(gstate);
 
-							lastEventError = 6;
+							lastEventError = 5;
 
 							break;
 						}
@@ -1822,7 +1854,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 						PyGILState_Release(gstate);
 
-						lastEventError = 5;
+						lastEventError = 4;
 
 						break;
 					}
@@ -1838,13 +1870,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 						PyGILState_Release(gstate);
 
-						lastEventError = 4;
+						lastEventError = 3;
 
 						break;
 					}
 
-				scoreID = modelID;
-				current_map.stageID = STAGE_ID::GET_SCORE;
+					scoreID = modelID;
+					current_map.stageID = STAGE_ID::GET_SCORE;
 
 					/*
 					uint8_t deleting_coords = delModelCoords(modelID, coords);
@@ -1866,8 +1898,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					//------------------------------
 
-					lastEventError = 3;
-
 					break;
 
 					// An error occurred
@@ -1878,7 +1908,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					lastEventError = 2;
 
-				break;
+					break;
 			}
 		}
 		else if (find_result == 7U) {
