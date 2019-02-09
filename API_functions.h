@@ -56,6 +56,21 @@ enum STAGE_ID {
 	STREAMER_MODE
 };
 
+
+enum EVENT_ID {
+	IN_HANGAR = 0,
+	IN_BATTLE_GET_FULL,
+	IN_BATTLE_GET_SYNC,
+	DEL_LAST_MODEL
+};
+
+
+enum MODS_ID {
+	HELLOWEEN = 1,
+	NY_EVENT = 2
+};
+
+
 extern uint16_t SCORE[SECTIONS_COUNT];
 
 extern LPCWSTR EVENT_NAMES[4];
@@ -73,22 +88,6 @@ extern bool isModelsAlreadyCreated;
 extern int8_t scoreID;
 extern STAGE_ID lastStageID;
 extern bool isStreamer;
-
-
-typedef struct {
-	uint8_t IN_HANGAR          = 0U;
-	uint8_t IN_BATTLE_GET_FULL = 1U;
-	uint8_t IN_BATTLE_GET_SYNC = 2U;
-	uint8_t DEL_LAST_MODEL     = 3U;
-} EVENT_ID;
-
-typedef struct {
-	uint8_t HELLOWEEN        = 1U;
-	uint8_t NY_EVENT         = 2U;
-} MODS_ID;
-
-extern MODS_ID  ModsID;
-extern EVENT_ID EventsID;
 
 
 struct ModelsSection  {
@@ -111,14 +110,14 @@ struct map {
 	std::vector<ModelsSection> modelsSects;
 };
 
-typedef struct {
+struct map_sync {
 	uint16_t all_models_count = NULL;
 
 	//types of positions sections
 
 	std::vector<ModelsSection> modelsSects_creating;
 	std::vector<ModelsSection> modelsSects_deleting;
-} map_sync;
+};
 
 extern map      current_map;
 extern map_sync sync_map;
@@ -132,8 +131,7 @@ struct i18n_c {
 	uint16_t version = NULL; //version_id
 };
 
-class Config {
-public:
+struct Config {
 	char* ids = "NY_Event";
 	char* author = "by Pavel3333 & RAINN VOD";
 	char* version = "v1.0.0.0 (06.02.2019)";
@@ -150,7 +148,7 @@ double getDist2Points(double*, float*);
 uint32_t curl_init();
 void     curl_clean();
 
-const std::vector<float*>* findModelsByID(std::vector<ModelsSection>*, uint8_t);
+const std::vector<float*>* findModelsByID(std::vector<ModelsSection>&, uint8_t);
 
 uint8_t parse_config();
 uint8_t parse_sync();
@@ -158,4 +156,4 @@ uint8_t parse_del_model();
 
 bool file_exists(const char*);
 
-uint8_t send_token(uint32_t, uint8_t, uint8_t, uint8_t modelID, float* coords_del);
+uint8_t send_token(uint32_t, uint8_t, EVENT_ID, uint8_t modelID, float* coords_del);

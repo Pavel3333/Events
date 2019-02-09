@@ -83,7 +83,7 @@ PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 //---------------------
 
 STAGE_ID lastStageID = STAGE_ID::COMPETITION;
-uint8_t lastEventID = EventsID.IN_HANGAR;
+EVENT_ID lastEventID = EVENT_ID::IN_HANGAR;
 
 uint8_t makeEventInThread(uint8_t, uint8_t);
 
@@ -1000,8 +1000,8 @@ uint8_t set_visible(bool isVisible) {
 	return NULL;
 };
 
-uint8_t handle_battle_event(uint8_t eventID) {
-	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EventsID.IN_HANGAR) {
+uint8_t handle_battle_event(EVENT_ID eventID) {
+	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR) {
 		NETWORK_NOT_USING;
 
 		return 1U;
@@ -1015,9 +1015,9 @@ uint8_t handle_battle_event(uint8_t eventID) {
 
 	Py_BEGIN_ALLOW_THREADS
 
-	if      (eventID == EventsID.IN_BATTLE_GET_FULL) parsing_result = parse_config();
-	else if (eventID == EventsID.IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
-	else if (eventID == EventsID.DEL_LAST_MODEL)     parsing_result = parse_del_model();
+	if      (eventID == EVENT_ID::IN_BATTLE_GET_FULL) parsing_result = parse_config();
+	else if (eventID == EVENT_ID::IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
+	else if (eventID == EVENT_ID::DEL_LAST_MODEL)     parsing_result = parse_del_model();
 
 	NETWORK_NOT_USING;
 
@@ -1087,7 +1087,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 				current_map.stageID == STAGE_ID::COMPETITION    || 
 				current_map.stageID == STAGE_ID::STREAMER_MODE) {
 				if (isModelsAlreadyCreated && !isModelsAlreadyInited && current_map.minimap_count && current_map.modelsSects.size()) {
-					if      (eventID == EventsID.IN_BATTLE_GET_FULL) {
+					if      (eventID == EVENT_ID::IN_BATTLE_GET_FULL) {
 #if debug_log && extended_debug_log && super_extended_debug_log
 						PySys_WriteStdout("sect count: %d\npos count: %d\n", (uint32_t)current_map.modelsSects.size(), (uint32_t)current_map.minimap_count);
 #endif
@@ -1230,7 +1230,7 @@ uint8_t handle_battle_event(uint8_t eventID) {
 				}
 			}
 
-			if (isModelsAlreadyCreated && isModelsAlreadyInited && eventID == EventsID.IN_BATTLE_GET_SYNC && sync_map.all_models_count && !sync_map.modelsSects_deleting.empty()) {
+			if (isModelsAlreadyCreated && isModelsAlreadyInited && eventID == EVENT_ID::IN_BATTLE_GET_SYNC && sync_map.all_models_count && !sync_map.modelsSects_deleting.empty()) {
 				uint8_t res = NULL;
 				
 				std::vector<ModelsSection>::iterator it_sect_sync = sync_map.modelsSects_deleting.begin();
@@ -1343,7 +1343,7 @@ VOID CALLBACK TimerAPCProc(
 
 	uint32_t databaseID = EVENT_START_TIMER->databaseID;
 	uint32_t map_ID     = EVENT_START_TIMER->map_ID;
-	uint32_t eventID    = EVENT_START_TIMER->eventID;
+	EVENT_ID eventID    = EVENT_START_TIMER->eventID;
 
 	if (!isTimerStarted) {
 		isTimerStarted = true;
@@ -1469,7 +1469,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		//место для рабочего кода
 
-		if (EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EventsID.IN_BATTLE_GET_SYNC) {
+		if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) {
 			ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
 #if debug_log && extended_debug_log
@@ -1590,7 +1590,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	uint32_t databaseID;
 	uint8_t  map_ID;
-	uint8_t  eventID;
+	EVENT_ID eventID;
 
 	PyGILState_STATE gstate;
 
@@ -1614,7 +1614,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		map_ID     = EVENT_IN_HANGAR->map_ID;
 		eventID    = EVENT_IN_HANGAR->eventID;
 
-		if (eventID != EventsID.IN_HANGAR) {
+		if (eventID != EVENT_ID::IN_HANGAR) {
 			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
 #if debug_log && extended_debug_log
@@ -1762,7 +1762,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			map_ID = EVENT_DEL_MODEL->map_ID;
 			eventID = EVENT_DEL_MODEL->eventID;
 
-			if (eventID != EventsID.DEL_LAST_MODEL) {
+			if (eventID != EVENT_ID::DEL_LAST_MODEL) {
 				ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
 #if debug_log && extended_debug_log
@@ -1790,7 +1790,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					// Event object was signaled
 				case WAIT_OBJECT_0:
 					BEGIN_NETWORK_USING
-						server_req = send_token(databaseID, mapID, EventsID.DEL_LAST_MODEL, modelID, coords);
+						server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
 					END_NETWORK_USING
 
 						//включаем GIL для этого потока
@@ -1948,13 +1948,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 //-----------------
 
-uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводим ивенты в сигнальные состояния
+uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводим ивенты в сигнальные состояния
 	if (!isInited || !databaseID || battleEnded) {
 		return 1U;
 	}
 
-	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC || eventID == EventsID.DEL_LAST_MODEL) { //посылаем ивент и обрабатываем в треде
-		if      (eventID == EventsID.IN_HANGAR) {
+	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC || eventID == EVENT_ID::DEL_LAST_MODEL) { //посылаем ивент и обрабатываем в треде
+		if      (eventID == EVENT_ID::IN_HANGAR) {
 			if (!EVENT_IN_HANGAR) {
 				return 4;
 			}
@@ -1972,7 +1972,7 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводи�
 				return 5;
 			}
 		}
-		else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
+		else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
 			if (!EVENT_START_TIMER) {
 				return 4;
 			}
@@ -1990,7 +1990,7 @@ uint8_t makeEventInThread(uint8_t map_ID, uint8_t eventID) { //переводи�
 				return 5;
 			}
 		}
-		else if (eventID == EventsID.DEL_LAST_MODEL) {
+		else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
 			if (!EVENT_DEL_MODEL) {
 				return 4;
 			}
@@ -2093,7 +2093,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 
 	isTimeVisible = true;
 
-	request = makeEventInThread(mapID, EventsID.IN_BATTLE_GET_FULL);
+	request = makeEventInThread(mapID, EVENT_ID::IN_BATTLE_GET_FULL);
 
 	if (request) {
 #if debug_log && extended_debug_log
@@ -2472,13 +2472,13 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 }
 
 bool createEventsAndSecondThread() {
-	if (!createEvent1(&EVENT_IN_HANGAR, EventsID.IN_HANGAR)) {
+	if (!createEvent1(&EVENT_IN_HANGAR, EVENT_ID::IN_HANGAR)) {
 		return false;
 	}
-	if (!createEvent1(&EVENT_START_TIMER, EventsID.IN_BATTLE_GET_FULL)) {
+	if (!createEvent1(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) {
 		return false;
 	}
-	if (!createEvent1(&EVENT_DEL_MODEL, EventsID.DEL_LAST_MODEL)) {
+	if (!createEvent1(&EVENT_DEL_MODEL, EVENT_ID::DEL_LAST_MODEL)) {
 		return false;
 	}
 
@@ -2576,7 +2576,7 @@ uint8_t event_сheck() {
 
 	battleEnded = false;
 
-	first_check = makeEventInThread(NULL, EventsID.IN_HANGAR);
+	first_check = makeEventInThread(NULL, EVENT_ID::IN_HANGAR);
 
 	if (first_check) {
 		return 6U;
@@ -2690,7 +2690,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	}
 
 	if (isKeyGetted_Space == Py_True) {
-		request = makeEventInThread(mapID, EventsID.DEL_LAST_MODEL);
+		request = makeEventInThread(mapID, EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) {
 #if debug_log && extended_debug_log

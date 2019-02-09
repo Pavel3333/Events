@@ -1,7 +1,7 @@
 ﻿#include "API_functions.h"
 
 #include <cmath>
-#include <io.h>
+#include <filesystem>
 #include <sstream>
 #include "curl/curl.h"
 #pragma comment(lib,"libcurl.lib")
@@ -15,9 +15,6 @@ map      current_map;
 map_sync sync_map;
 
 CURL *  curl_handle = NULL;
-
-MODS_ID  ModsID;
-EVENT_ID EventsID;
 
 int8_t scoreID = -1;
 
@@ -67,14 +64,10 @@ char* MODEL_NAMES[SECTIONS_COUNT] {
 
 //---------------------------------------------API functions--------------------------------------------------------
 
-const std::vector<float*>* findModelsByID(std::vector<ModelsSection>* modelsSects, uint8_t ID) {
-	for (std::vector<ModelsSection>::const_iterator it = modelsSects->cbegin();
-		it != modelsSects->cend();
-		it++) {
-		if (it->isInitialised) {
-			if (it->ID == ID) {
-				return &(it->models);
-			}
+const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSects, uint8_t ID) {
+	for (const auto &it : modelsSects) {
+		if (it.isInitialised && it.ID == ID) {
+			return &it.models;
 		}
 	}
 
@@ -83,7 +76,7 @@ const std::vector<float*>* findModelsByID(std::vector<ModelsSection>* modelsSect
 
 bool file_exists(const char *fname)
 {
-	return _access(fname, 0) != -1;
+	return std::filesystem::exists(fname);
 }
 
 double getDist2Points(double* point1, float* point2) {
@@ -593,26 +586,26 @@ uint8_t parse_del_model() {
 	return 26U;
 }
 
-uint8_t send_token(uint32_t id, uint8_t map_id, uint8_t eventID, uint8_t modelID=NULL, float* coords_del=nullptr) {
+uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID=NULL, float* coords_del=nullptr) {
 	unsigned char* token = nullptr;
 
 	uint16_t size = NULL;
 
 	//Код наполнения токена по типу события
 
-	if (eventID == EventsID.IN_HANGAR || eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) {
+	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
 		size = 7U;
 
 		token = new unsigned char[size + 1];
 
-		token[0] = ModsID.NY_EVENT;    //mod
+		token[0] = MODS_ID::NY_EVENT;    //mod
 		token[1] = map_id;             //map ID
 
 		memcpy(&token[2], &id, 4U);
 
 		token[6] = eventID; //код события
 	}
-	else if (eventID == EventsID.DEL_LAST_MODEL) {
+	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
 		if (coords_del == nullptr) {
 			return 24U;
 		}
@@ -621,7 +614,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, uint8_t eventID, uint8_t modelID
 
 		token = new unsigned char[size + 1];
 
-		token[0] = ModsID.NY_EVENT;    //mod
+		token[0] = MODS_ID::NY_EVENT;    //mod
 		token[1] = map_id;             //map ID
 
 		memcpy(&token[2], &id, 4U);
@@ -673,7 +666,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, uint8_t eventID, uint8_t modelID
 	uint16_t len;
 	uint16_t offset = NULL;
 
-	if (eventID == EventsID.IN_HANGAR) { //запрос из ангара: 3 байта - 2 байта длина; 1 байт либо 0, либо 6, либо ошибка (больше 9);
+	if (eventID == EVENT_ID::IN_HANGAR) { //запрос из ангара: 3 байта - 2 байта длина; 1 байт либо 0, либо 6, либо ошибка (больше 9);
 		//проверяем ответ от сервера
 
 		if (wr_index == 3U) {
@@ -688,10 +681,10 @@ uint8_t send_token(uint32_t id, uint8_t map_id, uint8_t eventID, uint8_t modelID
 
 		return 24U;
 	}
-	else if (eventID == EventsID.IN_BATTLE_GET_FULL || eventID == EventsID.IN_BATTLE_GET_SYNC) { 
+	else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) { 
 		return NULL;
 	}
-	else if (eventID == EventsID.DEL_LAST_MODEL) {
+	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
 		return NULL;
 	}
 
