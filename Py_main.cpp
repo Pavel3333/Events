@@ -2126,8 +2126,6 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 		return PyInt_FromSize_t(6U);
 	}
 
-	set_visible(false);
-
 	Py_RETURN_NONE;
 };
 
