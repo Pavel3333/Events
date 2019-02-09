@@ -6,50 +6,58 @@
 #include <Windows.h>
 #include <tchar.h>
 
+
 #define debug_log true
-
 #define extended_debug_log true
+#define super_extended_debug_log true
 
-#define super_extended_debug_log false
 
 #if debug_log
-#define debugLog(X)                                        \
-	OutputDebugString(_T(X));                              \
-	PySys_WriteStdout(X);
+#define debugLog(X)           \
+	OutputDebugString(_T(X)); \
+	PySys_WriteStdout(X)
 
-#define debugLogFmt(msg, args)                             \
-	wsprintfW(msgBuf, _T(msg), args);                      \
-	OutputDebugString(msgBuf);                             \
-	PySys_WriteStdout(msg, args);
+#define debugLogFmt(fmt, ...) {               \
+	WCHAR log_buf[256];                       \
+	wsprintfW(log_buf, _T(fmt), __VA_ARGS__); \
+	OutputDebugString(log_buf);               \
+	PySys_WriteStdout(fmt, __VA_ARGS__);      \
+	}
 
 #if extended_debug_log
-#define extendedDebugLog(X) OutputDebugString(_T(X));
-#define extendedDebugLogFmt(X)                             \
-	wsprintfW(msgBuf, X);                                  \
-	OutputDebugString(msgBuf);
+#define extendedDebugLog(X) OutputDebugString(_T(X))
+#define extendedDebugLogFmt(fmt, ...) {       \
+	WCHAR log_buf[256];                       \
+	wsprintfW(log_buf, _T(fmt), __VA_ARGS__); \
+	OutputDebugString(log_buf);               \
+	}
+
 
 #if super_extended_debug_log
-#define superExtendedDebugLog(X) OutputDebugString(_T(X));
-#define superExtendedDebugLog(X)                           \
-	wsprintfW(msgBuf, X);                                  \
-	OutputDebugString(msgBuf);
+#define superExtendedDebugLog(X) OutputDebugString(_T(X))
+#define superExtendedDebugLogFmt(fmt, ...) {  \
+	WCHAR log_buf[256];                       \
+	wsprintfW(log_buf, _T(fmt), __VA_ARGS__); \
+	OutputDebugString(log_buf);               \
+	}
+
 #else
-#define superExtendedDebugLog(X)    0;
-#define superExtendedDebugLogFmt(X) 0;
+#define superExtendedDebugLog(X)    0
+#define superExtendedDebugLogFmt(X) 0
 #endif
 #else
-#define extendedDebugLog(X)         0;
-#define extendedDebugLogFmt(X)      0;
-#define superExtendedDebugLog(X)    0;
-#define superExtendedDebugLogFmt(X) 0;
+#define extendedDebugLog(X)         0
+#define extendedDebugLogFmt(X)      0
+#define superExtendedDebugLog(X)    0
+#define superExtendedDebugLogFmt(X) 0
 #endif
 #else
-#define debugLog(X)                 0;
-#define debugLogFmt(X)              0;
-#define extendedDebugLog(X)         0;
-#define extendedDebugLogFmt(X)      0;
-#define superExtendedDebugLog(X)    0;
-#define superExtendedDebugLogFmt(X) 0;
+#define debugLog(X)                 0
+#define debugLogFmt(X)              0
+#define extendedDebugLog(X)         0
+#define extendedDebugLogFmt(X)      0
+#define superExtendedDebugLog(X)    0
+#define superExtendedDebugLogFmt(X) 0
 #endif
 
 #if debug_log && extended_debug_log

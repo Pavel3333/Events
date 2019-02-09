@@ -59,7 +59,7 @@ DWORD  handlerThreadID = NULL;
 
 uint8_t timerLastError = NULL;
 
-wchar_t msgBuf[512];
+
 
 //Главные ивенты
 
@@ -868,20 +868,14 @@ uint8_t create_models() {
 		}
 		
 		for (auto it2 = it->models.cbegin(); it2 != it->models.cend(); it2++) {
-#if debug_log && extended_debug_log && super_extended_debug_log
-			OutputDebugString("[");
-#endif
+			superExtendedDebugLog("[");
 
 			event_model(it->path, *it2, true);
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-			OutputDebugString("], ");
-#endif
+			superExtendedDebugLog("], ");
 		}
 	}
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("], \n"));
-#endif
+	superExtendedDebugLog("], \n");
 
 	return NULL;
 }
@@ -911,9 +905,7 @@ uint8_t init_models() {
 			continue;
 		}
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: addModel debug 2.1\n"));
-#endif
+		superExtendedDebugLog("[NY_Event]: addModel debug 2.1\n");
 
 		PyObject* __addModel = PyString_FromStringAndSize("addModel", 8U);
 
@@ -921,22 +913,17 @@ uint8_t init_models() {
 
 		Py_DECREF(__addModel);
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: addModel debug 2.2\n"));
-#endif
+		superExtendedDebugLog("[NY_Event]: addModel debug 2.2\n");
+
 		if (result) {
 			Py_DECREF(result);
 
 			models[i]->processed = true;
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-			OutputDebugString(_T("True\n"));
-#endif
+			superExtendedDebugLog("True\n");
 		}
-#if debug_log && extended_debug_log && super_extended_debug_log
-		else OutputDebugString(_T("False\n"));
-		OutputDebugString(_T("[NY_Event]: addModel debug 2.3\n"));
-#endif
+		else superExtendedDebugLog("False\n");
+		superExtendedDebugLog("[NY_Event]: addModel debug 2.3\n");
 	}
 
 	extendedDebugLog("[NY_Event]: models adding OK!\n");
@@ -1007,17 +994,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 	Py_END_ALLOW_THREADS
 
 	if (parsing_result) {
-		extendedDebugLogFmt(_T("[NY_Event]: parsing FAILED! Error code: %d\n"), (uint32_t)parsing_result);
+		extendedDebugLogFmt("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
 
 		GUI_setError(parsing_result);
 
 		return 2U;
 	}
 
-
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("[NY_Event]: parsing OK!\n"));
-#endif
+	superExtendedDebugLog("[NY_Event]: parsing OK!\n");
 	
 	if (current_map.time_preparing)  //выводим время
 		GUI_setTime(current_map.time_preparing);
@@ -1049,7 +1033,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 				uint8_t event_result = event_fini();
 
 				if (event_result) {
-					extendedDebugLogFmt(_T("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n"), (uint32_t)event_result);
+					extendedDebugLogFmt("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n", (uint32_t)event_result);
 
 					GUI_setWarning(event_result);
 				}
@@ -1066,10 +1050,8 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 				current_map.stageID == STAGE_ID::COMPETITION    || 
 				current_map.stageID == STAGE_ID::STREAMER_MODE) {
 				if (isModelsAlreadyCreated && !isModelsAlreadyInited && current_map.minimap_count && current_map.modelsSects.size()) {
-					if      (eventID == EVENT_ID::IN_BATTLE_GET_FULL) {
-#if debug_log && extended_debug_log && super_extended_debug_log
-						PySys_WriteStdout("sect count: %d\npos count: %d\n", (uint32_t)current_map.modelsSects.size(), (uint32_t)current_map.minimap_count);
-#endif
+					if (eventID == EVENT_ID::IN_BATTLE_GET_FULL) {
+						superExtendedDebugLogFmt("sect count: %u\npos count: %u\n", current_map.modelsSects.size(), current_map.minimap_count);
 
 						Py_BEGIN_ALLOW_THREADS;
 
@@ -1103,7 +1085,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 						request = create_models();
 
 						if (request) {
-							extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n"), request);
+							extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
 
 							return 3U;
 						}
@@ -1141,14 +1123,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 							if (request) {
 								if (request > 9U) {
-									extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n"), request);
+									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
 
 									GUI_setError(request);
 
 									return 5U;
 								}
 
-								extendedDebugLogFmt(_T("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n"), request);
+								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
 
 								GUI_setWarning(request);
 
@@ -1159,14 +1141,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 							if (request) {
 								if (request > 9U) {
-									extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n"), request);
+									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
 
 									GUI_setError(request);
 
 									return 5U;
 								}
 
-								extendedDebugLogFmt(_T("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n"), request);
+								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 
 								GUI_setWarning(request);
 
@@ -1212,7 +1194,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 							res = delModelPy(*it_model);
 
 							if (res) {
-								extendedDebugLogFmt(_T("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n"), (uint32_t)res);
+								extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)res);
 
 								GUI_setError(res);
 
@@ -1399,7 +1381,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 						if (request) {
 							if (request > 9U) {
-								extendedDebugLogFmt(_T("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n"), request)
+								extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request)
 
 								GUI_setError(request);
 
@@ -1412,7 +1394,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 								break;
 							}
 
-							extendedDebugLogFmt(_T("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n"), request)
+							extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request)
 
 							GUI_setWarning(request);
 
@@ -1430,7 +1412,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						request = handle_battle_event(eventID);
 
 						if (request) {
-							extendedDebugLogFmt(_T("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n"), request)
+							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request)
 
 							GUI_setError(request);
 
@@ -1490,7 +1472,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 	//закрываем поток
 
-	extendedDebugLogFmt(_T("[NY_Event]: Closing timer thread %d\n"), handlerThreadID);
+	extendedDebugLogFmt("[NY_Event]: Closing timer thread %d\n", handlerThreadID);
 
 	ExitThread(NULL); //завершаем поток
 
@@ -1561,14 +1543,14 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			if (first_check) {
 				if (first_check > 9U) {
-					extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n"), request);
+					extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
 
 					GUI_setError(first_check);
 
 					return 6U;
 				}
 
-				extendedDebugLogFmt(_T("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n"), request);
+				extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
 
 				GUI_setWarning(first_check);
 
@@ -1604,7 +1586,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		return 3;
 	}
 	if (first_check) {
-		extendedDebugLogFmt(_T("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n"), (uint32_t)first_check);
+		extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n", (uint32_t)first_check);
 
 		return 4;
 	}
@@ -1625,7 +1607,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	if (hTimerThread == NULL)
 	{
-		extendedDebugLogFmt(_T("[NY_Event][ERROR]: CreateThread: error %d\n"), GetLastError());
+		extendedDebugLogFmt("[NY_Event][ERROR]: CreateThread: error %d\n", GetLastError());
 
 		return 5;
 	}
@@ -1710,7 +1692,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 					if (server_req) {
 						if (server_req > 9U) {
-							extendedDebugLogFmt(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n"), (uint32_t)server_req);
+							extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", (uint32_t)server_req);
 
 							GUI_setError(server_req);
 
@@ -1721,7 +1703,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 							break;
 						}
 
-						extendedDebugLogFmt(_T("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n"), (uint32_t)server_req);
+						extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
 
 						GUI_setWarning(server_req);
 
@@ -1735,7 +1717,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					deleting_py_models = delModelPy(coords);
 
 					if (deleting_py_models) {
-						extendedDebugLogFmt(_T("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n"), (uint32_t)deleting_py_models);
+						extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", (uint32_t)deleting_py_models);
 
 						GUI_setError(deleting_py_models);
 
@@ -1822,11 +1804,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		}
 	}
 
-	if (lastEventError) extendedDebugLogFmt(_T("Error in event: %d\n"), lastEventError);
+	if (lastEventError) extendedDebugLogFmt("Error in event: %d\n", lastEventError);
 
 	//закрываем поток
 
-	extendedDebugLogFmt(_T("Closing handler thread %d\n"), handlerThreadID);
+	extendedDebugLogFmt("Closing handler thread %d\n", handlerThreadID);
 
 	ExitThread(NULL); //завершаем поток
 
@@ -1963,7 +1945,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 
 	mapID = atoi(map_ID_s);
 
-	extendedDebugLogFmt(_T("[NY_Event]: mapID = %d\n"), (uint32_t)mapID);
+	extendedDebugLogFmt("[NY_Event]: mapID = %d\n", (uint32_t)mapID);
 
 	battleEnded = false;
 
@@ -1975,7 +1957,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	request = makeEventInThread(mapID, EVENT_ID::IN_BATTLE_GET_FULL);
 
 	if (request) {
-		extendedDebugLogFmt(_T("[NY_Event][ERROR]: start - error %d\n"), request);
+		extendedDebugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
 
 		return PyInt_FromSize_t(6U);
 	}
@@ -2103,7 +2085,7 @@ uint8_t event_fini() {
 		uint8_t delete_models = del_models();
 
 		if (delete_models) {
-			extendedDebugLogFmt(_T("[NY_Event][WARNING]: del_models: %d\n"), (uint32_t)delete_models);
+			extendedDebugLogFmt("[NY_Event][WARNING]: del_models: %d\n", (uint32_t)delete_models);
 		}
 
 		std::vector<ModModel*>::iterator it_model = models.begin();
@@ -2298,7 +2280,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 	if ((*pEvent)->hEvent == NULL)
 	{
-		extendedDebugLogFmt(_T("[NY_Event][ERROR]: Primary event creating: error %d\n"), GetLastError());
+		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
 
 		return false;
 	}
@@ -2326,7 +2308,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 
 	if ((*pEvent)->hEvent == NULL)
 	{
-		extendedDebugLogFmt(_T("[NY_Event][ERROR]: Secondary event creating: error %d\n"), GetLastError());
+		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
 
 		return false;
 	}
@@ -2377,7 +2359,7 @@ bool createEventsAndSecondThread() {
 
 	if (hHandlerThread == NULL)
 	{
-		extendedDebugLogFmt(_T("[NY_Event][ERROR]: Handler thread creating: error %d\n"), GetLastError());
+		extendedDebugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
 
 		return false;
 	}
@@ -2552,7 +2534,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 		request = makeEventInThread(mapID, EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) {
-			extendedDebugLogFmt(_T("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n"), request);
+			extendedDebugLogFmt("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n", request);
 
 			Py_RETURN_NONE;
 		}

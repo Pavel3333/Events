@@ -6,6 +6,7 @@
 #include "curl/curl.h"
 #pragma comment(lib,"libcurl.lib")
 
+#undef debug_log
 #define debug_log false
 
 unsigned char wr_buf[NET_BUFFER_SIZE + 1];
