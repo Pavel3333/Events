@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <direct.h>
 
+
 typedef struct {
 	bool processed = false;
 	PyObject* model = NULL;
@@ -31,8 +32,8 @@ uint16_t allModelsCreated      = NULL;
 
 PyObject* onModelCreatedPyMeth = NULL;
 
-uint8_t  first_check = 100U;
-uint32_t request     = 100U;
+uint8_t  first_check = 100;
+uint32_t request     = 100;
 
 uint8_t  mapID      = NULL;
 uint32_t databaseID = NULL;
@@ -99,10 +100,10 @@ bool write_data(char* data_path, PyObject* data_p) {
 	PyObject* arg6 = Py_None;
 	Py_INCREF(arg6);
 
-	PyObject* indent = PyInt_FromSize_t(4U);
+	PyObject* indent = PyInt_FromSize_t(4);
 	Py_INCREF(indent);
 
-	PyObject* __dumps = PyString_FromStringAndSize("dumps", 5U);
+	PyObject* __dumps = PyString_FromString("dumps");
 
 	PyObject* data_json_s = PyObject_CallMethodObjArgs(json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
 
@@ -162,11 +163,11 @@ bool read_data(bool isData) {
 		}
 		data.close();
 
-		PyObject* data_p = PyString_FromStringAndSize(data_s, size);
+		PyObject* data_p = PyString_FromString(data_s);
 
 		delete[] data_s;
 
-		PyObject* __loads = PyString_FromStringAndSize("loads", 5U);
+		PyObject* __loads = PyString_FromString("loads");
 
 		PyObject* data_json_s = PyObject_CallMethodObjArgs(json, __loads, data_p, NULL);
 
@@ -208,8 +209,8 @@ void clearModelsSections() {
 					continue;
 				}
 
-				for (uint8_t counter = NULL; counter < 3U; counter++) {
-					memset(&(*it_model)[counter], NULL, 4U);
+				for (uint8_t counter = NULL; counter < 3; counter++) {
+					memset(&(*it_model)[counter], NULL, 4);
 				}
 
 				delete[] *it_model;
@@ -263,7 +264,7 @@ void clearModelsSections() {
 }
 
 uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
-	PyObject* __player = PyString_FromStringAndSize("player", 6U);
+	PyObject* __player = PyString_FromString("player");
 
 	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
 
@@ -272,10 +273,10 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 	isModelsAlreadyCreated = false;
 
 	if (!player) {
-		return 1U;
+		return 1;
 	}
 
-	PyObject* __vehicle = PyString_FromStringAndSize("vehicle", 7U);
+	PyObject* __vehicle = PyString_FromString("vehicle");
 	PyObject* vehicle = PyObject_GetAttr(player, __vehicle);
 
 	Py_DECREF(__vehicle);
@@ -283,46 +284,46 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 	Py_DECREF(player);
 
 	if (!vehicle) {
-		return 2U;
+		return 2;
 	}
 
-	PyObject* __model = PyString_FromStringAndSize("model", 5U);
+	PyObject* __model = PyString_FromString("model");
 	PyObject* model_p = PyObject_GetAttr(vehicle, __model);
 
 	Py_DECREF(__model);
 	Py_DECREF(vehicle);
 
 	if (!model_p) {
-		return 3U;
+		return 3;
 	}
 
-	PyObject* __position = PyString_FromStringAndSize("position", 8U);
+	PyObject* __position = PyString_FromString("position");
 	PyObject* position_Vec3 = PyObject_GetAttr(model_p, __position);
 
 	Py_DECREF(__position);
 	Py_DECREF(model_p);
 
 	if (!position_Vec3) {
-		return 4U;
+		return 4;
 	}
 
 	double* coords_pos = new double[3];
 
-	for (uint8_t i = NULL; i < 3U; i++) {
-		PyObject* __tuple = PyString_FromStringAndSize("tuple", 5U);
+	for (uint8_t i = NULL; i < 3; i++) {
+		PyObject* __tuple = PyString_FromString("tuple");
 
 		PyObject* position = PyObject_CallMethodObjArgs(position_Vec3, __tuple, NULL);
 
 		Py_DECREF(__tuple);
 
 		if (!position) {
-			return 5U;
+			return 5;
 		}
 
 		PyObject* coord_p = PyTuple_GetItem(position, i);
 
 		if (!coord_p) {
-			return 6U;
+			return 6;
 		}
 
 		coords_pos[i] = PyFloat_AS_DOUBLE(coord_p);
@@ -357,11 +358,11 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 	delete[] coords_pos;
 
 	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) {
-		return 8U;
+		return 8;
 	}
 
 	if (dist > dist_equal) {
-		return 7U;
+		return 7;
 	}
 
 	*modelID = modelTypeLast;
@@ -372,7 +373,7 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 
 uint8_t delModelPy(float* coords) {
 	if (coords == nullptr) {
-		return 1U;
+		return 1;
 	}
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
@@ -411,7 +412,7 @@ uint8_t delModelPy(float* coords) {
 
 			PyObject* py_visible = PyBool_FromLong(false);
 
-			PyObject* __visible = PyString_FromStringAndSize("visible", 7U);
+			PyObject* __visible = PyString_FromString("visible");
 
 			if (!PyObject_SetAttr((*it_model)->model, __visible, py_visible)) {
 				Py_DECREF(py_visible);
@@ -421,9 +422,9 @@ uint8_t delModelPy(float* coords) {
 
 			Py_DECREF(py_visible);
 
-			return 3U;
+			return 3;
 
-			/*PyObject* __delModel = PyString_FromStringAndSize("delModel", 8U);
+			/*PyObject* __delModel = PyString_FromString("delModel");
 
 			PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __delModel, (*it_model)->model, NULL);
 
@@ -454,12 +455,12 @@ uint8_t delModelPy(float* coords) {
 	OutputDebugString(_T("[NY_Event]: del debug 1.2\n"));
 #endif
 
-	return 2U;
+	return 2;
 }
 
 uint8_t delModelCoords(uint16_t ID, float* coords) {
 	if (coords == nullptr) {
-		return 1U;
+		return 1;
 	}
 
 	std::vector<ModelsSection>::iterator it_sect = current_map.modelsSects.begin();
@@ -484,8 +485,8 @@ uint8_t delModelCoords(uint16_t ID, float* coords) {
 						model[1] == coords[1] &&
 						model[2] == coords[2]
 						) {
-						for (uint8_t counter = NULL; counter < 3U; counter++) {
-							memset(&model[counter], NULL, 4U);
+						for (uint8_t counter = NULL; counter < 3; counter++) {
+							memset(&model[counter], NULL, 4);
 						}
 
 						delete[] * it_model;
@@ -504,7 +505,7 @@ uint8_t delModelCoords(uint16_t ID, float* coords) {
 		it_sect++;
 	}
 
-	return 2U;
+	return 2;
 }
 
 static PyObject* event_light(float coords[3]) {
@@ -516,7 +517,7 @@ static PyObject* event_light(float coords[3]) {
 	OutputDebugString(_T("light creating...\n"));
 #endif
 
-	PyObject* __PyOmniLight = PyString_FromStringAndSize("PyOmniLight", 11U);
+	PyObject* __PyOmniLight = PyString_FromString("PyOmniLight");
 
 	PyObject* Light = PyObject_CallMethodObjArgs(BigWorld, __PyOmniLight, NULL);
 
@@ -531,7 +532,7 @@ static PyObject* event_light(float coords[3]) {
 
 	//---------inner radius---------
 
-	PyObject* __innerRadius = PyString_FromStringAndSize("innerRadius", 11U);
+	PyObject* __innerRadius = PyString_FromString("innerRadius");
 	PyObject* innerRadius = PyFloat_FromDouble(0.75);
 
 	if (PyObject_SetAttr(Light, __innerRadius, innerRadius)) {
@@ -549,7 +550,7 @@ static PyObject* event_light(float coords[3]) {
 
 	//---------outer radius---------
 
-	PyObject* __outerRadius = PyString_FromStringAndSize("outerRadius", 11U);
+	PyObject* __outerRadius = PyString_FromString("outerRadius");
 	PyObject* outerRadius = PyFloat_FromDouble(1.5);
 
 	if (PyObject_SetAttr(Light, __outerRadius, outerRadius)) {
@@ -567,7 +568,7 @@ static PyObject* event_light(float coords[3]) {
 
 	//----------multiplier----------
 
-	PyObject* __multiplier = PyString_FromStringAndSize("multiplier", 10U);
+	PyObject* __multiplier = PyString_FromString("multiplier");
 	PyObject* multiplier = PyFloat_FromDouble(500.0);
 
 	if (PyObject_SetAttr(Light, __multiplier, multiplier)) {
@@ -585,7 +586,7 @@ static PyObject* event_light(float coords[3]) {
 
 	//-----------position-----------
 
-	PyObject* coords_p = PyTuple_New(3U);
+	PyObject* coords_p = PyTuple_New(3);
 
 	if (!coords_p) {
 #if debug_log && extended_debug_log && super_extended_debug_log
@@ -596,8 +597,8 @@ static PyObject* event_light(float coords[3]) {
 		return NULL;
 	}
 
-	for (uint8_t i = NULL; i < 3U; i++) {
-		if (i == 1U) {
+	for (uint8_t i = NULL; i < 3; i++) {
+		if (i == 1) {
 			PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i] + 0.5));
 		}
 		else {
@@ -605,7 +606,7 @@ static PyObject* event_light(float coords[3]) {
 		}
 	}
 
-	PyObject* __position = PyString_FromStringAndSize("position", 8U);
+	PyObject* __position = PyString_FromString("position");
 
 	if (PyObject_SetAttr(Light, __position, coords_p)) {
 #if debug_log && extended_debug_log && super_extended_debug_log
@@ -622,7 +623,7 @@ static PyObject* event_light(float coords[3]) {
 
 	//------------colour------------
 
-	PyObject* colour_p = PyTuple_New(4U);
+	PyObject* colour_p = PyTuple_New(4);
 
 	if (!colour_p) {
 #if debug_log && extended_debug_log && super_extended_debug_log
@@ -640,13 +641,13 @@ static PyObject* event_light(float coords[3]) {
 	colour[2] = 255.0;
 	colour[3] = 0.0;
 
-	for (uint8_t i = NULL; i < 4U; i++) PyTuple_SET_ITEM(colour_p, i, PyFloat_FromDouble(colour[i]));
+	for (uint8_t i = NULL; i < 4; i++) PyTuple_SET_ITEM(colour_p, i, PyFloat_FromDouble(colour[i]));
 
 	delete[] colour;
 
 	//------------------------------
 
-	PyObject* __colour = PyString_FromStringAndSize("colour", 6U);
+	PyObject* __colour = PyString_FromString("colour");
 
 	if (PyObject_SetAttr(Light, __colour, colour_p)) {
 #if debug_log && extended_debug_log && super_extended_debug_log
@@ -673,7 +674,7 @@ bool setModelPosition(PyObject* Model, float* coords_f) {
 
 	for (uint8_t i = NULL; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords_f[i]));
 
-	PyObject* __position = PyString_FromStringAndSize("position", 8U);
+	PyObject* __position = PyString_FromString("position");
 
 	if (PyObject_SetAttr(Model, __position, coords_p)) {
 		Py_DECREF(__position);
@@ -708,7 +709,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 			return NULL;
 		}
 
-		PyObject* __partial = PyString_FromStringAndSize("partial", 7);
+		PyObject* __partial = PyString_FromString("partial");
 
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
@@ -722,7 +723,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 			return NULL;
 		}
 
-		PyObject* __fetchModel = PyString_FromStringAndSize("fetchModel", 10U);
+		PyObject* __fetchModel = PyString_FromString("fetchModel");
 
 		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
 
@@ -732,7 +733,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) {
 		return NULL;
 	}
 
-	PyObject* __Model = PyString_FromStringAndSize("Model", 5U);
+	PyObject* __Model = PyString_FromString("Model");
 
 	Model = PyObject_CallMethodObjArgs(BigWorld, __Model, PyString_FromString(path), NULL);
 
@@ -834,7 +835,7 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { //при
 
 uint8_t create_models() {
 	if (!isInited || battleEnded || !onModelCreatedPyMeth) {
-		return 1U;
+		return 1;
 	}
 
 	for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
@@ -882,7 +883,7 @@ uint8_t create_models() {
 
 uint8_t init_models() {
 	if (!isInited || first_check || request || battleEnded || models.empty()) {
-		return 1U;
+		return 1;
 	}
 
 	extendedDebugLog("[NY_Event]: models adding...\n");
@@ -907,7 +908,7 @@ uint8_t init_models() {
 
 		superExtendedDebugLog("[NY_Event]: addModel debug 2.1\n");
 
-		PyObject* __addModel = PyString_FromStringAndSize("addModel", 8U);
+		PyObject* __addModel = PyString_FromString("addModel");
 
 		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __addModel, models[i]->model, NULL);
 
@@ -933,7 +934,7 @@ uint8_t init_models() {
 
 uint8_t set_visible(bool isVisible) {
 	if (!isInited || first_check || request || battleEnded || models.empty()) {
-		return 1U;
+		return 1;
 	}
 
 	PyObject* py_visible = PyBool_FromLong(isVisible);
@@ -958,7 +959,7 @@ uint8_t set_visible(bool isVisible) {
 			continue;
 		}
 
-		PyObject* __visible = PyString_FromStringAndSize("visible", 7U);
+		PyObject* __visible = PyString_FromString("visible");
 
 		PyObject_SetAttr(models[i]->model, __visible, py_visible);
 
@@ -976,7 +977,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR) {
 		NETWORK_NOT_USING;
 
-		return 1U;
+		return 1;
 	}
 
 	extendedDebugLog("[NY_Event]: parsing...\n");
@@ -998,7 +999,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 		GUI_setError(parsing_result);
 
-		return 2U;
+		return 2;
 	}
 
 	superExtendedDebugLog("[NY_Event]: parsing OK!\n");
@@ -1072,7 +1073,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 							OutputDebugString(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - failed to start PendingCall of creating models!\n"));
 #endif
 
-							return 3U;
+							return 3;
 						}
 						*/
 
@@ -1087,7 +1088,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 						if (request) {
 							extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
 
-							return 3U;
+							return 3;
 						}
 
 						PyThreadState *_save;        //глушим GIL, пока ожидаем
@@ -1122,37 +1123,37 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 							request = init_models();
 
 							if (request) {
-								if (request > 9U) {
+								if (request > 9) {
 									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
 
 									GUI_setError(request);
 
-									return 5U;
+									return 5;
 								}
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
 
 								GUI_setWarning(request);
 
-								return 4U;
+								return 4;
 							}
 
 							request = set_visible(true);
 
 							if (request) {
-								if (request > 9U) {
+								if (request > 9) {
 									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
 
 									GUI_setError(request);
 
-									return 5U;
+									return 5;
 								}
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 
 								GUI_setWarning(request);
 
-								return 4U;
+								return 4;
 							}
 
 							isModelsAlreadyInited = true;
@@ -1167,7 +1168,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 							Py_BLOCK_THREADS;
 
-							return 3U;
+							return 3;
 						}
 					}
 
@@ -1281,7 +1282,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 	UNREFERENCED_PARAMETER(lpParam);
 
 	if (!isInited) {
-		return 1U;
+		return 1;
 	}
 
 	BOOL            bSuccess;
@@ -1307,13 +1308,13 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n");
 
-			return 2U;
+			return 2;
 		}
 
 		if (first_check || battleEnded) {
 			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n");
 
-			return 3U;
+			return 3;
 		}
 
 		//рабочая часть
@@ -1380,8 +1381,8 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						//-----------------------------
 
 						if (request) {
-							if (request > 9U) {
-								extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request)
+							if (request > 9) {
+								extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
 
 								GUI_setError(request);
 
@@ -1394,7 +1395,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 								break;
 							}
 
-							extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request)
+							extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
 
 							GUI_setWarning(request);
 
@@ -1412,7 +1413,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						request = handle_battle_event(eventID);
 
 						if (request) {
-							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request)
+							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
 
 							GUI_setError(request);
 
@@ -1467,7 +1468,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
 
-		return 3U;
+		return 3;
 	}
 
 	//закрываем поток
@@ -1484,7 +1485,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	UNREFERENCED_PARAMETER(lpParam);
 
 	if (!isInited) {
-		return 1U;
+		return 1;
 	}
 
 	uint32_t databaseID;
@@ -1518,7 +1519,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n");
 
-			return 2U;
+			return 2;
 		}
 
 		//рабочая часть
@@ -1542,19 +1543,19 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			//-----------------------------
 
 			if (first_check) {
-				if (first_check > 9U) {
+				if (first_check > 9) {
 					extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
 
 					GUI_setError(first_check);
 
-					return 6U;
+					return 6;
 				}
 
 				extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
 
 				GUI_setWarning(first_check);
 
-				return 5U;
+				return 5;
 			}
 
 			//выключаем GIL для этого потока
@@ -1691,7 +1692,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					//-----------------------------
 
 					if (server_req) {
-						if (server_req > 9U) {
+						if (server_req > 9) {
 							extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", (uint32_t)server_req);
 
 							GUI_setError(server_req);
@@ -1741,7 +1742,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 							GUI_setError(deleting_coords);
 
-							return 6U;
+							return 6;
 					}
 					*/
 
@@ -1762,7 +1763,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					break;
 			}
 		}
-		else if (find_result == 7U) {
+		else if (find_result == 7) {
 			current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
 		}
 
@@ -1819,7 +1820,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводим ивенты в сигнальные состояния
 	if (!isInited || !databaseID || battleEnded) {
-		return 1U;
+		return 1;
 	}
 
 	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC || eventID == EVENT_ID::DEL_LAST_MODEL) { //посылаем ивент и обрабатываем в треде
@@ -1875,23 +1876,23 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 		return NULL;
 	}
 
-	return 2U;
+	return 2;
 };
 
 static PyObject* event_start(PyObject *self, PyObject *args) {
 	if (first_check || !mapID || !databaseID) {
 		first_check = NULL;
 		battleEnded = false;
-		mapID = 217U;
-		//mapID = 115U;
+		mapID = 217;
+		//mapID = 115;
 		databaseID = 2274297;
 	}
 
 	if (!isInited || first_check) {
-		return PyInt_FromSize_t(1U);
+		return PyInt_FromSize_t(1);
 	}
 
-	PyObject* __player = PyString_FromStringAndSize("player", 6U);
+	PyObject* __player = PyString_FromString("player");
 
 	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
 
@@ -1900,10 +1901,10 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	isModelsAlreadyCreated = false;
 
 	if (!player) {
-		return PyInt_FromSize_t(2U);
+		return PyInt_FromSize_t(2);
 	}
 
-	PyObject* __arena = PyString_FromStringAndSize("arena", 5U);
+	PyObject* __arena = PyString_FromString("arena");
 	PyObject* arena = PyObject_GetAttr(player, __arena);
 
 	Py_DECREF(__arena);
@@ -1911,27 +1912,27 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	Py_DECREF(player);
 
 	if (!arena) {
-		return PyInt_FromSize_t(3U);
+		return PyInt_FromSize_t(3);
 	}
 
-	PyObject* __arenaType = PyString_FromStringAndSize("arenaType", 9U);
+	PyObject* __arenaType = PyString_FromString("arenaType");
 	PyObject* arenaType = PyObject_GetAttr(arena, __arenaType);
 
 	Py_DECREF(__arenaType);
 	Py_DECREF(arena);
 
 	if (!arenaType) {
-		return PyInt_FromSize_t(4U);
+		return PyInt_FromSize_t(4);
 	}
 
-	PyObject* __geometryName = PyString_FromStringAndSize("geometryName", 12U);
+	PyObject* __geometryName = PyString_FromString("geometryName");
 	PyObject* map_PS = PyObject_GetAttr(arenaType, __geometryName);
 
 	Py_DECREF(__geometryName);
 	Py_DECREF(arenaType);
 
 	if (!map_PS) {
-		return PyInt_FromSize_t(5U);
+		return PyInt_FromSize_t(5);
 	}
 
 	char* map_s = PyString_AS_STRING(map_PS);
@@ -1939,7 +1940,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	Py_DECREF(map_PS);
 
 	char map_ID_s[4];
-	memcpy(map_ID_s, map_s, 3U);
+	memcpy(map_ID_s, map_s, 3);
 	if (map_ID_s[2] == '_') map_ID_s[2] = NULL;
 	map_ID_s[3] = NULL;
 
@@ -1959,7 +1960,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	if (request) {
 		extendedDebugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
 
-		return PyInt_FromSize_t(6U);
+		return PyInt_FromSize_t(6);
 	}
 
 	Py_RETURN_NONE;
@@ -1967,7 +1968,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 
 uint8_t del_models() {
 	if (!isInited || first_check || battleEnded /*|| request*/) {
-		return 1U;
+		return 1;
 	}
 
 	extendedDebugLog("[NY_Event]: models deleting...\n");
@@ -2002,7 +2003,7 @@ uint8_t del_models() {
 		OutputDebugString(_T("[NY_Event]: del debug 1.1\n"));
 #endif
 
-		PyObject* __delModel = PyString_FromStringAndSize("delModel", 8U);
+		PyObject* __delModel = PyString_FromString("delModel");
 
 		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __delModel, (*it_model)->model, NULL);
 
@@ -2026,9 +2027,8 @@ uint8_t del_models() {
 		}
 
 		it_model++;
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: del debug 1.2\n"));
-#endif
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
 	}
 
 	std::vector<ModLight*>::iterator it_light = lights.begin();
@@ -2040,14 +2040,11 @@ uint8_t del_models() {
 			continue;
 		}
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: del debug 1.1\n"));
-#endif
+		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
 
 		if (!(*it_light)->model || (*it_light)->model == Py_None) {
-#if debug_log && extended_debug_log && super_extended_debug_log
-			OutputDebugString(_T("NULL\n"));
-#endif
+			superExtendedDebugLog("NULL\n");
+
 			Py_XDECREF((*it_light)->model);
 
 			(*it_light)->model = NULL;
@@ -2062,9 +2059,8 @@ uint8_t del_models() {
 		}
 
 		it_light++;
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: del debug 1.2\n"));
-#endif
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
 	}
 
 	extendedDebugLog("[NY_Event]: models deleting OK!\n");
@@ -2072,9 +2068,10 @@ uint8_t del_models() {
 	return NULL;
 }
 
+
 uint8_t event_fini() {
 	if (!isInited || first_check) {
-		return 1U;
+		return 1;
 	}
 
 	extendedDebugLog("[NY_Event]: fini...\n");
@@ -2140,14 +2137,10 @@ uint8_t event_fini() {
 		lights.~vector();
 	}
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("[NY_Event]: fini debug 1\n"));
-#endif
+	superExtendedDebugLog("[NY_Event]: fini debug 1\n");
 
 	if (!current_map.modelsSects.empty() && current_map.minimap_count) {
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[PositionsMod_Free]: fini debug 2\n"));
-#endif
+		superExtendedDebugLog("[PositionsMod_Free]: fini debug 2\n");
 
 		Py_BEGIN_ALLOW_THREADS;
 			clearModelsSections();
@@ -2369,36 +2362,36 @@ bool createEventsAndSecondThread() {
 
 uint8_t event_сheck() {
 	if (!isInited) {
-		return 1U;
+		return 1;
 	}
 
 	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
 
 	if (!createEventsAndSecondThread()) {
-		return 2U;
+		return 2;
 	}
 
 	//------------------------------------------------------------------------------------------------
 
 	extendedDebugLog("[NY_Event]: checking...\n");
 
-	PyObject* __player = PyString_FromStringAndSize("player", 6U);
+	PyObject* __player = PyString_FromString("player");
 	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
 	if (!player) {
-		return 3U;
+		return 3;
 	}
 
-	PyObject* __databaseID = PyString_FromStringAndSize("databaseID", 10U);
+	PyObject* __databaseID = PyString_FromString("databaseID");
 	PyObject* DBID_string = PyObject_GetAttr(player, __databaseID);
 
 	Py_DECREF(__databaseID);
 	Py_DECREF(player);
 
 	if (!DBID_string) {
-		return 4U;
+		return 4;
 	}
 
 	PyObject* DBID_int = PyNumber_Int(DBID_string);
@@ -2406,7 +2399,7 @@ uint8_t event_сheck() {
 	Py_DECREF(DBID_string);
 
 	if (!DBID_int) {
-		return 5U;
+		return 5;
 	}
 
 	databaseID = PyInt_AS_LONG(DBID_int);
@@ -2420,7 +2413,7 @@ uint8_t event_сheck() {
 	first_check = makeEventInThread(NULL, EVENT_ID::IN_HANGAR);
 
 	if (first_check) {
-		return 6U;
+		return 6;
 	}
 	else {
 		return NULL;
@@ -2438,14 +2431,14 @@ static PyObject* event_сheck_py(PyObject *self, PyObject *args) {
 
 uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) {
 	if (!template_ || !apply || !byteify) {
-		return 1U;
+		return 1;
 	}
 
 	if (g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) {
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
-		PyObject* __register = PyString_FromStringAndSize("register", 8U);
+		PyObject* __register = PyString_FromString("register");
 		PyObject* result = PyObject_CallMethodObjArgs(g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
 
 		Py_XDECREF(result);
@@ -2457,7 +2450,7 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) {
 	if (!g_gui && PyCallable_Check(byteify)) {
 		Py_INCREF(byteify);
 
-		PyObject* args1 = PyTuple_New(1U);
+		PyObject* args1 = PyTuple_New(1);
 		PyTuple_SET_ITEM(args1, NULL, g_self->i18n);
 
 		PyObject* result = PyObject_CallObject(byteify, args1);
@@ -2479,7 +2472,7 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) {
 
 static PyObject* event_init_py(PyObject *self, PyObject *args) {
 	if (!isInited) {
-		return PyInt_FromSize_t(1U);
+		return PyInt_FromSize_t(1);
 	}
 
 	PyObject* template_ = NULL;
@@ -2487,7 +2480,7 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) {
 	PyObject* byteify   = NULL;
 
 	if (!PyArg_ParseTuple(args, "OOO", &template_, &apply, &byteify)) {
-		return PyInt_FromSize_t(2U);
+		return PyInt_FromSize_t(2);
 	}
 
 	uint8_t res = event_init(template_, apply, byteify);
@@ -2507,14 +2500,14 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	PyObject* isKeyGetted_Space = NULL;
 
 	if (g_gui) {
-		PyObject* __get_key = PyString_FromStringAndSize("get_key", 7U);
+		PyObject* __get_key = PyString_FromString("get_key");
 		
 		isKeyGetted_Space = PyObject_CallMethodObjArgs(g_gui, __get_key, spaceKey, NULL);
 
 		Py_DECREF(__get_key);
 	}
 	else {
-		PyObject* __key = PyString_FromStringAndSize("key", 3U);
+		PyObject* __key = PyString_FromString("key");
 		PyObject* key = PyObject_GetAttr(event_, __key);
 
 		Py_DECREF(__key);
@@ -2523,7 +2516,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 			Py_RETURN_NONE;
 		}
 
-		PyObject* ____contains__ = PyString_FromStringAndSize("__contains__", 12U);
+		PyObject* ____contains__ = PyString_FromString("__contains__");
 
 		isKeyGetted_Space = PyObject_CallMethodObjArgs(spaceKey, ____contains__, key, NULL);
 
@@ -2577,7 +2570,7 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	}
 
-	PyObject* __g_appLoader = PyString_FromStringAndSize("g_appLoader", 11U);
+	PyObject* __g_appLoader = PyString_FromString("g_appLoader");
 
 	g_appLoader = PyObject_GetAttr(appLoader, __g_appLoader);
 
@@ -2635,7 +2628,7 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	}
 
-	PyObject* __omc = PyString_FromStringAndSize("omc", 3);
+	PyObject* __omc = PyString_FromString("omc");
 
 	onModelCreatedPyMeth = PyObject_GetAttr(event_module, __omc);
 
@@ -2648,10 +2641,10 @@ PyMODINIT_FUNC initevent(void)
 
 	//Space key
 
-	spaceKey = PyList_New(1U);
+	spaceKey = PyList_New(1);
 
 	if (spaceKey) {
-		PyList_SET_ITEM(spaceKey, 0U, PyInt_FromSize_t(57U));
+		PyList_SET_ITEM(spaceKey, 0U, PyInt_FromSize_t(57));
 	}
 
 	//---------
@@ -2669,7 +2662,7 @@ PyMODINIT_FUNC initevent(void)
 
 	debugLog("[NY_Event]: Mod_GUI class loading...\n");
 
-	PyObject* __Mod_GUI = PyString_FromStringAndSize("Mod_GUI", 7U);
+	PyObject* __Mod_GUI = PyString_FromString("Mod_GUI");
 
 	modGUI = PyObject_CallMethodObjArgs(mGUI_module, __Mod_GUI, NULL);
 	
@@ -2694,7 +2687,7 @@ PyMODINIT_FUNC initevent(void)
 		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
 	}
 	else {
-		PyObject* __g_gui = PyString_FromStringAndSize("g_gui", 5U);
+		PyObject* __g_gui = PyString_FromString("g_gui");
 
 		g_gui = PyObject_GetAttr(mod_mods_gui, __g_gui);
 
@@ -2732,8 +2725,8 @@ PyMODINIT_FUNC initevent(void)
 			return;
 		}
 
-		PyObject* __register_data = PyString_FromStringAndSize("register_data", 13U);
-		PyObject* __pavel3333 = PyString_FromStringAndSize("pavel3333", 9U);
+		PyObject* __register_data = PyString_FromString("register_data");
+		PyObject* __pavel3333 = PyString_FromString("pavel3333");
 		PyObject* data_i18n = PyObject_CallMethodObjArgs(g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
 
 		Py_DECREF(__pavel3333);
@@ -2758,7 +2751,7 @@ PyMODINIT_FUNC initevent(void)
 
 		old = g_self->i18n;
 
-		g_self->i18n = PyTuple_GET_ITEM(data_i18n, 1U);
+		g_self->i18n = PyTuple_GET_ITEM(data_i18n, 1);
 
 		PyDict_Clear(old);
 
