@@ -23,7 +23,7 @@
 	OutputDebugString(_T("[NY_Event]: timer: ending EVENT_NETWORK_NOT_USING\n")); \
 	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                              \
 		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));              \
-	}\
+	}                                                                             \
 }
 
 #define NET_BUFFER_SIZE 16384

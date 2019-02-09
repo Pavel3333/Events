@@ -1430,8 +1430,6 @@ VOID CALLBACK TimerAPCProc(
 
 			PyGILState_Release(gstate);
 
-			NETWORK_NOT_USING;
-
 			return;
 		}
 
@@ -1514,50 +1512,45 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		if (hTimer != NULL)
 		{
-			__try
+			qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
+
+			// Copy the relative time into a LARGE_INTEGER.
+			liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
+			liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
+
+			bSuccess = SetWaitableTimer(
+				hTimer,           // Handle to the timer object
+				&liDueTime,       // When timer will become signaled
+				1000,             // Periodic timer interval of 1 seconds
+				TimerAPCProc,     // Completion routine
+				NULL,             // Argument to the completion routine
+				FALSE);           // Do not restore a suspended system
+
+			if (bSuccess)
 			{
-				qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
-
-				// Copy the relative time into a LARGE_INTEGER.
-				liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
-				liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
-
-				bSuccess = SetWaitableTimer(
-					hTimer,           // Handle to the timer object
-					&liDueTime,       // When timer will become signaled
-					1000,             // Periodic timer interval of 1 seconds
-					TimerAPCProc,     // Completion routine
-					NULL,             // Argument to the completion routine
-					FALSE);           // Do not restore a suspended system
-
-				if (bSuccess)
+				while (!first_check && !battleEnded && !timerLastError)
 				{
-					while (!first_check && !battleEnded && !timerLastError)
-					{
-						SleepEx(
-							INFINITE,     // Wait forever
-							TRUE);        // Put thread in an alertable state
-					}
+					SleepEx(
+						INFINITE,     // Wait forever
+						TRUE);        // Put thread in an alertable state
+				}
 
-					if (timerLastError) {
+				if (timerLastError) {
 #if debug_log && extended_debug_log
-						OutputDebugString(_T("Timer got the error\n"));
+					OutputDebugString(_T("Timer got the error\n"));
 #endif
 
-						CancelWaitableTimer(hTimer);
-					}
-				}
-				else
-				{
-#if debug_log && extended_debug_log
-					OutputDebugString(_T("SetWaitableTimer failed\n"));
-#endif
+					CancelWaitableTimer(hTimer);
 				}
 			}
-			__finally
+			else
 			{
-				CloseHandle(hTimer);
+#if debug_log && extended_debug_log
+				OutputDebugString(_T("SetWaitableTimer failed\n"));
+#endif
 			}
+
+			CloseHandle(hTimer);
 		}
 		else
 		{
