@@ -60,8 +60,6 @@ DWORD  handlerThreadID = NULL;
 
 uint8_t timerLastError = NULL;
 
-
-
 //Главные ивенты
 
 PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
@@ -1464,13 +1462,13 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		//очищаем ивент
 
-		ResetEvent(EVENT_START_TIMER->hEvent);
+		if(EVENT_START_TIMER->hEvent) ResetEvent(EVENT_START_TIMER->hEvent);
 
 		break;
 
 		// An error occurred
 	default:
-		ResetEvent(EVENT_START_TIMER->hEvent);
+		if(EVENT_START_TIMER->hEvent) ResetEvent(EVENT_START_TIMER->hEvent);
 
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
 
