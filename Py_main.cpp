@@ -992,15 +992,17 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 	NETWORK_NOT_USING;
 
-	Py_END_ALLOW_THREADS
+	
 
 	if (parsing_result) {
 		extendedDebugLogFmt("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
 
-		GUI_setError(parsing_result);
+		//GUI_setError(parsing_result);
 
 		return 2;
 	}
+
+	Py_END_ALLOW_THREADS
 
 	superExtendedDebugLog("[NY_Event]: parsing OK!\n");
 	
@@ -1036,7 +1038,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 				if (event_result) {
 					extendedDebugLogFmt("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n", (uint32_t)event_result);
 
-					GUI_setWarning(event_result);
+					//GUI_setWarning(event_result);
 				}
 			}
 			else {
@@ -1085,14 +1087,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 						request = create_models();
 
+						PyThreadState *_save;        //глушим GIL
+						Py_UNBLOCK_THREADS;
+
 						if (request) {
 							extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
 
 							return 3;
 						}
-
-						PyThreadState *_save;        //глушим GIL, пока ожидаем
-						Py_UNBLOCK_THREADS;
 
 						//ожидаем события полного создания моделей
 
@@ -1126,14 +1128,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 								if (request > 9) {
 									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
 
-									GUI_setError(request);
+									//GUI_setError(request);
 
 									return 5;
 								}
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
 
-								GUI_setWarning(request);
+								//GUI_setWarning(request);
 
 								return 4;
 							}
@@ -1144,14 +1146,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 								if (request > 9) {
 									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
 
-									GUI_setError(request);
+									//GUI_setError(request);
 
 									return 5;
 								}
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 
-								GUI_setWarning(request);
+								//GUI_setWarning(request);
 
 								return 4;
 							}
@@ -1197,7 +1199,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 							if (res) {
 								extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)res);
 
-								GUI_setError(res);
+								//GUI_setError(res);
 
 								it_model++;
 
@@ -1213,7 +1215,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 								PySys_WriteStdout("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)res);
 #endif
 
-								GUI_setError(res);
+								//GUI_setError(res);
 
 								it_model++;
 
@@ -1384,7 +1386,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 							if (request > 9) {
 								extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
 
-								GUI_setError(request);
+								//GUI_setError(request);
 
 								timerLastError = 1;
 
@@ -1397,7 +1399,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 							extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
 
-							GUI_setWarning(request);
+							//GUI_setWarning(request);
 
 							PyGILState_Release(gstate);
 
@@ -1415,7 +1417,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						if (request) {
 							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
 
-							GUI_setError(request);
+							//GUI_setError(request);
 
 							timerLastError = 2;
 
@@ -1492,7 +1494,15 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	uint8_t  map_ID;
 	EVENT_ID eventID;
 
-	PyGILState_STATE gstate;
+	//включаем GIL для этого потока
+
+	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	//-----------------------------
+
+	PyThreadState* _save;
+
+	Py_UNBLOCK_THREADS;
 
 	DWORD EVENT_NETWORK_NOT_USING_WaitResult;
 
@@ -1536,33 +1546,21 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 			END_NETWORK_USING;
 
-			//включаем GIL для этого потока
-
-			gstate = PyGILState_Ensure();
-
-			//-----------------------------
-
 			if (first_check) {
 				if (first_check > 9) {
 					extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
 
-					GUI_setError(first_check);
+					//GUI_setError(first_check);
 
 					return 6;
 				}
 
 				extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
 
-				GUI_setWarning(first_check);
+				//GUI_setWarning(first_check);
 
 				return 5;
 			}
-
-			//выключаем GIL для этого потока
-
-			PyGILState_Release(gstate);
-
-			//------------------------------
 
 			break;
 
@@ -1645,8 +1643,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			//место для рабочего кода
 
 			databaseID = EVENT_DEL_MODEL->databaseID;
-			map_ID = EVENT_DEL_MODEL->map_ID;
-			eventID = EVENT_DEL_MODEL->eventID;
+			map_ID     = EVENT_DEL_MODEL->map_ID;
+			eventID    = EVENT_DEL_MODEL->eventID;
 
 			if (eventID != EVENT_ID::DEL_LAST_MODEL) {
 				ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
@@ -1662,15 +1660,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			coords = new float[3];
 
-			//включаем GIL для этого потока
-
-			gstate = PyGILState_Ensure();
-
-			//-----------------------------
+			Py_BLOCK_THREADS;
 
 			find_result = findLastModelCoords(5.0, &modelID, &coords);
 
-			PyGILState_Release(gstate);
+			Py_UNBLOCK_THREADS;
 
 			if (!find_result) {
 				EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
@@ -1685,19 +1679,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 						server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
 					END_NETWORK_USING;
 
-					//включаем GIL для этого потока
-
-					gstate = PyGILState_Ensure();
-
-					//-----------------------------
-
 					if (server_req) {
 						if (server_req > 9) {
 							extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", (uint32_t)server_req);
 
-							GUI_setError(server_req);
-
-							PyGILState_Release(gstate);
+							//GUI_setError(server_req);
 
 							lastEventError = 5;
 
@@ -1706,9 +1692,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 						extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
 
-						GUI_setWarning(server_req);
-
-						PyGILState_Release(gstate);
+						//GUI_setWarning(server_req);
 
 						lastEventError = 4;
 
@@ -1720,9 +1704,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					if (deleting_py_models) {
 						extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", (uint32_t)deleting_py_models);
 
-						GUI_setError(deleting_py_models);
-
-						PyGILState_Release(gstate);
+						//GUI_setError(deleting_py_models);
 
 						lastEventError = 3;
 
@@ -1740,17 +1722,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 							PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
 		#endif
 
-							GUI_setError(deleting_coords);
+							//GUI_setError(deleting_coords);
 
 							return 6;
 					}
 					*/
-
-					//выключаем GIL для этого потока
-
-					PyGILState_Release(gstate);
-
-					//------------------------------
 
 					break;
 
@@ -1761,33 +1737,22 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 					lastEventError = 2;
 
 					break;
+				}
 			}
-		}
-		else if (find_result == 7) {
-			current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
-		}
+			else if (find_result == 7) {
+				current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
+			}
 
-		//включаем GIL
+			Py_BLOCK_THREADS;
 
-		gstate = PyGILState_Ensure();
+			if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) {
+				GUI_setMsg(current_map.stageID, scoreID, 5.0f);
 
-		//-----------------------------
-
-
-		if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) {
-			GUI_setMsg(current_map.stageID, scoreID, 5.0f);
-
-			scoreID = -1;
-		}
-		else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) {
-			GUI_setMsg(current_map.stageID);
-		}
-
-			//выключаем GIL для этого потока
-
-			PyGILState_Release(gstate);
-
-			//------------------------------
+				scoreID = -1;
+			}
+			else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) {
+				GUI_setMsg(current_map.stageID);
+			}
 
 			ResetEvent(EVENT_DEL_MODEL->hEvent);
 
@@ -1810,6 +1775,14 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	//закрываем поток
 
 	extendedDebugLogFmt("Closing handler thread %d\n", handlerThreadID);
+
+	Py_END_ALLOW_THREADS;
+
+	//выключаем GIL для этого потока
+
+	PyGILState_Release(gstate);
+
+	//------------------------------
 
 	ExitThread(NULL); //завершаем поток
 
