@@ -2047,7 +2047,6 @@ uint8_t del_models() {
 	return NULL;
 }
 
-
 uint8_t event_fini() {
 	if (!isInited || first_check) {
 		return 1;
@@ -2173,6 +2172,24 @@ void closeEvent2(PEVENTDATA_2* pEvent) {
 }
 
 static PyObject* event_fini_py(PyObject *self, PyObject *args) {
+	if (hTimer != NULL) { //закрываем таймер, если он был создан
+		CloseHandle(hTimer);
+
+		hTimer = NULL;
+	}
+
+	isTimerStarted = false;
+
+	closeEvent1(&EVENT_START_TIMER);
+	closeEvent1(&EVENT_IN_HANGAR);
+	closeEvent1(&EVENT_DEL_MODEL);
+
+	closeEvent2(&EVENT_NETWORK_NOT_USING);
+	closeEvent2(&EVENT_MODELS_NOT_USING);
+
+	closeEvent2(&EVENT_ALL_MODELS_CREATED);
+	closeEvent2(&EVENT_BATTLE_ENDED);
+
 	uint8_t fini_result = event_fini();
 
 	if (fini_result) {
@@ -2197,24 +2214,6 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) {
 		}
 
 		cancelCallback(&delLabelCBID);
-
-		if (hTimer != NULL) { //закрываем таймер, если он был создан
-			CloseHandle(hTimer);
-
-			hTimer = NULL;
-		}
-
-		isTimerStarted = false;
-
-		closeEvent1(&EVENT_START_TIMER);
-		closeEvent1(&EVENT_IN_HANGAR);
-		closeEvent1(&EVENT_DEL_MODEL);
-
-		closeEvent2(&EVENT_NETWORK_NOT_USING);
-		closeEvent2(&EVENT_MODELS_NOT_USING);
-
-		closeEvent2(&EVENT_ALL_MODELS_CREATED);
-		closeEvent2(&EVENT_BATTLE_ENDED);
 
 		allModelsCreated = NULL;
 

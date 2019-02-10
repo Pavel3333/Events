@@ -6,11 +6,9 @@
 #include <Windows.h>
 #include <tchar.h>
 
-
 #define debug_log true
-#define extended_debug_log true
+#define extended_debug_log false
 #define super_extended_debug_log false
-
 
 #if debug_log
 #define debugLog(X)           \
@@ -60,37 +58,25 @@
 #define superExtendedDebugLogFmt(...) 0
 #endif
 
-#if debug_log && extended_debug_log
-#define NETWORK_USING                                                                \
-	OutputDebugString(_T("[NY_Event]: NETWORK_USING\n"));                            \
+#define NETWORK_USING                                                           \
+	extendedDebugLog("[NY_Event]: NETWORK_USING\n");                            \
     ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
-#define NETWORK_NOT_USING                                                            \
-	OutputDebugString(_T("[NY_Event]: NETWORK_NOT_USING\n"));                        \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                                 \
-		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));                 \
+#define NETWORK_NOT_USING                                                       \
+	extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");                        \
+	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                            \
+		extendedDebugLog("NetworkNotUsingEvent not setted!\n");                 \
 	}
 
-#define BEGIN_NETWORK_USING {                                                        \
-	OutputDebugString(_T("[NY_Event]: timer: beginning EVENT_NETWORK_NOT_USING\n")); \
+#define BEGIN_NETWORK_USING {                                                   \
+	extendedDebugLog("[NY_Event]: beginning EVENT_NETWORK_NOT_USING\n");        \
 	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
 
-#define END_NETWORK_USING                                                            \
-	OutputDebugString(_T("[NY_Event]: timer: ending EVENT_NETWORK_NOT_USING\n"));    \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                                 \
-		OutputDebugString(_T("NetworkNotUsingEvent not setted!\n"));                 \
-	}                                                                                \
+#define END_NETWORK_USING                                                       \
+	extendedDebugLog("[NY_Event]: ending EVENT_NETWORK_NOT_USING\n");           \
+	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                            \
+		extendedDebugLog("NetworkNotUsingEvent not setted!\n");                 \
+	}                                                                           \
 }
-#else
-#define NETWORK_USING     ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
-#define NETWORK_NOT_USING SetEvent(EVENT_NETWORK_NOT_USING->hEvent);
-
-#define BEGIN_NETWORK_USING {                                                        \
-	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
-
-#define END_NETWORK_USING                                                            \
-	SetEvent(EVENT_NETWORK_NOT_USING->hEvent);                                       \
-}
-#endif
 
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12
@@ -138,7 +124,7 @@ enum EVENT_ID {
 
 enum MODS_ID {
 	HELLOWEEN = 1,
-	NY_EVENT = 2
+	NY_EVENT  = 2
 };
 
 
@@ -205,7 +191,7 @@ struct i18n_c {
 struct Config {
 	char* ids = "NY_Event";
 	char* author = "by Pavel3333 & RAINN VOD";
-	char* version = "v1.0.0.0 (06.02.2019)";
+	char* version = "v1.0.0.1 (10.02.2019)";
 	char* patch = "1.4.0.0";
 	uint16_t version_id = 100U;
 	data_c data;
