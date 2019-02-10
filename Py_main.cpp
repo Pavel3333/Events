@@ -1291,6 +1291,10 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 	__int64         qwDueTime;
 	LARGE_INTEGER   liDueTime;
 
+	PyGILState_STATE gstate;
+
+	PyThreadState* _save;
+
 	extendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
 
 	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
@@ -1302,6 +1306,14 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		// Event object was signaled
 	case WAIT_OBJECT_0:
 		extendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
+
+		//включаем GIL для этого потока
+
+		gstate = PyGILState_Ensure();
+
+		//-----------------------------
+
+		Py_UNBLOCK_THREADS;
 
 		//место для рабочего кода
 
@@ -1356,8 +1368,6 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						isTimerStarted = true;
 					}
 
-					PyGILState_STATE gstate;
-
 					extendedDebugLog("[NY_Event]: timer: waiting EVENT_NETWORK_NOT_USING\n");
 
 					DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
@@ -1376,12 +1386,6 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 						request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
 
-						//включаем GIL для этого потока
-
-						gstate = PyGILState_Ensure();
-
-						//-----------------------------
-
 						if (request) {
 							if (request > 9) {
 								extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
@@ -1389,8 +1393,6 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 								//GUI_setError(request);
 
 								timerLastError = 1;
-
-								PyGILState_Release(gstate);
 
 								NETWORK_NOT_USING;
 
@@ -1401,8 +1403,6 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 							//GUI_setWarning(request);
 
-							PyGILState_Release(gstate);
-
 							NETWORK_NOT_USING;
 
 							break;
@@ -1412,7 +1412,11 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
 #endif
 
+						Py_BLOCK_THREADS;
+
 						request = handle_battle_event(eventID);
+
+						Py_UNBLOCK_THREADS;
 
 						if (request) {
 							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
@@ -1421,16 +1425,8 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 							timerLastError = 2;
 
-							PyGILState_Release(gstate);
-
 							break;
 						}
-
-						//выключаем GIL для этого потока
-
-						PyGILState_Release(gstate);
-
-						//------------------------------
 
 						break;
 
@@ -1457,6 +1453,14 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 			CloseHandle(hTimer);
 		}
 		else extendedDebugLog("[NY_Event][ERROR]: CreateWaitableTimer failed\n");
+
+		Py_BLOCK_THREADS;
+
+		//выключаем GIL для этого потока
+
+		PyGILState_Release(gstate);
+
+		//------------------------------
 
 		//очищаем ивент
 
@@ -1754,6 +1758,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				GUI_setMsg(current_map.stageID);
 			}
 
+			Py_UNBLOCK_THREADS;
+
 			ResetEvent(EVENT_DEL_MODEL->hEvent);
 
 			break;
@@ -1776,7 +1782,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	extendedDebugLogFmt("Closing handler thread %d\n", handlerThreadID);
 
-	Py_END_ALLOW_THREADS;
+	Py_BLOCK_THREADS;
 
 	//выключаем GIL для этого потока
 
