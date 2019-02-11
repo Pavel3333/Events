@@ -7,36 +7,50 @@
 #include <tchar.h>
 
 #define debug_log true
-#define extended_debug_log false
+#define extended_debug_log true
 #define super_extended_debug_log false
 
 #if debug_log
 #define debugLog(X)           \
 	OutputDebugString(_T(X)); \
-	PySys_WriteStdout(X)
+	PySys_WriteStdout(X);     \
+    dbg_log << X << std::endl;
 
-#define debugLogFmt(fmt, ...) {               \
-	WCHAR log_buf[256];                       \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__); \
-	OutputDebugString(log_buf);               \
-	PySys_WriteStdout(fmt, __VA_ARGS__);      \
+#define debugLogFmt(fmt, ...) {                  \
+	char log_buf_c[256];                         \
+	WCHAR  log_buf[256];                         \
+	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
+	OutputDebugString(log_buf);                  \
+	PySys_WriteStdout(fmt, __VA_ARGS__);         \
+    sprintf_s(log_buf_c, 256, fmt, __VA_ARGS__); \
+    dbg_log << log_buf_c;                        \
 	}
 
 #if extended_debug_log
-#define extendedDebugLog(X) OutputDebugString(_T(X))
-#define extendedDebugLogFmt(fmt, ...) {       \
-	WCHAR log_buf[256];                       \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__); \
-	OutputDebugString(log_buf);               \
+#define extendedDebugLog(X)                      \
+	OutputDebugString(_T(X));                    \
+	dbg_log << X << std::endl; 
+#define extendedDebugLogFmt(fmt, ...) {          \
+	char log_buf_c[256];                         \
+	WCHAR log_buf[256];                          \
+	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
+	OutputDebugString(log_buf);                  \
+    sprintf_s(log_buf_c, 256, fmt, __VA_ARGS__); \
+    dbg_log << log_buf_c;                        \
 	}
 
 
 #if super_extended_debug_log
-#define superExtendedDebugLog(X) OutputDebugString(_T(X))
-#define superExtendedDebugLogFmt(fmt, ...) {  \
-	WCHAR log_buf[256];                       \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__); \
-	OutputDebugString(log_buf);               \
+#define superExtendedDebugLog(X)                 \
+	OutputDebugString(_T(X));                    \
+	dbg_log << X << std::endl; 
+#define superExtendedDebugLogFmt(fmt, ...) {     \
+	char log_buf_c[256];                         \
+	WCHAR log_buf[256];                          \
+	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
+	OutputDebugString(log_buf);                  \
+    sprintf_s(log_buf_c, 256, fmt, __VA_ARGS__); \
+    dbg_log << log_buf_c;                        \
 	}
 
 #else

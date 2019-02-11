@@ -22,6 +22,8 @@ typedef struct {
 std::vector<ModModel*> models;
 std::vector<ModLight*> lights;
 
+std::ofstream dbg_log("NY_Event_debug_log", std::ios::app);
+
 PyObject* event_module = NULL;
 
 PyObject* modGUI = NULL;
@@ -1857,14 +1859,6 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 };
 
 static PyObject* event_start(PyObject *self, PyObject *args) {
-	if (first_check || !mapID || !databaseID) {
-		first_check = NULL;
-		battleEnded = false;
-		mapID = 217;
-		//mapID = 115;
-		databaseID = 2274297;
-	}
-
 	if (!isInited || first_check) {
 		return PyInt_FromSize_t(1);
 	}
