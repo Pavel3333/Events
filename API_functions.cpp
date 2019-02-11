@@ -19,14 +19,14 @@ CURL *  curl_handle = NULL;
 
 int8_t scoreID = -1;
 
-LPCWSTR EVENT_NAMES[] { traceLog();
+LPCWSTR EVENT_NAMES[] {
 	L"NY_Event_HangarEvent",
 	L"NY_Event_StartTimerEvent",
 	L"NY_Event_StartTimerEvent",
 	L"NY_Event_DelEvent"
 };
 
-char* COLOURS[MESSAGES_COUNT] { traceLog();
+char* COLOURS[MESSAGES_COUNT] {
 	"FFFF00FF",
 	"00E600FF",
 	"000000FF",
@@ -37,7 +37,7 @@ char* COLOURS[MESSAGES_COUNT] { traceLog();
 	"00E600FF"
 };
 
-char* MESSAGES[MESSAGES_COUNT] { traceLog();
+char* MESSAGES[MESSAGES_COUNT] {
 	"\\c%s;Waiting for competition...",
 	"\\c%s;START!!!",
 	"",
@@ -48,9 +48,9 @@ char* MESSAGES[MESSAGES_COUNT] { traceLog();
 	"\\c%s;Streamer mode"
 };
 
-uint16_t SCORE[SECTIONS_COUNT]{ traceLog(); 13, 5, 11, 3000, 3, 7, 9, 15, 17, 100 };
+uint16_t SCORE[SECTIONS_COUNT] { 13, 5, 11, 3000, 3, 7, 9, 15, 17, 100 };
 
-char* MODEL_NAMES[SECTIONS_COUNT] { traceLog();
+char* MODEL_NAMES[SECTIONS_COUNT] {
 	"ball",
 	"candy_cane",
 	"fir",
@@ -65,9 +65,9 @@ char* MODEL_NAMES[SECTIONS_COUNT] { traceLog();
 
 //---------------------------------------------API functions--------------------------------------------------------
 
-const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSects, uint8_t ID) { traceLog();
-	for (const auto &it : modelsSects) { traceLog();
-		if (it.isInitialised && it.ID == ID) { traceLog();
+const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSects, uint8_t ID) {
+	for (const auto &it : modelsSects) {
+		if (it.isInitialised && it.ID == ID) {
 			return &it.models;
 		}
 	}
@@ -76,12 +76,12 @@ const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSect
 }
 
 bool file_exists(const char *fname)
-{ traceLog();
+{
 	return std::filesystem::exists(fname);
 }
 
-double getDist2Points(double* point1, float* point2) { traceLog();
-	if (point1 == nullptr || point2 == nullptr) { traceLog();
+double getDist2Points(double* point1, float* point2) {
+	if (point1 == nullptr || point2 == nullptr) {
 		return -1.0;
 	}
 
@@ -95,9 +95,9 @@ double getDist2Points(double* point1, float* point2) { traceLog();
 //-----------------
 
 //generate random bytes
-void generate_random_bytes(unsigned char* out, size_t length) { traceLog();
+void generate_random_bytes(unsigned char* out, size_t length) {
 	unsigned char ret = NULL;
-	for (uint_fast32_t i = NULL; i < length; i++) { traceLog();
+	for (uint_fast32_t i = NULL; i < length; i++) {
 		ret = rand() % 256;
 		while (ret == '"' || ret == '\t' || ret == '\n') ret = rand() % 256;
 		out[i] = ret;
@@ -105,7 +105,7 @@ void generate_random_bytes(unsigned char* out, size_t length) { traceLog();
 }
 
 //writing response from server into array ptr and return size of response
-static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data){ traceLog();
+static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data){
 	if (data == NULL || wr_index + size * nmemb > NET_BUFFER_SIZE) return 0U; // Error if out of buffer
 
 	memcpy(&data[wr_index], ptr, size*nmemb);// appending data into the end
@@ -114,22 +114,22 @@ static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data){ trac
 }
 
 std::string urlencode(unsigned char* s, size_t size)
-{ traceLog();
+{
 	static const char lookup[] = "0123456789abcdef";
 	std::stringstream e;
 	for (size_t i = NULL; i < size; i++)
-	{ traceLog();
+	{
 		const char& c = s[i];
 		if ((c > 47U && c < 58U) ||//0-9
 			(c > 64U && c < 91U) ||//abc...xyz
 			(c > 96U && c < 123U) || //ABC...XYZ
 			(c == '-' || c == '_' || c == '.' || c == '~')
 			)
-		{ traceLog();
+		{
 			e << c;
 		}
 		else
-		{ traceLog();
+		{
 			e << '%';
 			e << lookup[(c & 0xF0) >> 4];
 			e << lookup[(c & 0x0F)];
@@ -143,30 +143,30 @@ std::string urlencode(unsigned char* s, size_t size)
 
 //------------------------------------------CLIENT-SERVER PART---------------------------------------------------
 
-uint32_t curl_init() { traceLog();
+uint32_t curl_init() {
 	if (curl_global_init(CURL_GLOBAL_ALL))
-	{ traceLog();
+	{
 		return 1;
 	}
 
 	curl_handle = curl_easy_init();
 
-	if (!curl_handle) { traceLog();
+	if (!curl_handle) {
 		return 2;
 	}
 
 	return 0;
 }
 
-void curl_clean() { traceLog();
+void curl_clean() {
 	curl_easy_cleanup(curl_handle);
 
 	curl_global_cleanup();
 }
 
 //getting token in pre-auth step
-static uint8_t get_token(std::string input) { traceLog();
-	if (!curl_handle) { traceLog();
+static uint8_t get_token(std::string input) {
+	if (!curl_handle) {
 		return 1U;
 	}
 
@@ -212,8 +212,8 @@ static uint8_t get_token(std::string input) { traceLog();
 	return res;
 }
 
-uint8_t parse_config() { traceLog(); // при входе в бой
-	if (!wr_index) { traceLog();
+uint8_t parse_config() { // при входе в бой
+	if (!wr_index) {
 		return 21U;
 	}
 
@@ -223,27 +223,27 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 
 	memcpy(&length, wr_buf, 2U);
 
-	if (length != wr_index) { traceLog();
+	if (length != wr_index) {
 		return 22U;
 	}
 
 	offset += 2U;
 
-	if (wr_index == 3U) { traceLog(); //код ошибки
+	if (wr_index == 3U) { //код ошибки
 		uint8_t error_code = wr_buf[offset];
 
-		if (error_code < 10U) { traceLog();
-			if (error_code == 7U) { traceLog();
+		if (error_code < 10U) {
+			if (error_code == 7U) {
 				current_map.stageID = STAGE_ID::WAITING;
 
 				return NULL;
 			}
-			else if (error_code == 8U) { traceLog();
+			else if (error_code == 8U) {
 				current_map.stageID = STAGE_ID::END_BY_TIME;
 
 				return NULL;
 			}
-			else if (error_code == 9U) { traceLog();
+			else if (error_code == 9U) {
 				current_map.stageID = STAGE_ID::END_BY_COUNT;
 
 				return NULL;
@@ -254,7 +254,7 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 
 		return (uint32_t)wr_buf[offset];
 	}
-	else if (wr_index >= 8U) { traceLog();
+	else if (wr_index >= 8U) {
 		/*
 		Всё прошло успешно.
 		Первый байт - ноль для проверки,
@@ -262,7 +262,7 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 		остальные четыре байта - оставшееся время
 		*/
 
-		if (wr_buf[offset] != 0) { traceLog();
+		if (wr_buf[offset] != 0) {
 			return 23U;
 		}
 
@@ -277,12 +277,12 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 
 		offset += 6U;
 
-		if (wr_index > 8U) { traceLog(); //парсинг координат
+		if (wr_index > 8U) { //парсинг координат
 			uint8_t sections_count = wr_buf[offset];
 
 			offset++;
 
-			if (sections_count > SECTIONS_COUNT) { traceLog();
+			if (sections_count > SECTIONS_COUNT) {
 				return 24U; //проверяем валидность числа секций
 			}
 
@@ -293,12 +293,12 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 			uint8_t model_type = NULL;
 			uint16_t models_count_sect = NULL;
 
-			for (uint16_t i = NULL; i < sections_count; i++) { traceLog();
+			for (uint16_t i = NULL; i < sections_count; i++) {
 				model_type = wr_buf[offset];
 
 				offset++;
 
-				if (model_type >= SECTIONS_COUNT) { traceLog();
+				if (model_type >= SECTIONS_COUNT) {
 					return 25U;  //проверяем валидность типа модели
 				}
 
@@ -306,7 +306,7 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 
 				offset += 2U;
 
-				if (!models_count_sect) { traceLog();
+				if (!models_count_sect) {
 					continue; //нет моделей, идем далее
 				}
 
@@ -317,7 +317,7 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 
 				//инициализация новой секции моделей
 
-				ModelsSection model_sect{ traceLog();
+				ModelsSection model_sect{
 					false,
 					model_type,
 					path_buffer
@@ -327,10 +327,10 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 
 				model_sect.models.resize(models_count_sect);
 
-				for (uint16_t i = NULL; i < models_count_sect; i++) { traceLog();
+				for (uint16_t i = NULL; i < models_count_sect; i++) {
 					float* coords = new float[3];
 
-					for (uint8_t j = NULL; j < 3U; j++) { traceLog();
+					for (uint8_t j = NULL; j < 3U; j++) {
 						memcpy(&coords[j], wr_buf + offset, 4U);
 
 						offset += 4U;
@@ -357,8 +357,8 @@ uint8_t parse_config() { traceLog(); // при входе в бой
 	return 26U;
 }
 
-uint8_t parse_sync() { traceLog(); // синхронизация
-	if (!wr_index) { traceLog();
+uint8_t parse_sync() { // синхронизация
+	if (!wr_index) {
 		return 21U;
 	}
 
@@ -368,27 +368,27 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 
 	memcpy(&length, wr_buf, 2U);
 
-	if (length != wr_index) { traceLog();
+	if (length != wr_index) {
 		return 22U;
 	}
 
 	offset += 2U;
 
-	if (wr_index == 3U) { traceLog(); //код ошибки
+	if (wr_index == 3U) { //код ошибки
 		uint8_t error_code = wr_buf[offset];
 
-		if (error_code < 10U) { traceLog();
-			if (error_code == 7U) { traceLog();
+		if (error_code < 10U) {
+			if (error_code == 7U) {
 				current_map.stageID = STAGE_ID::WAITING;
 
 				return NULL;
 			}
-			else if (error_code == 8U) { traceLog();
+			else if (error_code == 8U) {
 				current_map.stageID = STAGE_ID::END_BY_TIME;
 
 				return NULL;
 			}
-			else if (error_code == 9U) { traceLog();
+			else if (error_code == 9U) {
 				current_map.stageID = STAGE_ID::END_BY_COUNT;
 
 				return NULL;
@@ -399,7 +399,7 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 
 		return (uint32_t)wr_buf[offset];
 	}
-	else if (wr_index >= 8U) { traceLog();
+	else if (wr_index >= 8U) {
 		/*
 		Всё прошло успешно.
 		Первый байт - ноль для проверки,
@@ -416,7 +416,7 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 		       координаты удаляемых моделей
 		*/
 
-		if (wr_buf[offset] != 0) { traceLog();
+		if (wr_buf[offset] != 0) {
 			return 23U;
 		}
 
@@ -431,13 +431,13 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 
 		offset += 6U;
 
-		if (wr_index > 8U) { traceLog(); //парсинг координат
+		if (wr_index > 8U) { //парсинг координат
 			std::vector<ModelsSection>* sect = nullptr;
 
-			for (uint8_t modelSectionID = NULL; modelSectionID < 2U; modelSectionID++) { traceLog();
+			for (uint8_t modelSectionID = NULL; modelSectionID < 2U; modelSectionID++) {
 				if      (modelSectionID == 0U && wr_buf[offset] == 0U) sect = &(sync_map.modelsSects_creating);
 				else if (modelSectionID == 1U && wr_buf[offset] == 1U) sect = &(sync_map.modelsSects_deleting);
-				else { traceLog();
+				else {
 					OutputDebugString(_T("[NY_Event]: Found unexpected section while synchronizing!\n"));
 
 					break;
@@ -449,7 +449,7 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 
 				offset++;
 
-				if (sections_count > SECTIONS_COUNT) { traceLog();
+				if (sections_count > SECTIONS_COUNT) {
 					return 24U; //проверяем валидность числа секций
 				}
 
@@ -460,12 +460,12 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 				uint8_t model_type = NULL;
 				uint16_t models_count_sect = NULL;
 
-				for (uint16_t i = NULL; i < sections_count; i++) { traceLog();
+				for (uint16_t i = NULL; i < sections_count; i++) {
 					model_type = wr_buf[offset];
 
 					offset++;
 
-					if (model_type >= SECTIONS_COUNT) { traceLog();
+					if (model_type >= SECTIONS_COUNT) {
 						return 25U;  //проверяем валидность типа модели
 					}
 
@@ -473,7 +473,7 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 
 					offset += 2U;
 
-					if (!models_count_sect) { traceLog();
+					if (!models_count_sect) {
 						continue; //нет моделей, идем далее
 					}
 
@@ -484,7 +484,7 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 
 					//инициализация новой секции моделей
 
-					ModelsSection model_sect { traceLog();
+					ModelsSection model_sect {
 						false,
 						model_type,
 						path_buffer
@@ -494,10 +494,10 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 
 					model_sect.models.resize(models_count_sect);
 
-					for (uint16_t i = NULL; i < models_count_sect; i++) { traceLog();
+					for (uint16_t i = NULL; i < models_count_sect; i++) {
 						float* coords = new float[3];
 
-						for (uint8_t j = NULL; j < 3U; j++) { traceLog();
+						for (uint8_t j = NULL; j < 3U; j++) {
 							memcpy(&coords[j], wr_buf + offset, 4U);
 
 							offset += 4U;
@@ -525,8 +525,8 @@ uint8_t parse_sync() { traceLog(); // синхронизация
 	return 25U;
 }
 
-uint8_t parse_del_model() { traceLog();
-	if (!wr_index) { traceLog();
+uint8_t parse_del_model() {
+	if (!wr_index) {
 		return 21U;
 	}
 
@@ -536,23 +536,23 @@ uint8_t parse_del_model() { traceLog();
 
 	memcpy(&length, wr_buf, 2U);
 
-	if (length != wr_index) { traceLog();
+	if (length != wr_index) {
 		return 22U;
 	}
 
 	offset += 2U;
 
-	if (wr_index == 3U) { traceLog(); //код ошибки
+	if (wr_index == 3U) { //код ошибки
 		uint8_t error_code = wr_buf[offset];
 
-		if (error_code < 10U) { traceLog();
-			if (error_code == 7U) { traceLog();
+		if (error_code < 10U) {
+			if (error_code == 7U) {
 				current_map.stageID = STAGE_ID::WAITING;
 			}
-			else if (error_code == 8U) { traceLog();
+			else if (error_code == 8U) {
 				current_map.stageID = STAGE_ID::END_BY_TIME;
 			}
-			else if (error_code == 9U) { traceLog();
+			else if (error_code == 9U) {
 				current_map.stageID = STAGE_ID::END_BY_COUNT;
 			}
 
@@ -561,7 +561,7 @@ uint8_t parse_del_model() { traceLog();
 
 		return error_code;
 	}
-	else if (wr_index >= 9U) { traceLog();
+	else if (wr_index >= 9U) {
 		/*
 		Всё прошло успешно.
 		Первый байт - ноль для проверки,
@@ -569,7 +569,7 @@ uint8_t parse_del_model() { traceLog();
 		остальные четыре байта - оставшееся время
 		*/
 
-		if (wr_buf[offset] != 0) { traceLog();
+		if (wr_buf[offset] != 0) {
 			return 23U;
 		}
 
@@ -587,14 +587,14 @@ uint8_t parse_del_model() { traceLog();
 	return 26U;
 }
 
-uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID, float* coords_del) { traceLog();
+uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID, float* coords_del) {
 	unsigned char* token = nullptr;
 
 	uint16_t size = NULL;
 
 	//Код наполнения токена по типу события
 
-	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) { traceLog();
+	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
 		size = 7U;
 
 		token = new unsigned char[size + 1];
@@ -606,8 +606,8 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 
 		token[6] = eventID; //код события
 	}
-	else if (eventID == EVENT_ID::DEL_LAST_MODEL) { traceLog();
-		if (coords_del == nullptr) { traceLog();
+	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
+		if (coords_del == nullptr) {
 			return 24U;
 		}
 
@@ -630,7 +630,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 
 	//-------------------------------------
 
-	if (token == nullptr) { traceLog();
+	if (token == nullptr) {
 		return 21U;
 	}
 
@@ -652,7 +652,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 
 	new_token.~basic_string();
 
-	if (code || !wr_index) { traceLog(); //get token
+	if (code || !wr_index) { //get token
 		return 22U;
 	}
 
@@ -667,13 +667,13 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 	uint16_t len;
 	uint16_t offset = NULL;
 
-	if (eventID == EVENT_ID::IN_HANGAR) { traceLog(); //запрос из ангара: 3 байта - 2 байта длина; 1 байт либо 0, либо 6, либо ошибка (больше 9);
+	if (eventID == EVENT_ID::IN_HANGAR) { //запрос из ангара: 3 байта - 2 байта длина; 1 байт либо 0, либо 6, либо ошибка (больше 9);
 		//проверяем ответ от сервера
 
-		if (wr_index == 3U) { traceLog();
+		if (wr_index == 3U) {
 			memcpy(&len, wr_buf, 2U); //смотрим длину данных
 
-			if (len == wr_index) { traceLog();
+			if (len == wr_index) {
 				return (uint32_t)(wr_buf[2]);
 			}
 
@@ -682,23 +682,23 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 
 		return 24U;
 	}
-	else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) { traceLog(); 
+	else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) { 
 		return NULL;
 	}
-	else if (eventID == EVENT_ID::DEL_LAST_MODEL) { traceLog();
+	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
 		return NULL;
 	}
 
 	return 23U; //неизвестный ивент
 
-	/*if (!map_id) { traceLog();
-		//if (wr_index < 3U) { traceLog();
+	/*if (!map_id) {
+		//if (wr_index < 3U) {
 			return (uint32_t)(wr_buf[0]);
 		//}
 		//else return 10U;
 	}
-	else { traceLog();
-		if (wr_index < 3U) { traceLog();
+	else {
+		if (wr_index < 3U) {
 			return 9U;
 		}
 		else return NULL;

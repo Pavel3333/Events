@@ -4,25 +4,25 @@ long delLabelCBID = NULL;
 
 //GUI methods
 
-PyObject* GUI_getAttr(char* attribute) { traceLog();
-	if (!modGUI) { traceLog();
+PyObject* GUI_getAttr(char* attribute) {
+	if (!modGUI) {
 		return NULL;
 	}
 
 	return PyObject_GetAttrString(modGUI, attribute);
 }
 
-bool GUI_setAttr(char* attribute, PyObject* value) { traceLog();
-	if (!modGUI) { traceLog();
+bool GUI_setAttr(char* attribute, PyObject* value) {
+	if (!modGUI) {
 		return false;
 	}
 
 	return PyObject_SetAttrString(modGUI, attribute, value);
 }
 
-void GUI_setWarning(uint8_t warningCode) { traceLog();
+void GUI_setWarning(uint8_t warningCode) {
 #if debug_log && extended_debug_log
-	if (!isInited || !modGUI) { traceLog();
+	if (!isInited || !modGUI) {
 		return;
 	}
 
@@ -34,9 +34,9 @@ void GUI_setWarning(uint8_t warningCode) { traceLog();
 #endif
 }
 
-void GUI_setError(uint8_t errorCode) { traceLog();
+void GUI_setError(uint8_t errorCode) {
 #if debug_log && extended_debug_log
-	if (!isInited || !modGUI) { traceLog();
+	if (!isInited || !modGUI) {
 		return;
 	}
 
@@ -48,8 +48,8 @@ void GUI_setError(uint8_t errorCode) { traceLog();
 #endif
 }
 
-void GUI_setVisible(bool visible) { traceLog();
-	if (!isInited || battleEnded || !modGUI) { traceLog();
+void GUI_setVisible(bool visible) {
+	if (!isInited || battleEnded || !modGUI) {
 		return;
 	}
 
@@ -60,8 +60,8 @@ void GUI_setVisible(bool visible) { traceLog();
 	Py_XDECREF(res);
 }
 
-void GUI_setTimerVisible(bool visible) { traceLog();
-	if (!isInited || battleEnded || !modGUI) { traceLog();
+void GUI_setTimerVisible(bool visible) {
+	if (!isInited || battleEnded || !modGUI) {
 		return;
 	}
 
@@ -72,8 +72,8 @@ void GUI_setTimerVisible(bool visible) { traceLog();
 	Py_XDECREF(res);
 }
 
-void GUI_setTime(uint32_t time_preparing) { traceLog();
-	if (!isInited || battleEnded || !modGUI) { traceLog();
+void GUI_setTime(uint32_t time_preparing) {
+	if (!isInited || battleEnded || !modGUI) {
 		return;
 	}
 
@@ -88,8 +88,8 @@ void GUI_setTime(uint32_t time_preparing) { traceLog();
 	Py_XDECREF(res);
 }
 
-void GUI_setText(char* msg, float time_f) { traceLog();
-	if (!isInited || battleEnded || !modGUI) { traceLog();
+void GUI_setText(char* msg, float time_f) {
+	if (!isInited || battleEnded || !modGUI) {
 		return;
 	}
 
@@ -102,28 +102,28 @@ void GUI_setText(char* msg, float time_f) { traceLog();
 
 	PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
-	if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog();
+	if (!delLabelCBID_p || delLabelCBID_p == Py_None) {
 		delLabelCBID = NULL;
 
 		Py_XDECREF(delLabelCBID_p);
 	}
-	else { traceLog();
+	else {
 		delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
 
 		Py_DECREF(delLabelCBID_p);
 	}
 
-	if (delLabelCBID) { traceLog();
+	if (delLabelCBID) {
 		cancelCallback(&delLabelCBID);
 
 		Py_INCREF(Py_None);
 
-		if (!GUI_setAttr("delLabelCBID", Py_None)) { traceLog();
+		if (!GUI_setAttr("delLabelCBID", Py_None)) {
 			return;
 		}
 	}
 
-	if (time_f) { traceLog();
+	if (time_f) {
 		PyObject* __clearTextCB = PyString_FromStringAndSize("clearTextCB", 11U);
 		PyObject* res2 = PyObject_CallMethodObjArgs(modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
 
@@ -138,12 +138,12 @@ void GUI_setText(char* msg, float time_f) { traceLog();
 	}
 }
 
-void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) { traceLog();
-	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= MESSAGES_COUNT) { traceLog();
+void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
+	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= MESSAGES_COUNT) {
 		return;
 	}
 
-	if (lastStageID == current_map.stageID && lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) { traceLog();
+	if (lastStageID == current_map.stageID && lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) {
 		return;
 	}
 
@@ -151,7 +151,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) { traceLog();
 
 	PyObject* __UI_messages = PyString_FromStringAndSize("UI_messages", 11U);
 
-	/*if (PyDict_Contains(g_self->i18n, __UI_messages) != 1U) { traceLog();
+	/*if (PyDict_Contains(g_self->i18n, __UI_messages) != 1U) {
 		Py_DECREF(__UI_messages);
 		return ;
 	}*/
@@ -160,7 +160,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) { traceLog();
 
 	Py_DECREF(__UI_messages);
 
-	if (!messagesList) { traceLog();
+	if (!messagesList) {
 		return;
 	}
 
@@ -170,13 +170,13 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) { traceLog();
 
 	PyObject* msg_p = PyList_GetItem(messagesList, msgID);
 
-	if (!msg_p) { traceLog();
+	if (!msg_p) {
 		return;
 	}
 
 	char* msg = PyString_AsString(msg_p);
 
-	if (!msg) { traceLog();
+	if (!msg) {
 		return;
 	}
 
@@ -184,10 +184,10 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) { traceLog();
 
 	char new_msg[255];
 
-	if (msgID == STAGE_ID::GET_SCORE) { traceLog(); // если это - сообщение о том, что получили баллы
+	if (msgID == STAGE_ID::GET_SCORE) { // если это - сообщение о том, что получили баллы
 		sprintf_s(new_msg, 255U, msg, COLOURS[msgID], SCORE[scoreID]);
 	}
-	else { traceLog();
+	else {
 		sprintf_s(new_msg, 255U, msg, COLOURS[msgID]);
 	}
 
@@ -196,8 +196,8 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) { traceLog();
 	lastStageID = current_map.stageID;
 }
 
-void GUI_clearText() { traceLog();
-	if (!isInited || !modGUI) { traceLog();
+void GUI_clearText() {
+	if (!isInited || !modGUI) {
 		return;
 	}
 
