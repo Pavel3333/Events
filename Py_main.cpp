@@ -22,7 +22,7 @@ typedef struct {
 std::vector<ModModel*> models;
 std::vector<ModLight*> lights;
 
-std::ofstream dbg_log("NY_Event_debug_log", std::ios::app);
+std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
 PyObject* event_module = NULL;
 
