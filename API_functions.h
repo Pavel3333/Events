@@ -6,9 +6,11 @@
 #include <Windows.h>
 #include <tchar.h>
 
-#define debug_log true
-#define extended_debug_log true
-#define super_extended_debug_log false
+#define debug_log                true
+#define extended_debug_log       true
+#define super_extended_debug_log true
+
+#define trace_log true
 
 #define INIT_LOCAL_MSG_BUFFER \
 	char log_buf_c[512];      \
@@ -68,6 +70,14 @@
 #define extendedDebugLogFmt(...)      0
 #define superExtendedDebugLog(X)      0
 #define superExtendedDebugLogFmt(...) 0
+#endif
+
+#if trace_log
+#define traceLog() {                                           \
+	dbg_log << __LINE__ << " - " << __FUNCTION__ << std::endl; \
+}
+#else
+#define traceLog(X) 0
 #endif
 
 #define NETWORK_USING                                                           \

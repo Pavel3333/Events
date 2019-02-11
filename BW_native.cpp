@@ -8,8 +8,8 @@ PyObject* json        = NULL;
 
 //native functions
 
-void callback(long* CBID, PyObject* func, float time_f) {
-	if (!func) {
+void callback(long* CBID, PyObject* func, float time_f) { traceLog();
+	if (!func) { traceLog();
 		return;
 	}
 
@@ -18,7 +18,7 @@ void callback(long* CBID, PyObject* func, float time_f) {
 	if (!time_f) time_p = PyFloat_FromDouble(0.0);
 	else         time_p = PyFloat_FromDouble(time_f);
 
-	if (!time_p) {
+	if (!time_p) { traceLog();
 		return;
 	}
 
@@ -28,7 +28,7 @@ void callback(long* CBID, PyObject* func, float time_f) {
 
 	Py_DECREF(__callback_text);
 
-	if (!res) {
+	if (!res) { traceLog();
 		return;
 	}
 
@@ -41,8 +41,8 @@ void callback(long* CBID, PyObject* func, float time_f) {
 	Py_DECREF(res);
 }
 
-void cancelCallback(long* CBID) {
-	if (!*CBID) {
+void cancelCallback(long* CBID) { traceLog();
+	if (!*CBID) { traceLog();
 		return;
 	}
 

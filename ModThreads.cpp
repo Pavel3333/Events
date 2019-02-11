@@ -3,7 +3,7 @@
 #include <thread>
 
 uint8_t getThreadCount()
-{
+{ traceLog();
 	uint8_t threadCount = std::thread::hardware_concurrency();
 
 	if (threadCount > 4) threadCount -= 4;

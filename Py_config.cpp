@@ -4,30 +4,30 @@ Config config = Config();
 
 ConfigObject* g_self = NULL;
 
-static PyObject* getMessagesList() {
+static PyObject* getMessagesList() { traceLog();
 	PyObject* messagesList = PyList_New(MESSAGES_COUNT);
 
-	for (uint8_t i = NULL; i < MESSAGES_COUNT; i++) {
+	for (uint8_t i = NULL; i < MESSAGES_COUNT; i++) { traceLog();
 		PyList_SET_ITEM(messagesList, i, PyString_FromString(MESSAGES[i]));
 	}
 
 	return messagesList;
 };
 
-void init_config() {
+void init_config() { traceLog();
 	config.i18n.version = config.version_id;
 	config.data.version = config.version_id;
 }
 
-static PyObject* init_data() {
+static PyObject* init_data() { traceLog();
 	PyObject* data = PyDict_New();
-	if (data == NULL) {
+	if (data == NULL) { traceLog();
 		return NULL;
 	}
 
 	PyObject* data_version = PyInt_FromSize_t(config.data.version);
 
-	if (PyDict_SetItem(data, PyString_FromStringAndSize("version", 7U), data_version)) {
+	if (PyDict_SetItem(data, PyString_FromStringAndSize("version", 7U), data_version)) { traceLog();
 		Py_DECREF(data_version);
 		Py_DECREF(data);
 		return NULL;
@@ -35,7 +35,7 @@ static PyObject* init_data() {
 
 	PyObject* data_enabled = PyBool_FromLong(config.data.enabled);
 
-	if (PyDict_SetItem(data, PyString_FromStringAndSize("enabled", 7U), data_enabled)) {
+	if (PyDict_SetItem(data, PyString_FromStringAndSize("enabled", 7U), data_enabled)) { traceLog();
 		Py_DECREF(data_enabled);
 		Py_DECREF(data);
 		return NULL;
@@ -44,15 +44,15 @@ static PyObject* init_data() {
 	return data;
 };
 
-static PyObject* init_i18n() {
+static PyObject* init_i18n() { traceLog();
 	PyObject* i18n = PyDict_New();
-	if (i18n == NULL) {
+	if (i18n == NULL) { traceLog();
 		return NULL;
 	}
 
 	PyObject* i18n_version = PyInt_FromSize_t(config.i18n.version);
 
-	if (PyDict_SetItem(i18n, PyString_FromStringAndSize("version", 7U), i18n_version)) {
+	if (PyDict_SetItem(i18n, PyString_FromStringAndSize("version", 7U), i18n_version)) { traceLog();
 		Py_DECREF(i18n_version);
 		Py_DECREF(i18n);
 		return NULL;
@@ -80,7 +80,7 @@ static PyObject* init_i18n() {
 		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_err_3", 8U), UI_err_3) ||
 		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_err_6", 8U), UI_err_6) ||
 		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_messages", 11U), UI_messages)
-		) {
+		) { traceLog();
 		Py_DECREF(i18n);
 		return NULL;
 	}
@@ -89,46 +89,46 @@ static PyObject* init_i18n() {
 }
 
 static PyObject * Config_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
+{ traceLog();
 	init_config();
 
 	g_self = (ConfigObject*)type->tp_alloc(type, 0);
 
-	if (g_self != NULL) {
+	if (g_self != NULL) { traceLog();
 
 		g_self->ids = config.ids;
-		if (g_self->ids == NULL) {
+		if (g_self->ids == NULL) { traceLog();
 			Py_DECREF(g_self);
 			return NULL;
 		}
 
 		g_self->patch = config.patch;
-		if (g_self->patch == NULL) {
+		if (g_self->patch == NULL) { traceLog();
 			Py_DECREF(g_self);
 			return NULL;
 		}
 
 		g_self->author = config.author;
-		if (g_self->author == NULL) {
+		if (g_self->author == NULL) { traceLog();
 			Py_DECREF(g_self);
 			return NULL;
 		}
 
 		g_self->version = config.version;
-		if (g_self->version == NULL) {
+		if (g_self->version == NULL) { traceLog();
 			Py_DECREF(g_self);
 			return NULL;
 		}
 
 		g_self->version_id = config.version_id;
-		if (g_self->version_id == NULL) {
+		if (g_self->version_id == NULL) { traceLog();
 			Py_DECREF(g_self);
 			return NULL;
 		}
 
 		g_self->data = init_data();
 
-		if (!g_self->data) {
+		if (!g_self->data) { traceLog();
 			Py_DECREF(g_self);
 			return NULL;
 		}
@@ -140,20 +140,20 @@ static PyObject * Config_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	return (PyObject *)g_self;
 }
 
-static void Config_dealloc(ConfigObject* self) {
-	if (self->buttons) {
+static void Config_dealloc(ConfigObject* self) { traceLog();
+	if (self->buttons) { traceLog();
 		PyDict_Clear(self->buttons);
 
 		Py_DECREF(self->buttons);
 	}
 
-	if (self->data) {
+	if (self->data) { traceLog();
 		PyDict_Clear(self->data);
 
 		Py_DECREF(self->data);
 	}
 
-	if (self->i18n) {
+	if (self->i18n) { traceLog();
 		PyDict_Clear(self->i18n);
 
 		Py_DECREF(self->i18n);
@@ -162,7 +162,7 @@ static void Config_dealloc(ConfigObject* self) {
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
-PyTypeObject Config_p {
+PyTypeObject Config_p { traceLog();
 	PyVarObject_HEAD_INIT(NULL, 0)
 		"pos.Config",					  /*tp_name*/
 		sizeof(ConfigObject),             /*tp_basicsize*/
