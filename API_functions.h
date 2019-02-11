@@ -82,22 +82,18 @@
 
 #define NETWORK_USING                                                           \
 	extendedDebugLog("[NY_Event]: NETWORK_USING\n");                            \
-    ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+    EnterCriticalSection(pCS_NETWORK_NOT_USING);
 #define NETWORK_NOT_USING                                                       \
 	extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");                        \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                            \
-		extendedDebugLog("NetworkNotUsingEvent not setted!\n");                 \
-	}
+	LeaveCriticalSection(pCS_NETWORK_NOT_USING);
 
 #define BEGIN_NETWORK_USING {                                                   \
-	extendedDebugLog("[NY_Event]: beginning EVENT_NETWORK_NOT_USING\n");        \
-	ResetEvent(EVENT_NETWORK_NOT_USING->hEvent);
+	extendedDebugLog("[NY_Event]: entering NETWORK_NOT_USING\n");               \
+	EnterCriticalSection(pCS_NETWORK_NOT_USING);
 
 #define END_NETWORK_USING                                                       \
-	extendedDebugLog("[NY_Event]: ending EVENT_NETWORK_NOT_USING\n");           \
-	if(!SetEvent(EVENT_NETWORK_NOT_USING->hEvent)) {                            \
-		extendedDebugLog("NetworkNotUsingEvent not setted!\n");                 \
-	}                                                                           \
+	extendedDebugLog("[NY_Event]: leaving NETWORK_NOT_USING\n");                \
+	LeaveCriticalSection(pCS_NETWORK_NOT_USING);                                \
 }
 
 #define NET_BUFFER_SIZE 16384

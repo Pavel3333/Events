@@ -70,12 +70,14 @@ PEVENTDATA_1 EVENT_DEL_MODEL   = NULL;
 
 //Второстепенные ивенты
 
-PEVENTDATA_2 EVENT_NETWORK_NOT_USING = NULL;
-PEVENTDATA_2 EVENT_MODELS_NOT_USING  = NULL;
-
 PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
 
 PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
+
+//Критические секции
+
+CRITICAL_SECTION* pCS_NETWORK_NOT_USING = nullptr;
+CRITICAL_SECTION* pCS_MODELS_NOT_USING  = nullptr;
 
 //---------------------
 
@@ -1371,75 +1373,54 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						isTimerStarted = true;
 					} traceLog();
 
-					extendedDebugLog("[NY_Event]: timer: waiting EVENT_NETWORK_NOT_USING\n");
+					NETWORK_USING;
 
-					DWORD EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
-						EVENT_NETWORK_NOT_USING->hEvent, // event handle
-						INFINITE);               // indefinite wait
+					//рабочая часть
 
-					switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
-					{
-						// Event object was signaled
-					case WAIT_OBJECT_0:
-						extendedDebugLog("[NY_Event]: timer: EVENT_NETWORK_NOT_USING signaled!\n");
+					eventID = EVENT_ID::IN_BATTLE_GET_FULL;
 
-						NETWORK_USING;
+					if (isModelsAlreadyCreated && isModelsAlreadyInited) eventID = EVENT_ID::IN_BATTLE_GET_SYNC;
 
-						//рабочая часть
+					request = send_token(databaseID, mapID, eventID);
 
-						eventID = EVENT_ID::IN_BATTLE_GET_FULL;
+					if (request) { traceLog();
+						if (request > 9) { traceLog();
+							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
 
-						if (isModelsAlreadyCreated && isModelsAlreadyInited) eventID = EVENT_ID::IN_BATTLE_GET_SYNC;
+							//GUI_setError(request);
 
-						request = send_token(databaseID, mapID, eventID);
-
-						if (request) { traceLog();
-							if (request > 9) { traceLog();
-								extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
-
-								//GUI_setError(request);
-
-								timerLastError = 1;
-
-								NETWORK_NOT_USING;
-
-								break;
-							} traceLog();
-
-							extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
-
-							//GUI_setWarning(request);
+							timerLastError = 1;
 
 							NETWORK_NOT_USING;
 
 							break;
 						} traceLog();
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-						OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
-#endif
+						extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
 
-						Py_BLOCK_THREADS;
+						//GUI_setWarning(request);
 
-						request = handle_battle_event(eventID);
-
-						Py_UNBLOCK_THREADS;
-
-						if (request) { traceLog();
-							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
-
-							//GUI_setError(request);
-
-							timerLastError = 2;
-
-							break;
-						} traceLog();
+						NETWORK_NOT_USING;
 
 						break;
+					} traceLog();
 
-						// An error occurred
-					default:
-						extendedDebugLog("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n");
+#if debug_log && extended_debug_log && super_extended_debug_log
+					OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
+#endif
+
+					Py_BLOCK_THREADS;
+
+					request = handle_battle_event(eventID);
+
+					Py_UNBLOCK_THREADS;
+
+					if (request) { traceLog();
+						extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
+
+						//GUI_setError(request);
+
+						timerLastError = 2;
 
 						break;
 					} traceLog();
@@ -1547,43 +1528,24 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		//рабочая часть
 
-		EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
-			EVENT_NETWORK_NOT_USING->hEvent, // event handle
-			INFINITE);               // indefinite wait
+		BEGIN_NETWORK_USING;
+			first_check = send_token(databaseID, mapID, eventID);
+		END_NETWORK_USING;
 
-		switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
-		{
-			// Event object was signaled
-		case WAIT_OBJECT_0:
-			BEGIN_NETWORK_USING;
-				first_check = send_token(databaseID, mapID, eventID);
-			END_NETWORK_USING;
+		if (first_check) { traceLog();
+			if (first_check > 9) { traceLog();
+				extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
 
-			if (first_check) { traceLog();
-				if (first_check > 9) { traceLog();
-					extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+				//GUI_setError(first_check);
 
-					//GUI_setError(first_check);
-
-					return 6;
-				} traceLog();
-
-				extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
-
-				//GUI_setWarning(first_check);
-
-				return 5;
+				return 6;
 			} traceLog();
 
-			break;
+			extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
 
-			// An error occurred
-		default:
-			NETWORK_NOT_USING;
+			//GUI_setWarning(first_check);
 
-			extendedDebugLog("[NY_Event][ERROR]: NetworkNotUsingEvent - something wrong with WaitResult!\n");
-
-			return 4;
+			return 5;
 		} traceLog();
 
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
@@ -1678,77 +1640,58 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			Py_UNBLOCK_THREADS;
 
 			if (!find_result) { traceLog();
-				EVENT_NETWORK_NOT_USING_WaitResult = WaitForSingleObject(
-					EVENT_NETWORK_NOT_USING->hEvent, // event handle
-					INFINITE);               // indefinite wait
+				BEGIN_NETWORK_USING;
+					server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
+				END_NETWORK_USING;
 
-				switch (EVENT_NETWORK_NOT_USING_WaitResult) //ждем, когда сеть перестанет использоваться
-				{
-					// Event object was signaled
-				case WAIT_OBJECT_0:
-					BEGIN_NETWORK_USING;
-						server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
-					END_NETWORK_USING;
+				if (server_req) { traceLog();
+					if (server_req > 9) { traceLog();
+						extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", (uint32_t)server_req);
 
-					if (server_req) { traceLog();
-						if (server_req > 9) { traceLog();
-							extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", (uint32_t)server_req);
+						//GUI_setError(server_req);
 
-							//GUI_setError(server_req);
-
-							lastEventError = 5;
-
-							break;
-						} traceLog();
-
-						extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
-
-						//GUI_setWarning(server_req);
-
-						lastEventError = 4;
+						lastEventError = 5;
 
 						break;
 					} traceLog();
 
-					deleting_py_models = delModelPy(coords);
+					extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
 
-					if (deleting_py_models) { traceLog();
-						extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", (uint32_t)deleting_py_models);
+					//GUI_setWarning(server_req);
 
-						//GUI_setError(deleting_py_models);
-
-						lastEventError = 3;
-
-						break;
-					} traceLog();
-
-					scoreID = modelID;
-					current_map.stageID = STAGE_ID::GET_SCORE;
-
-					/*
-					uint8_t deleting_coords = delModelCoords(modelID, coords);
-
-					if (deleting_coords) { traceLog();
-		#if debug_log && extended_debug_log
-							PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
-		#endif
-
-							//GUI_setError(deleting_coords);
-
-							return 6;
-					} traceLog();
-					*/
-
-					break;
-
-					// An error occurred
-				default:
-					extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
-
-					lastEventError = 2;
+					lastEventError = 4;
 
 					break;
 				} traceLog();
+
+				deleting_py_models = delModelPy(coords);
+
+				if (deleting_py_models) { traceLog();
+					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", (uint32_t)deleting_py_models);
+
+					//GUI_setError(deleting_py_models);
+
+					lastEventError = 3;
+
+					break;
+				} traceLog();
+
+				scoreID = modelID;
+				current_map.stageID = STAGE_ID::GET_SCORE;
+
+				/*
+				uint8_t deleting_coords = delModelCoords(modelID, coords);
+
+				if (deleting_coords) { traceLog();
+	#if debug_log && extended_debug_log
+						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
+	#endif
+
+						//GUI_setError(deleting_coords);
+
+						return 6;
+				} traceLog();
+				*/
 			}
 			else if (find_result == 7) { traceLog();
 				current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
@@ -2170,6 +2113,15 @@ void closeEvent2(PEVENTDATA_2* pEvent) { traceLog();
 	} traceLog();
 }
 
+void closeCS(CRITICAL_SECTION** CS) {
+	if (CS != nullptr) {
+		DeleteCriticalSection(*CS);
+
+		delete *CS;
+		(*CS) = nullptr;
+	}
+}
+
 static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 	if (hTimer != NULL) { traceLog(); //закрываем таймер, если он был создан
 		CloseHandle(hTimer);
@@ -2183,8 +2135,8 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 	closeEvent1(&EVENT_IN_HANGAR);
 	closeEvent1(&EVENT_DEL_MODEL);
 
-	closeEvent2(&EVENT_NETWORK_NOT_USING);
-	closeEvent2(&EVENT_MODELS_NOT_USING);
+	closeCS(&pCS_NETWORK_NOT_USING);
+	closeCS(&pCS_MODELS_NOT_USING);
 
 	closeEvent2(&EVENT_ALL_MODELS_CREATED);
 	closeEvent2(&EVENT_BATTLE_ENDED);
@@ -2301,13 +2253,12 @@ bool createEventsAndSecondThread() { traceLog();
 		return false;
 	} traceLog();
 
+	pCS_NETWORK_NOT_USING = new CRITICAL_SECTION;
+	pCS_MODELS_NOT_USING  = new CRITICAL_SECTION;
 
-	if (!createEvent2(&EVENT_NETWORK_NOT_USING, L"NY_Event_NetworkNotUsingEvent", TRUE)) { traceLog(); //изначально сигнализирует
-		return false;
-	} traceLog();
-	if (!createEvent2(&EVENT_MODELS_NOT_USING,  L"NY_Event_ModelsNotUsingEvent",  TRUE)) { traceLog(); //изначально сигнализирует
-		return false;
-	} traceLog();
+	InitializeCriticalSection(pCS_NETWORK_NOT_USING);
+	InitializeCriticalSection(pCS_MODELS_NOT_USING);
+
 	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog();
 		return false;
 	} traceLog();
