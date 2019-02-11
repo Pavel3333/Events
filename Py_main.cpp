@@ -980,6 +980,8 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 		return 1;
 	}
 
+	INIT_LOCAL_MSG_BUFFER;
+
 	extendedDebugLog("[NY_Event]: parsing...\n");
 
 	uint8_t parsing_result = NULL;
@@ -992,8 +994,6 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 	NETWORK_NOT_USING;
 
-	
-
 	if (parsing_result) {
 		extendedDebugLogFmt("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
 
@@ -1004,7 +1004,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) {
 
 	Py_END_ALLOW_THREADS
 
-	superExtendedDebugLog("[NY_Event]: parsing OK!\n");
+	extendedDebugLog("[NY_Event]: parsing OK!\n");
 	
 	if (current_map.time_preparing)  //выводим время
 		GUI_setTime(current_map.time_preparing);
@@ -1297,6 +1297,8 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 	EVENT_ID eventID;
 
+	INIT_LOCAL_MSG_BUFFER;
+
 	extendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
 
 	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
@@ -1509,6 +1511,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	Py_UNBLOCK_THREADS;
 
 	DWORD EVENT_NETWORK_NOT_USING_WaitResult;
+
+	INIT_LOCAL_MSG_BUFFER;
 
 	extendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR\n");
 
@@ -1798,6 +1802,8 @@ uint8_t makeEventInThread(EVENT_ID eventID) { //переводим ивенты 
 		return 1;
 	}
 
+	INIT_LOCAL_MSG_BUFFER;
+
 	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC || eventID == EVENT_ID::DEL_LAST_MODEL) { //посылаем ивент и обрабатываем в треде
 		if      (eventID == EVENT_ID::IN_HANGAR) {
 			if (!EVENT_IN_HANGAR) {
@@ -1808,7 +1814,7 @@ uint8_t makeEventInThread(EVENT_ID eventID) { //переводим ивенты 
 
 			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
 			{
-				extendedDebugLog("[NY_Event][ERROR]: EVENT_IN_HANGAR not setted!\n");
+				debugLogFmt("[NY_Event][ERROR]: EVENT_IN_HANGAR not setted!\n");
 
 				return 5;
 			}
@@ -1822,7 +1828,7 @@ uint8_t makeEventInThread(EVENT_ID eventID) { //переводим ивенты 
 
 			if (!SetEvent(EVENT_START_TIMER->hEvent))
 			{
-				extendedDebugLog("[NY_Event][ERROR]: EVENT_START_TIMER not setted!\n");
+				debugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER not setted!\n");
 
 				return 5;
 			}
@@ -1836,7 +1842,7 @@ uint8_t makeEventInThread(EVENT_ID eventID) { //переводим ивенты 
 
 			if (!SetEvent(EVENT_DEL_MODEL->hEvent))
 			{
-				extendedDebugLog("[NY_Event][ERROR]: EVENT_DEL_MODEL not setted!\n");
+				debugLogFmt("[NY_Event][ERROR]: EVENT_DEL_MODEL not setted!\n");
 
 				return 5;
 			}
@@ -1852,6 +1858,8 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	if (!isInited || first_check) {
 		return PyInt_FromSize_t(1);
 	}
+
+	INIT_LOCAL_MSG_BUFFER;
 
 	PyObject* __player = PyString_FromString("player");
 
@@ -1919,7 +1927,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 	request = makeEventInThread(EVENT_ID::IN_BATTLE_GET_FULL);
 
 	if (request) {
-		extendedDebugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
+		debugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
 
 		return PyInt_FromSize_t(6);
 	}
@@ -2033,6 +2041,8 @@ uint8_t event_fini() {
 	if (!isInited || first_check) {
 		return 1;
 	}
+
+	INIT_LOCAL_MSG_BUFFER;
 
 	extendedDebugLog("[NY_Event]: fini...\n");
 
@@ -2233,6 +2243,8 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 	if ((*pEvent)->hEvent == NULL)
 	{
+		INIT_LOCAL_MSG_BUFFER;
+
 		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
 
 		return false;
@@ -2261,6 +2273,8 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 
 	if ((*pEvent)->hEvent == NULL)
 	{
+		INIT_LOCAL_MSG_BUFFER;
+
 		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
 
 		return false;
@@ -2270,13 +2284,13 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 }
 
 bool createEventsAndSecondThread() {
-	if (!createEvent1(&EVENT_IN_HANGAR, EVENT_ID::IN_HANGAR)) {
+	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) {
 		return false;
 	}
 	if (!createEvent1(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) {
 		return false;
 	}
-	if (!createEvent1(&EVENT_DEL_MODEL, EVENT_ID::DEL_LAST_MODEL)) {
+	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) {
 		return false;
 	}
 
@@ -2312,7 +2326,9 @@ bool createEventsAndSecondThread() {
 
 	if (hHandlerThread == NULL)
 	{
-		extendedDebugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
+		INIT_LOCAL_MSG_BUFFER;
+
+		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
 
 		return false;
 	}
@@ -2333,7 +2349,9 @@ uint8_t event_сheck() {
 
 	//------------------------------------------------------------------------------------------------
 
-	extendedDebugLog("[NY_Event]: checking...\n");
+	INIT_LOCAL_MSG_BUFFER;
+
+	debugLogFmt("[NY_Event]: checking...\n");
 
 	PyObject* __player = PyString_FromString("player");
 	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
@@ -2366,7 +2384,7 @@ uint8_t event_сheck() {
 
 	Py_DECREF(DBID_int);
 
-	extendedDebugLog("[NY_Event]: DBID created\n");
+	debugLogFmt("[NY_Event]: DBID created\n");
 
 	mapID = NULL;
 
@@ -2489,7 +2507,9 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 		request = makeEventInThread(EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) {
-			extendedDebugLogFmt("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n", request);
+			INIT_LOCAL_MSG_BUFFER;
+
+			debugLogFmt("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n", request);
 
 			Py_RETURN_NONE;
 		}
@@ -2724,6 +2744,8 @@ PyMODINIT_FUNC initevent(void)
 	uint32_t curl_init_result = curl_init();
 
 	if (curl_init_result) {
+		INIT_LOCAL_MSG_BUFFER;
+
 		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
 
 		return;

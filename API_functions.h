@@ -10,6 +10,10 @@
 #define extended_debug_log true
 #define super_extended_debug_log false
 
+#define INIT_LOCAL_MSG_BUFFER \
+	char log_buf_c[512];      \
+	WCHAR log_buf[512];                          
+
 #if debug_log
 #define debugLog(X)           \
 	OutputDebugString(_T(X)); \
@@ -17,12 +21,10 @@
     dbg_log << X;
 
 #define debugLogFmt(fmt, ...) {                  \
-	char log_buf_c[256];                         \
-	WCHAR  log_buf[256];                         \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
 	OutputDebugString(log_buf);                  \
 	PySys_WriteStdout(fmt, __VA_ARGS__);         \
-    sprintf_s(log_buf_c, 256, fmt, __VA_ARGS__); \
+    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
     dbg_log << log_buf_c;                        \
 	}
 
@@ -31,11 +33,9 @@
 	OutputDebugString(_T(X));                    \
 	dbg_log << X; 
 #define extendedDebugLogFmt(fmt, ...) {          \
-	char log_buf_c[256];                         \
-	WCHAR log_buf[256];                          \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
 	OutputDebugString(log_buf);                  \
-    sprintf_s(log_buf_c, 256, fmt, __VA_ARGS__); \
+    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
     dbg_log << log_buf_c;                        \
 	}
 
@@ -45,11 +45,9 @@
 	OutputDebugString(_T(X));                    \
 	dbg_log << X; 
 #define superExtendedDebugLogFmt(fmt, ...) {     \
-	char log_buf_c[256];                         \
-	WCHAR log_buf[256];                          \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
 	OutputDebugString(log_buf);                  \
-    sprintf_s(log_buf_c, 256, fmt, __VA_ARGS__); \
+    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
     dbg_log << log_buf_c;                        \
 	}
 
