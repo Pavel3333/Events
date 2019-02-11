@@ -82,7 +82,7 @@ PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 STAGE_ID lastStageID = STAGE_ID::COMPETITION;
 EVENT_ID lastEventID = EVENT_ID::IN_HANGAR;
 
-uint8_t makeEventInThread(uint8_t, uint8_t);
+uint8_t makeEventInThread(uint8_t);
 
 bool write_data(char* data_path, PyObject* data_p) {
 	PyObject* arg2 = Py_False;
@@ -1496,8 +1496,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		return 1;
 	}
 
-	uint32_t databaseID;
-	uint8_t  map_ID;
 	EVENT_ID eventID;
 
 	//включаем GIL для этого потока
@@ -1547,7 +1545,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			// Event object was signaled
 		case WAIT_OBJECT_0:
 			BEGIN_NETWORK_USING;
-				first_check = send_token(databaseID, map_ID, eventID);
+				first_check = send_token(databaseID, mapID, eventID);
 			END_NETWORK_USING;
 
 			if (first_check) {
@@ -1795,7 +1793,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 //-----------------
 
-uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводим ивенты в сигнальные состояния
+uint8_t makeEventInThread(EVENT_ID eventID) { //переводим ивенты в сигнальные состояния
 	if (!isInited || !databaseID || battleEnded) {
 		return 1;
 	}
@@ -1918,7 +1916,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) {
 
 	isTimeVisible = true;
 
-	request = makeEventInThread(mapID, EVENT_ID::IN_BATTLE_GET_FULL);
+	request = makeEventInThread(EVENT_ID::IN_BATTLE_GET_FULL);
 
 	if (request) {
 		extendedDebugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
@@ -2370,9 +2368,11 @@ uint8_t event_сheck() {
 
 	extendedDebugLog("[NY_Event]: DBID created\n");
 
+	mapID = NULL;
+
 	battleEnded = false;
 
-	first_check = makeEventInThread(NULL, EVENT_ID::IN_HANGAR);
+	first_check = makeEventInThread(EVENT_ID::IN_HANGAR);
 
 	if (first_check) {
 		return 6;
@@ -2486,7 +2486,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	}
 
 	if (isKeyGetted_Space == Py_True) {
-		request = makeEventInThread(mapID, EVENT_ID::DEL_LAST_MODEL);
+		request = makeEventInThread(EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) {
 			extendedDebugLogFmt("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n", request);
