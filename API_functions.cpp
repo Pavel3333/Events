@@ -587,7 +587,7 @@ uint8_t parse_del_model() {
 	return 26U;
 }
 
-uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID=NULL, float* coords_del=nullptr) {
+uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID, float* coords_del) {
 	unsigned char* token = nullptr;
 
 	uint16_t size = NULL;

@@ -1283,7 +1283,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	if (!isInited) {
+	if (!isInited || !EVENT_START_TIMER) {
 		return 1;
 	}
 
@@ -1294,6 +1294,8 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 	PyGILState_STATE gstate;
 
 	PyThreadState* _save;
+
+	EVENT_ID eventID;
 
 	extendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
 
@@ -1360,10 +1362,6 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 			{
 				while (!first_check && !battleEnded && !timerLastError)
 				{
-					uint32_t databaseID = EVENT_START_TIMER->databaseID;
-					uint32_t map_ID = EVENT_START_TIMER->map_ID;
-					EVENT_ID eventID = EVENT_START_TIMER->eventID;
-
 					if (!isTimerStarted) {
 						isTimerStarted = true;
 					}
@@ -1384,7 +1382,11 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 						//рабочая часть
 
-						request = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+						eventID = EVENT_ID::IN_BATTLE_GET_FULL;
+
+						if (isModelsAlreadyCreated && isModelsAlreadyInited) eventID = EVENT_ID::IN_BATTLE_GET_SYNC;
+
+						request = send_token(databaseID, mapID, eventID);
 
 						if (request) {
 							if (request > 9) {
@@ -1524,8 +1526,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		//место для рабочего кода
 
-		databaseID = EVENT_IN_HANGAR->databaseID;
-		map_ID     = EVENT_IN_HANGAR->map_ID;
 		eventID    = EVENT_IN_HANGAR->eventID;
 
 		if (eventID != EVENT_ID::IN_HANGAR) {
@@ -1547,7 +1547,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			// Event object was signaled
 		case WAIT_OBJECT_0:
 			BEGIN_NETWORK_USING;
-				first_check = send_token(databaseID, map_ID, eventID, NULL, nullptr);
+				first_check = send_token(databaseID, map_ID, eventID);
 			END_NETWORK_USING;
 
 			if (first_check) {
@@ -1646,8 +1646,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			//место для рабочего кода
 
-			databaseID = EVENT_DEL_MODEL->databaseID;
-			map_ID     = EVENT_DEL_MODEL->map_ID;
 			eventID    = EVENT_DEL_MODEL->eventID;
 
 			if (eventID != EVENT_ID::DEL_LAST_MODEL) {
@@ -1808,8 +1806,6 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 				return 4;
 			}
 
-			EVENT_IN_HANGAR->databaseID = databaseID; //заполняем буфер для ангара
-			EVENT_IN_HANGAR->map_ID = map_ID;
 			EVENT_IN_HANGAR->eventID = eventID;
 
 			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
@@ -1824,8 +1820,6 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 				return 4;
 			}
 
-			EVENT_START_TIMER->databaseID = databaseID;
-			EVENT_START_TIMER->map_ID     = map_ID;
 			EVENT_START_TIMER->eventID    = eventID;
 
 			if (!SetEvent(EVENT_START_TIMER->hEvent))
@@ -1840,8 +1834,6 @@ uint8_t makeEventInThread(uint8_t map_ID, EVENT_ID eventID) { //переводи
 				return 4;
 			}
 
-			EVENT_DEL_MODEL->databaseID = databaseID;
-			EVENT_DEL_MODEL->map_ID = map_ID;
 			EVENT_DEL_MODEL->eventID = eventID;
 
 			if (!SetEvent(EVENT_DEL_MODEL->hEvent))

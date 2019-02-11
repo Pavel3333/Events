@@ -9,8 +9,6 @@
 typedef struct {
 	HANDLE hEvent = NULL;
 
-	uint32_t databaseID = NULL;
-	uint8_t  map_ID = NULL;
 	EVENT_ID eventID = EVENT_ID::IN_HANGAR;
 } EVENTDATA_1, *PEVENTDATA_1;
 

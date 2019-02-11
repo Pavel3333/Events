@@ -227,4 +227,4 @@ uint8_t parse_del_model();
 
 bool file_exists(const char*);
 
-uint8_t send_token(uint32_t, uint8_t, EVENT_ID, uint8_t modelID, float* coords_del);
+uint8_t send_token(uint32_t, uint8_t, EVENT_ID, uint8_t modelID = NULL, float* coords_del = nullptr);
