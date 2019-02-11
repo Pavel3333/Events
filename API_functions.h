@@ -14,7 +14,7 @@
 #define debugLog(X)           \
 	OutputDebugString(_T(X)); \
 	PySys_WriteStdout(X);     \
-    dbg_log << X << std::endl;
+    dbg_log << X;
 
 #define debugLogFmt(fmt, ...) {                  \
 	char log_buf_c[256];                         \
@@ -29,7 +29,7 @@
 #if extended_debug_log
 #define extendedDebugLog(X)                      \
 	OutputDebugString(_T(X));                    \
-	dbg_log << X << std::endl; 
+	dbg_log << X; 
 #define extendedDebugLogFmt(fmt, ...) {          \
 	char log_buf_c[256];                         \
 	WCHAR log_buf[256];                          \
@@ -43,7 +43,7 @@
 #if super_extended_debug_log
 #define superExtendedDebugLog(X)                 \
 	OutputDebugString(_T(X));                    \
-	dbg_log << X << std::endl; 
+	dbg_log << X; 
 #define superExtendedDebugLogFmt(fmt, ...) {     \
 	char log_buf_c[256];                         \
 	WCHAR log_buf[256];                          \
