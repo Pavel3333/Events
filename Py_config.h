@@ -19,8 +19,6 @@ extern ConfigObject* g_self;
 
 static PyObject* getMessagesList();
 
-uint8_t event_fini();
-
 void init_config();
 
 static PyObject* init_data();

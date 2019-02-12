@@ -87,6 +87,7 @@ HANDLE M_MODELS_NOT_USING = NULL;
 STAGE_ID lastStageID = STAGE_ID::COMPETITION;
 EVENT_ID lastEventID = EVENT_ID::IN_HANGAR;
 
+uint8_t handleBattleEndEvent(PyThreadState* _save);
 uint8_t makeEventInThread(uint8_t);
 
 bool write_data(char* data_path, PyObject* data_p) { traceLog();
@@ -975,9 +976,11 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 	extendedDebugLog("[NY_Event]: parsing...\n");
 
+	PyThreadState *_save;
+
 	uint8_t parsing_result = NULL;
 
-	Py_BEGIN_ALLOW_THREADS
+	Py_UNBLOCK_THREADS;
 
 	if      (eventID == EVENT_ID::IN_BATTLE_GET_FULL) parsing_result = parse_config();
 	else if (eventID == EVENT_ID::IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
@@ -993,7 +996,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 		return 2;
 	} traceLog();
 
-	Py_END_ALLOW_THREADS
+	Py_BLOCK_THREADS;
 
 	extendedDebugLog("[NY_Event]: parsing OK!\n");
 	
@@ -1024,7 +1027,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 				GUI_setMsg(current_map.stageID);
 
-				uint8_t event_result = event_fini();
+				uint8_t event_result = handleBattleEndEvent(_save);
 
 				if (event_result) { traceLog();
 					extendedDebugLogFmt("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n", (uint32_t)event_result);
@@ -1047,14 +1050,14 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 					if (eventID == EVENT_ID::IN_BATTLE_GET_FULL) { traceLog();
 						superExtendedDebugLogFmt("sect count: %u\npos count: %u\n", current_map.modelsSects.size(), current_map.minimap_count);
 
-						Py_BEGIN_ALLOW_THREADS;
+						Py_UNBLOCK_THREADS;
 
 						extendedDebugLog("[NY_Event]: creating...\n");
 
 						models.~vector();
 						lights.~vector();
 
-						Py_END_ALLOW_THREADS;
+						Py_BLOCK_THREADS;
 
 						/*
 						Первый способ - нативный вызов в main-потоке добавлением в очередь. Ненадёжно!
@@ -1076,7 +1079,6 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 						request = create_models();
 
-						PyThreadState *_save;        //глушим GIL
 						Py_UNBLOCK_THREADS;
 
 						if (request) { traceLog();
@@ -1240,6 +1242,18 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 	return NULL;
 }
 
+VOID CALLBACK TimerAPCProc(
+	LPVOID lpArg,               // Data value
+	DWORD dwTimerLowValue,      // Timer low value
+	DWORD dwTimerHighValue)     // Timer high value
+{
+	// Formal parameters not used in this example.
+	UNREFERENCED_PARAMETER(lpArg);
+
+	UNREFERENCED_PARAMETER(dwTimerLowValue);
+	UNREFERENCED_PARAMETER(dwTimerHighValue);
+}
+
 uint8_t handleStartTimerEvent(PyThreadState* _save) {
 	INIT_LOCAL_MSG_BUFFER;
 
@@ -1398,6 +1412,131 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 	} traceLog();
 }
 
+uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
+	if (!isInited || first_check) { traceLog();
+		return 1;
+	} traceLog();
+
+	Py_UNBLOCK_THREADS;
+
+	INIT_LOCAL_MSG_BUFFER;
+
+	uint8_t delete_models = NULL;
+	std::vector<ModModel*>::iterator it_model;
+	std::vector<ModLight*>::iterator it_light;
+
+	Py_BLOCK_THREADS;
+
+	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
+		M_MODELS_NOT_USING,    // handle to mutex
+		INFINITE);             // no time-out interval
+
+	switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
+	case WAIT_OBJECT_0: traceLog();
+		if (!models.empty()) { traceLog();
+			request = NULL;
+
+			delete_models = del_models();
+
+			if (delete_models) { traceLog();
+				extendedDebugLogFmt("[NY_Event][WARNING]: del_models: %d\n", (uint32_t)delete_models);
+			} traceLog();
+
+			it_model = models.begin();
+
+			while (it_model != models.end()) {
+				if (*it_model == nullptr) { traceLog();
+					it_model = models.erase(it_model);
+
+					continue;
+				}
+
+				Py_XDECREF((*it_model)->model);
+
+				(*it_model)->model = NULL;
+				(*it_model)->coords = nullptr;
+				(*it_model)->processed = false;
+
+				delete *it_model;
+				*it_model = nullptr;
+
+				it_model = models.erase(it_model);
+
+				it_model++;
+			} traceLog();
+
+			models.~vector();
+		} traceLog();
+
+		isModelsAlreadyInited = false;
+
+		if (!lights.empty()) { traceLog();
+			it_light = lights.begin();
+
+			while (it_light != lights.end()) {
+				if (*it_light == nullptr) { traceLog();
+					it_light = lights.erase(it_light);
+
+					continue;
+				}
+
+				Py_XDECREF((*it_light)->model);
+
+				(*it_light)->model = NULL;
+				(*it_light)->coords = nullptr;
+
+				delete *it_light;
+				*it_light = nullptr;
+
+				it_light = lights.erase(it_light);
+			} traceLog();
+
+			lights.~vector();
+		} traceLog();
+
+		superExtendedDebugLog("[NY_Event]: fini debug 1\n");
+
+		Py_UNBLOCK_THREADS;
+
+		if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog();
+			superExtendedDebugLog("[NY_Event]: fini debug 2\n");
+
+			clearModelsSections();
+		} traceLog();
+
+		isModelsAlreadyCreated = false;
+
+		current_map.minimap_count = NULL;
+
+		//релизим мутекс для этого потока
+
+		if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+			extendedDebugLogFmt("[NY_Event][ERROR]: event_fini - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+		}
+
+		Py_BLOCK_THREADS;
+
+		break;
+	case WAIT_ABANDONED: traceLog();
+		extendedDebugLog("[NY_Event][ERROR]: event_fini - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+
+		return 2;
+	}
+
+	if (isTimeVisible) { traceLog();
+		GUI_setTime(NULL);
+		GUI_setTimerVisible(false);
+
+		isTimeVisible = false;
+
+		current_map.time_preparing = NULL;
+	} traceLog();
+
+	extendedDebugLog("[NY_Event]: fini OK!\n");
+
+	return NULL;
+};
+
 //threads functions
 
 /*
@@ -1409,18 +1548,6 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 -поток: ТАЙМЕР!!!
 -программа ушла в вечное ожидание
 */
-
-VOID CALLBACK TimerAPCProc(
-	LPVOID lpArg,               // Data value
-	DWORD dwTimerLowValue,      // Timer low value
-	DWORD dwTimerHighValue)     // Timer high value
-{
-	// Formal parameters not used in this example.
-	UNREFERENCED_PARAMETER(lpArg);
-
-	UNREFERENCED_PARAMETER(dwTimerLowValue);
-	UNREFERENCED_PARAMETER(dwTimerHighValue);
-}
 
 DWORD WINAPI TimerThread(LPVOID lpParam)
 {
@@ -1459,7 +1586,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		request = handleStartTimerEvent(_save);
 
 		if (request) { traceLog();
-			extendedDebugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
+			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
 		}
 
 		Py_BLOCK_THREADS;
@@ -1535,7 +1662,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		request = handleInHangarEvent(_save);
 
 		if (request) { traceLog();
-			extendedDebugLogFmt("[NY_Event][ERROR]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", request);
+			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", request);
 		}
 
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
@@ -1699,7 +1826,68 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			ResetEvent(EVENT_DEL_MODEL->hEvent);
 
 			break;
+		case WAIT_OBJECT_0 + 1: traceLog(); //сработало событие окончания боя
+			if (hTimer) { traceLog(); //закрываем таймер, если он был создан
+				CloseHandle(hTimer);
 
+				hTimer = NULL;
+			} traceLog();
+
+			isTimerStarted = false;
+
+			closeEvent1(&EVENT_START_TIMER);
+			closeEvent1(&EVENT_IN_HANGAR);
+			closeEvent1(&EVENT_DEL_MODEL);
+
+			if (pCS_NETWORK_NOT_USING != nullptr) { traceLog();
+				DeleteCriticalSection(pCS_NETWORK_NOT_USING);
+
+				delete pCS_NETWORK_NOT_USING;
+				pCS_NETWORK_NOT_USING = nullptr;
+			} traceLog();
+
+			if (M_MODELS_NOT_USING) { traceLog();
+				CloseHandle(M_MODELS_NOT_USING);
+
+				M_MODELS_NOT_USING = nullptr;
+			} traceLog();
+
+			closeEvent2(&EVENT_ALL_MODELS_CREATED);
+			closeEvent2(&EVENT_BATTLE_ENDED);
+
+			uint8_t fini_result = handleBattleEndEvent();
+
+			if (fini_result) { traceLog();
+				return fini_result;
+			}
+			else { traceLog();
+				battleEnded = true;
+
+				current_map.stageID = STAGE_ID::COMPETITION;
+
+				PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
+
+				if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog();
+					delLabelCBID = NULL;
+
+					Py_XDECREF(delLabelCBID_p);
+				}
+				else { traceLog();
+					delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
+
+					Py_DECREF(delLabelCBID_p);
+				} traceLog();
+
+				cancelCallback(&delLabelCBID);
+
+				allModelsCreated = NULL;
+
+				GUI_setVisible(false);
+				GUI_clearText();
+
+				request = NULL;
+				mapID = NULL;
+			}
 			// An error occurred
 		default: traceLog();
 			ResetEvent(EVENT_DEL_MODEL->hEvent);
@@ -1971,104 +2159,6 @@ uint8_t del_models() { traceLog();
 	return NULL;
 };
 
-uint8_t event_fini() { traceLog();
-	if (!isInited || first_check) { traceLog();
-		return 1;
-	} traceLog();
-
-	INIT_LOCAL_MSG_BUFFER;
-
-	extendedDebugLog("[NY_Event]: fini...\n");
-
-	if (!models.empty()) { traceLog();
-		request = NULL;
-
-		uint8_t delete_models = del_models();
-
-		if (delete_models) { traceLog();
-			extendedDebugLogFmt("[NY_Event][WARNING]: del_models: %d\n", (uint32_t)delete_models);
-		} traceLog();
-
-		std::vector<ModModel*>::iterator it_model = models.begin();
-
-		while (it_model != models.end()) {
-			if (*it_model == nullptr) { traceLog();
-				it_model = models.erase(it_model);
-
-				continue;
-			}
-
-			Py_XDECREF((*it_model)->model);
-
-			(*it_model)->model = NULL;
-			(*it_model)->coords = nullptr;
-			(*it_model)->processed = false;
-
-			delete *it_model;
-			*it_model = nullptr;
-
-			it_model = models.erase(it_model);
-
-			it_model++;
-		} traceLog();
-
-		models.~vector();
-	} traceLog();
-
-	isModelsAlreadyInited = false;
-
-	if (!lights.empty()) { traceLog();
-		std::vector<ModLight*>::iterator it_light = lights.begin();
-
-		while (it_light != lights.end()) {
-			if (*it_light == nullptr) { traceLog();
-				it_light = lights.erase(it_light);
-
-				continue;
-			}
-
-			Py_XDECREF((*it_light)->model);
-
-			(*it_light)->model = NULL;
-			(*it_light)->coords = nullptr;
-
-			delete *it_light;
-			*it_light = nullptr;
-
-			it_light = lights.erase(it_light);
-		} traceLog();
-
-		lights.~vector();
-	} traceLog();
-
-	superExtendedDebugLog("[NY_Event]: fini debug 1\n");
-
-	if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog();
-		superExtendedDebugLog("[NY_Event]: fini debug 2\n");
-
-		Py_BEGIN_ALLOW_THREADS;
-			clearModelsSections();
-		Py_END_ALLOW_THREADS;
-	} traceLog();
-
-	isModelsAlreadyCreated = false;
-
-	current_map.minimap_count = NULL;
-
-	if (isTimeVisible) { traceLog();
-		GUI_setTime(NULL);
-		GUI_setTimerVisible(false);
-
-		isTimeVisible = false;
-
-		current_map.time_preparing = NULL;
-	} traceLog();
-
-	extendedDebugLog("[NY_Event]: fini OK!\n");
-
-	return NULL;
-};
-
 void closeEvent1(PEVENTDATA_1* pEvent) { traceLog();
 	if (*pEvent) { traceLog(); //если уже была инициализирована структура - удаляем
 		if ((*pEvent)->hEvent) { traceLog();
@@ -2098,69 +2188,19 @@ void closeEvent2(PEVENTDATA_2* pEvent) { traceLog();
 }
 
 static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
-	if (hTimer) { traceLog(); //закрываем таймер, если он был создан
-		CloseHandle(hTimer);
-
-		hTimer = NULL;
+	if (!EVENT_BATTLE_ENDED) { traceLog();
+		return PyInt_FromSize_t(1);
 	} traceLog();
 
-	isTimerStarted = false;
+	INIT_LOCAL_MSG_BUFFER;
 
-	closeEvent1(&EVENT_START_TIMER);
-	closeEvent1(&EVENT_IN_HANGAR);
-	closeEvent1(&EVENT_DEL_MODEL);
+	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog();
+		debugLogFmt("[NY_Event][ERROR]: EVENT_BATTLE_ENDED not setted!\n");
 
-	if (pCS_NETWORK_NOT_USING != nullptr) { traceLog();
-		DeleteCriticalSection(pCS_NETWORK_NOT_USING);
-
-		delete pCS_NETWORK_NOT_USING;
-		pCS_NETWORK_NOT_USING = nullptr;
+		return PyInt_FromSize_t(2);
 	} traceLog();
 
-	if (M_MODELS_NOT_USING) { traceLog();
-		CloseHandle(M_MODELS_NOT_USING);
-
-		M_MODELS_NOT_USING = nullptr;
-	} traceLog();
-
-	closeEvent2(&EVENT_ALL_MODELS_CREATED);
-	closeEvent2(&EVENT_BATTLE_ENDED);
-
-	uint8_t fini_result = event_fini();
-
-	if (fini_result) { traceLog();
-		return PyInt_FromSize_t(fini_result);
-	}
-	else { traceLog();
-		battleEnded = true;
-
-		current_map.stageID = STAGE_ID::COMPETITION;
-
-		PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
-
-		if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog();
-			delLabelCBID = NULL;
-
-			Py_XDECREF(delLabelCBID_p);
-		}
-		else { traceLog();
-			delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
-
-			Py_DECREF(delLabelCBID_p);
-		} traceLog();
-
-		cancelCallback(&delLabelCBID);
-
-		allModelsCreated = NULL;
-
-		GUI_setVisible(false);
-		GUI_clearText();
-
-		request = NULL;
-		mapID = NULL;
-
-		Py_RETURN_NONE;
-	}
+	Py_RETURN_NONE;
 };
 
 static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog();
