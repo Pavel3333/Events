@@ -1099,10 +1099,6 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 						case WAIT_OBJECT_0:  traceLog();
 							extendedDebugLog("[NY_Event]: EVENT_ALL_MODELS_CREATED signaled!\n");
 
-							//очищаем ивент
-
-							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
-
 							//-------------
 
 							//место для рабочего кода
@@ -1153,8 +1149,6 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 							// An error occurred
 						default: traceLog();
-							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
-
 							extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
 
 							Py_BLOCK_THREADS;
@@ -1264,8 +1258,6 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 	EVENT_ID eventID;
 
 	if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) { traceLog();
-		ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
-
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n");
 
 		return 2;
@@ -1382,8 +1374,6 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 	EVENT_ID eventID = EVENT_IN_HANGAR->eventID;
 
 	if (eventID != EVENT_ID::IN_HANGAR) { traceLog();
-		ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
-
 		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n");
 
 		return 2;
@@ -1597,20 +1587,10 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		//------------------------------
 
-		//очищаем ивент
-
-		if (EVENT_START_TIMER)
-			if(EVENT_START_TIMER->hEvent)
-				ResetEvent(EVENT_START_TIMER->hEvent);
-
 		break;
 
 		// An error occurred
 	default: traceLog();
-		if (EVENT_START_TIMER)
-			if(EVENT_START_TIMER->hEvent)
-				ResetEvent(EVENT_START_TIMER->hEvent);
-
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
 
 		return 3;
@@ -1665,13 +1645,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", request);
 		}
 
-		ResetEvent(EVENT_IN_HANGAR->hEvent);
-
 		break;
 		// An error occurred
 	default: traceLog();
-		ResetEvent(EVENT_IN_HANGAR->hEvent);
-
 		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
 
 		return 3;
@@ -1735,8 +1711,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			eventID    = EVENT_DEL_MODEL->eventID;
 
 			if (eventID != EVENT_ID::DEL_LAST_MODEL) { traceLog();
-				ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
-
 				extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - eventID not equal!\n");
 
 				lastEventError = 6;
@@ -1823,8 +1797,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			Py_UNBLOCK_THREADS;
 
-			ResetEvent(EVENT_DEL_MODEL->hEvent);
-
 			break;
 		case WAIT_OBJECT_0 + 1: traceLog(); //сработало событие окончания боя
 			if (hTimer) { traceLog(); //закрываем таймер, если он был создан
@@ -1890,8 +1862,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			}
 			// An error occurred
 		default: traceLog();
-			ResetEvent(EVENT_DEL_MODEL->hEvent);
-
 			extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
 
 			lastEventError = 1;
@@ -2220,7 +2190,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) { traceLog();
 
 	(*pEvent)->hEvent = CreateEvent(
 		NULL,                      // default security attributes
-		TRUE,                      // manual-reset event
+		FALSE,                     // auto-reset event
 		FALSE,                     // initial state is nonsignaled
 		EVENT_NAMES[eventID]       // object name
 	);
@@ -2249,8 +2219,8 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 
 	(*pEvent)->hEvent = CreateEvent(
 		NULL,                      // default security attributes
-		TRUE,                      // manual-reset event
-		isSignaling,               // initial state is nonsignaled
+		FALSE,                     // auto-reset event
+		isSignaling,
 		eventName                  // object name
 	);
 
