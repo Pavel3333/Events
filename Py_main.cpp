@@ -411,9 +411,8 @@ uint8_t delModelPy(float* coords) { traceLog();
 
 			continue;
 		}
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: del debug 1.1\n"));
-#endif
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
 
 		if ((*it_model)->coords[0] == coords[0] &&
 			(*it_model)->coords[1] == coords[1] &&
@@ -460,9 +459,7 @@ uint8_t delModelPy(float* coords) { traceLog();
 		it_model++;
 	} traceLog();
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("[NY_Event]: del debug 1.2\n"));
-#endif
+	superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
 
 	return 2;
 }
@@ -522,9 +519,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		return NULL;
 	} traceLog();
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("light creating...\n"));
-#endif
+	superExtendedDebugLog("light creating...\n");
 
 	PyObject* __PyOmniLight = PyString_FromString("PyOmniLight");
 
@@ -533,9 +528,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	Py_DECREF(__PyOmniLight);
 
 	if (!Light) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight creating FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight creating FAILED\n");
+
 		return NULL;
 	} traceLog();
 
@@ -545,9 +539,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	PyObject* innerRadius = PyFloat_FromDouble(0.75);
 
 	if (PyObject_SetAttr(Light, __innerRadius, innerRadius)) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight innerRadius setting FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight innerRadius setting FAILED\n");
+
 		Py_DECREF(__innerRadius);
 		Py_DECREF(innerRadius);
 		Py_DECREF(Light);
@@ -563,9 +556,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	PyObject* outerRadius = PyFloat_FromDouble(1.5);
 
 	if (PyObject_SetAttr(Light, __outerRadius, outerRadius)) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight outerRadius setting FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight outerRadius setting FAILED\n");
+
 		Py_DECREF(outerRadius);
 		Py_DECREF(__outerRadius);
 		Py_DECREF(Light);
@@ -581,9 +573,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	PyObject* multiplier = PyFloat_FromDouble(500.0);
 
 	if (PyObject_SetAttr(Light, __multiplier, multiplier)) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight multiplier setting FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight multiplier setting FAILED\n");
+
 		Py_DECREF(multiplier);
 		Py_DECREF(__multiplier);
 		Py_DECREF(Light);
@@ -598,9 +589,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	PyObject* coords_p = PyTuple_New(3);
 
 	if (!coords_p) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight coords creating FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight coords creating FAILED\n");
+
 		Py_DECREF(Light);
 
 		return NULL;
@@ -618,9 +608,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	PyObject* __position = PyString_FromString("position");
 
 	if (PyObject_SetAttr(Light, __position, coords_p)) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight coords setting FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight coords setting FAILED\n");
+
 		Py_DECREF(__position);
 		Py_DECREF(coords_p);
 		Py_DECREF(Light);
@@ -635,9 +624,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	PyObject* colour_p = PyTuple_New(4);
 
 	if (!colour_p) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight colour creating FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight colour creating FAILED\n");
+
 		Py_DECREF(Light);
 
 		return NULL;
@@ -659,9 +647,8 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	PyObject* __colour = PyString_FromString("colour");
 
 	if (PyObject_SetAttr(Light, __colour, colour_p)) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("PyOmniLight colour setting FAILED\n"));
-#endif
+		superExtendedDebugLog("PyOmniLight colour setting FAILED\n");
+		
 		Py_DECREF(__colour);
 		Py_DECREF(colour_p);
 		Py_DECREF(Light);
@@ -671,9 +658,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 
 	Py_DECREF(__colour);
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("light creating OK!\n"));
-#endif
+	superExtendedDebugLog("light creating OK!\n");
 
 	return Light;
 }
@@ -705,9 +690,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) { 
 		return NULL;
 	} traceLog();
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("model creating...\n"));
-#endif
+	superExtendedDebugLog("model creating...\n");
 
 	PyObject* Model = NULL;
 
@@ -758,9 +741,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) { 
 		} traceLog();
 	} traceLog();
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("model creating OK!\n"));
-#endif
+	superExtendedDebugLog("model creating OK!\n");
 
 	return Model;
 };
@@ -1081,9 +1062,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
 						int creating_result = Py_AddPendingCall(&create_models, nullptr); //create_models();
 
 						if (creating_result == -1) { traceLog();
-#if debug_log && extended_debug_log
-							OutputDebugString(_T("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - failed to start PendingCall of creating models!\n"));
-#endif
+							extendedDebugLog("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - failed to start PendingCall of creating models!\n");
 
 							return 3;
 						} traceLog();
@@ -1221,10 +1200,8 @@ uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
 							res = delModelCoords(it_sect_sync->ID, *it_model);
 
 							if (res) {
-#if debug_log && extended_debug_log
-								PySys_WriteStdout("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)res);
-#endif
-
+								extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)res);
+								
 								//GUI_setError(res);
 
 								it_model++;
@@ -1409,9 +1386,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 						break;
 					} traceLog();
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-					OutputDebugString(_T("[NY_Event]: generating token OK!\n"));
-#endif
+					superExtendedDebugLog("[NY_Event]: generating token OK!\n");
 
 					Py_BLOCK_THREADS;
 
@@ -1686,10 +1661,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				uint8_t deleting_coords = delModelCoords(modelID, coords);
 
 				if (deleting_coords) { traceLog();
-	#if debug_log && extended_debug_log
-						PySys_WriteStdout("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
-	#endif
-
+						extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
+						
 						//GUI_setError(deleting_coords);
 
 						return 6;
@@ -2061,7 +2034,7 @@ uint8_t event_fini() { traceLog();
 	superExtendedDebugLog("[NY_Event]: fini debug 1\n");
 
 	if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog();
-		superExtendedDebugLog("[PositionsMod_Free]: fini debug 2\n");
+		superExtendedDebugLog("[NY_Event]: fini debug 2\n");
 
 		Py_BEGIN_ALLOW_THREADS;
 			clearModelsSections();
