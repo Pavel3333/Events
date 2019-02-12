@@ -80,7 +80,7 @@ CRITICAL_SECTION* pCS_NETWORK_NOT_USING = nullptr;
 
 //Мутексы
 
-HANDLE M_MODELS_NOT_USING               = nullptr;
+HANDLE M_MODELS_NOT_USING = NULL;
 
 //---------------------
 
@@ -165,7 +165,7 @@ bool read_data(bool isData) { traceLog();
 
 		char* data_s = new char[size + 1];
 
-		while (!data.eof()) { traceLog();
+		while (!data.eof()) {
 			data.read(data_s, size);
 		} traceLog();
 
@@ -206,35 +206,35 @@ bool read_data(bool isData) { traceLog();
 void clearModelsSections() { traceLog();
 	std::vector<ModelsSection>::iterator it_sect = current_map.modelsSects.begin();
 
-	while (it_sect != current_map.modelsSects.end()) { traceLog();
-		if (!it_sect->models.empty() && it_sect->isInitialised) { traceLog();
+	while (it_sect != current_map.modelsSects.end()) {
+		if (!it_sect->models.empty() && it_sect->isInitialised) {
 			std::vector<float*>::iterator it_model = it_sect->models.begin();
 
-			while (it_model != it_sect->models.end()) { traceLog();
+			while (it_model != it_sect->models.end()) {
 				if (*it_model == nullptr) { traceLog();
 					it_model = it_sect->models.erase(it_model);
 
 					continue;
-				} traceLog();
+				}
 
-				for (uint8_t counter = NULL; counter < 3; counter++) { traceLog();
+				for (uint8_t counter = NULL; counter < 3; counter++) {
 					memset(&(*it_model)[counter], NULL, 4);
-				} traceLog();
+				}
 
 				delete[] *it_model;
 				*it_model = nullptr;
 
 				it_model = it_sect->models.erase(it_model);
-			} traceLog();
+			}
 
 			it_sect->models.~vector();
-		} traceLog();
+		}
 
-		if (it_sect->path != nullptr) { traceLog();
+		if (it_sect->path != nullptr) {
 			delete[] it_sect->path;
 
 			it_sect->path = nullptr;
-		} traceLog();
+		}
 
 		it_sect = current_map.modelsSects.erase(it_sect);
 	} traceLog();
@@ -243,25 +243,25 @@ void clearModelsSections() { traceLog();
 
 	std::vector<ModelsSection>::iterator it_sect_sync = sync_map.modelsSects_deleting.begin();
 
-	while (it_sect_sync != sync_map.modelsSects_deleting.end()) { traceLog();
-		if (it_sect_sync->isInitialised) { traceLog();
+	while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
+		if (it_sect_sync->isInitialised) {
 			std::vector<float*>::iterator it_model = it_sect_sync->models.begin();
 
-			while (it_model != it_sect_sync->models.end()) { traceLog();
+			while (it_model != it_sect_sync->models.end()) {
 				if (*it_model != nullptr) { traceLog();
 					delete[] * it_model;
 					*it_model = nullptr;
-				} traceLog();
+				}
 
 				it_model = it_sect_sync->models.erase(it_model);
-			} traceLog();
-		} traceLog();
+			}
+		}
 
-		if (it_sect_sync->path != nullptr) { traceLog();
+		if (it_sect_sync->path != nullptr) {
 			delete[] it_sect_sync->path;
 
 			it_sect_sync->path = nullptr;
-		} traceLog();
+		}
 
 		it_sect_sync->models.~vector();
 
@@ -317,7 +317,7 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 
 	double* coords_pos = new double[3];
 
-	for (uint8_t i = NULL; i < 3; i++) { traceLog();
+	for (uint8_t i = NULL; i < 3; i++) {
 		PyObject* __tuple = PyString_FromString("tuple");
 
 		PyObject* position = PyObject_CallMethodObjArgs(position_Vec3, __tuple, NULL);
@@ -344,23 +344,25 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 
 	for (auto it = current_map.modelsSects.cbegin();
 		it != current_map.modelsSects.cend();
-		it++) { traceLog();
-		if (it->isInitialised) { traceLog();
+		it++) {
+		if (it->isInitialised) {
 			for (auto it2 = it->models.cbegin();
 				it2 != it->models.cend();
 				it2++) { traceLog();
-				if (*it2 == nullptr) continue;
+				if (*it2 == nullptr) { traceLog();
+					continue;
+				}
 
 				distTemp = getDist2Points(coords_pos, *it2);
 
-				if (dist == -1.0 || distTemp < dist) { traceLog();
+				if (dist == -1.0 || distTemp < dist) {
 					dist = distTemp;
 					modelTypeLast = it->ID;
 
 					coords_res = *it2;
-				} traceLog();
-			} traceLog();
-		} traceLog();
+				}
+			}
+		}
 	} traceLog();
 
 	delete[] coords_pos;
@@ -386,17 +388,16 @@ uint8_t delModelPy(float* coords) { traceLog();
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
 
-	while (it_model != models.end()) { traceLog();
+	while (it_model != models.end()) {
 		if (*it_model == nullptr) { traceLog();
 			it_model = models.erase(it_model);
 
 			continue;
-		} traceLog();
+		}
 
-		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-			OutputDebugString(_T("NULL\n"));
-#endif
+		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) {
+			superExtendedDebugLog("NULL\n");
+
 			Py_XDECREF((*it_model)->model);
 
 			(*it_model)->model = NULL;
@@ -409,14 +410,14 @@ uint8_t delModelPy(float* coords) { traceLog();
 			it_model = models.erase(it_model);
 
 			continue;
-		} traceLog();
+		}
 #if debug_log && extended_debug_log && super_extended_debug_log
 		OutputDebugString(_T("[NY_Event]: del debug 1.1\n"));
 #endif
 
 		if ((*it_model)->coords[0] == coords[0] &&
 			(*it_model)->coords[1] == coords[1] &&
-			(*it_model)->coords[2] == coords[2]) { traceLog();
+			(*it_model)->coords[2] == coords[2]) {
 
 			PyObject* py_visible = PyBool_FromLong(false);
 
@@ -426,7 +427,7 @@ uint8_t delModelPy(float* coords) { traceLog();
 				Py_DECREF(py_visible);
 				
 				return NULL;
-			} traceLog();
+			}
 
 			Py_DECREF(py_visible);
 
@@ -438,7 +439,7 @@ uint8_t delModelPy(float* coords) { traceLog();
 
 			Py_DECREF(__delModel);
 
-			if (result) { traceLog();
+			if (result) {
 				Py_DECREF(result);
 
 				Py_XDECREF((*it_model)->model);
@@ -453,8 +454,8 @@ uint8_t delModelPy(float* coords) { traceLog();
 				it_model = models.erase(it_model);
 
 				return NULL;
-			} traceLog();*/
-		} traceLog();
+			}*/
+		}
 
 		it_model++;
 	} traceLog();
@@ -475,27 +476,27 @@ uint8_t delModelCoords(uint16_t ID, float* coords) { traceLog();
 
 	float* model;
 
-	while (it_sect != current_map.modelsSects.end()) { traceLog();
-		if (!it_sect->models.empty() && it_sect->isInitialised) { traceLog();
-			if (it_sect->ID == ID) { traceLog();
+	while (it_sect != current_map.modelsSects.end()) {
+		if (!it_sect->models.empty() && it_sect->isInitialised) {
+			if (it_sect->ID == ID) {
 				std::vector<float*>::iterator it_model = it_sect->models.begin();
 
-				while (it_model != it_sect->models.end()) { traceLog();
+				while (it_model != it_sect->models.end()) {
 					if (*it_model == nullptr) { traceLog();
 						it_model = it_sect->models.erase(it_model);
 
 						continue;
-					} traceLog();
+					}
 
 					model = *it_model;
 
 					if (model[0] == coords[0] &&
 						model[1] == coords[1] &&
 						model[2] == coords[2]
-						) { traceLog();
-						for (uint8_t counter = NULL; counter < 3; counter++) { traceLog();
+						) {
+						for (uint8_t counter = NULL; counter < 3; counter++) {
 							memset(&model[counter], NULL, 4);
-						} traceLog();
+						}
 
 						delete[] * it_model;
 						*it_model = nullptr;
@@ -503,12 +504,12 @@ uint8_t delModelCoords(uint16_t ID, float* coords) { traceLog();
 						it_sect->models.erase(it_model);
 
 						return NULL;
-					} traceLog();
+					}
 
 					it_model++;
-				} traceLog();
-			} traceLog();
-		} traceLog();
+				}
+			}
+		}
 
 		it_sect++;
 	} traceLog();
@@ -605,13 +606,13 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		return NULL;
 	} traceLog();
 
-	for (uint8_t i = NULL; i < 3; i++) { traceLog();
-		if (i == 1) { traceLog();
+	for (uint8_t i = NULL; i < 3; i++) {
+		if (i == 1) {
 			PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i] + 0.5));
 		}
 		else {
 			PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
-		} traceLog();
+		}
 	} traceLog();
 
 	PyObject* __position = PyString_FromString("position");
@@ -848,42 +849,43 @@ uint8_t create_models() { traceLog();
 
 	for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
 		it != current_map.modelsSects.end();
-		it++) { traceLog();
+		it++) {
 
 		if (!it->isInitialised || it->models.empty()) { traceLog();
 			continue;
-		} traceLog();
+		}
 
 		auto it2 = it->models.begin();
 
-		while (it2 != it->models.end()) { traceLog();
+		while (it2 != it->models.end()) {
 			if (*it2 == nullptr) { traceLog();
 				it2 = it->models.erase(it2);
 
 				continue;
-			} traceLog();
+			}
 
 			allModelsCreated++;
 
 			it2++;
-		} traceLog();
+		}
 	} traceLog();
 
 	for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
 		it != current_map.modelsSects.cend();
-		it++) { traceLog();
+		it++) {
 		if (!it->isInitialised || it->models.empty()) { traceLog();
 			continue;
-		} traceLog();
+		}
 		
-		for (auto it2 = it->models.cbegin(); it2 != it->models.cend(); it2++) { traceLog();
+		for (auto it2 = it->models.cbegin(); it2 != it->models.cend(); it2++) {
 			superExtendedDebugLog("[");
 
 			event_model(it->path, *it2, true);
 
 			superExtendedDebugLog("], ");
-		} traceLog();
+		}
 	} traceLog();
+
 	superExtendedDebugLog("], \n");
 
 	return NULL;
@@ -896,10 +898,10 @@ uint8_t init_models() { traceLog();
 
 	extendedDebugLog("[NY_Event]: models adding...\n");
 
-	for (uint16_t i = NULL; i < models.size(); i++) { traceLog();
+	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog();
 			continue;
-		} traceLog();
+		}
 
 		if (models[i]->model == Py_None || !models[i]->model || models[i]->processed) { traceLog();
 			Py_XDECREF(models[i]->model);
@@ -912,7 +914,7 @@ uint8_t init_models() { traceLog();
 			models[i] = nullptr;
 
 			continue;
-		} traceLog();
+		}
 
 		superExtendedDebugLog("[NY_Event]: addModel debug 2.1\n");
 
@@ -924,7 +926,7 @@ uint8_t init_models() { traceLog();
 
 		superExtendedDebugLog("[NY_Event]: addModel debug 2.2\n");
 
-		if (result) { traceLog();
+		if (result) {
 			Py_DECREF(result);
 
 			models[i]->processed = true;
@@ -949,10 +951,10 @@ uint8_t set_visible(bool isVisible) { traceLog();
 
 	extendedDebugLog("[NY_Event]: Models visiblity changing...\n");
 
-	for (uint16_t i = NULL; i < models.size(); i++) { traceLog();
+	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog();
 			continue;
-		} traceLog();
+		}
 
 		if (!models[i]->model || models[i]->model == Py_None || !models[i]->processed) { traceLog();
 			Py_XDECREF(models[i]->model);
@@ -965,7 +967,7 @@ uint8_t set_visible(bool isVisible) { traceLog();
 			models[i] = nullptr;
 
 			continue;
-		} traceLog();
+		}
 
 		PyObject* __visible = PyString_FromString("visible");
 
@@ -1191,20 +1193,20 @@ uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
 				
 				std::vector<ModelsSection>::iterator it_sect_sync = sync_map.modelsSects_deleting.begin();
 
-				while (it_sect_sync != sync_map.modelsSects_deleting.end()) { traceLog();
-					if (it_sect_sync->isInitialised) { traceLog();
+				while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
+					if (it_sect_sync->isInitialised) {
 						std::vector<float*>::iterator it_model = it_sect_sync->models.begin();
 
-						while (it_model != it_sect_sync->models.end()) { traceLog();
+						while (it_model != it_sect_sync->models.end()) {
 							if (*it_model == nullptr) { traceLog();
 								it_model = it_sect_sync->models.erase(it_model);
 
 								continue;
-							} traceLog();
+							}
 
 							res = delModelPy(*it_model);
 
-							if (res) { traceLog();
+							if (res) {
 								extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)res);
 
 								//GUI_setError(res);
@@ -1212,13 +1214,13 @@ uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
 								it_model++;
 
 								continue;
-							} traceLog();
+							}
 
 							/*
 
 							res = delModelCoords(it_sect_sync->ID, *it_model);
 
-							if (res) { traceLog();
+							if (res) {
 #if debug_log && extended_debug_log
 								PySys_WriteStdout("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)res);
 #endif
@@ -1228,7 +1230,7 @@ uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
 								it_model++;
 
 								continue;
-							} traceLog();
+							}
 
 							*/
 
@@ -1236,14 +1238,14 @@ uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
 							*it_model = nullptr;
 
 							it_model = it_sect_sync->models.erase(it_model);
-						} traceLog();
-					} traceLog();
+						}
+					}
 
-					if (it_sect_sync->path != nullptr) { traceLog();
+					if (it_sect_sync->path != nullptr) {
 						delete[] it_sect_sync->path;
 
 						it_sect_sync->path = nullptr;
-					} traceLog();
+					}
 
 					it_sect_sync->models.~vector();
 
@@ -1291,7 +1293,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	if (!isInited || !EVENT_START_TIMER) { traceLog();
+	if (!isInited || pCS_NETWORK_NOT_USING == nullptr ||!EVENT_START_TIMER) { traceLog();
 		return 1;
 	} traceLog();
 
@@ -1370,8 +1372,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 			if (bSuccess)
 			{
-				while (!first_check && !battleEnded && !timerLastError)
-				{
+				while (!first_check && !battleEnded && !timerLastError) { traceLog();
 					if (!isTimerStarted) { traceLog();
 						isTimerStarted = true;
 					} traceLog();
@@ -1485,7 +1486,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	if (!isInited) { traceLog();
+	if (!isInited || pCS_NETWORK_NOT_USING == nullptr) { traceLog();
 		return 1;
 	} traceLog();
 
@@ -1603,8 +1604,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	uint8_t lastEventError = NULL;
 
-	while (!first_check && !battleEnded && !lastEventError)
-	{
+	while (!first_check && !battleEnded && !lastEventError) { traceLog();
 		extendedDebugLog("[NY_Event]: waiting EVENTS\n");
 
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
@@ -1897,17 +1897,16 @@ uint8_t del_models() { traceLog();
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
 
-	while (it_model != models.end()) { traceLog();
+	while (it_model != models.end()) {
 		if (*it_model == nullptr) { traceLog();
 			it_model = models.erase(it_model);
 
 			continue;
-		} traceLog();
+		}
 
 		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) { traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-			OutputDebugString(_T("NULL\n"));
-#endif
+			superExtendedDebugLog("NULL\n");
+
 			Py_XDECREF((*it_model)->model);
 
 			(*it_model)->model = NULL;
@@ -1920,10 +1919,9 @@ uint8_t del_models() { traceLog();
 			it_model = models.erase(it_model);
 
 			continue;
-		} traceLog();
-#if debug_log && extended_debug_log && super_extended_debug_log
-		OutputDebugString(_T("[NY_Event]: del debug 1.1\n"));
-#endif
+		}
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
 
 		PyObject* __delModel = PyString_FromString("delModel");
 
@@ -1931,7 +1929,7 @@ uint8_t del_models() { traceLog();
 
 		Py_DECREF(__delModel);
 
-		if (result) { traceLog();
+		if (result) {
 			Py_DECREF(result);
 
 			Py_XDECREF((*it_model)->model);
@@ -1946,7 +1944,7 @@ uint8_t del_models() { traceLog();
 			it_model = models.erase(it_model);
 
 			continue;
-		} traceLog();
+		}
 
 		it_model++;
 
@@ -1955,12 +1953,12 @@ uint8_t del_models() { traceLog();
 
 	std::vector<ModLight*>::iterator it_light = lights.begin();
 
-	while (it_light != lights.end()) { traceLog();
+	while (it_light != lights.end()) {
 		if (*it_light == nullptr) { traceLog();
 			it_light = lights.erase(it_light);
 
 			continue;
-		} traceLog();
+		}
 
 		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
 
@@ -1978,7 +1976,7 @@ uint8_t del_models() { traceLog();
 			it_light = lights.erase(it_light);
 
 			continue;
-		} traceLog();
+		}
 
 		it_light++;
 
@@ -2010,12 +2008,12 @@ uint8_t event_fini() { traceLog();
 
 		std::vector<ModModel*>::iterator it_model = models.begin();
 
-		while (it_model != models.end()) { traceLog();
+		while (it_model != models.end()) {
 			if (*it_model == nullptr) { traceLog();
 				it_model = models.erase(it_model);
 
 				continue;
-			} traceLog();
+			}
 
 			Py_XDECREF((*it_model)->model);
 
@@ -2039,12 +2037,12 @@ uint8_t event_fini() { traceLog();
 	if (!lights.empty()) { traceLog();
 		std::vector<ModLight*>::iterator it_light = lights.begin();
 
-		while (it_light != lights.end()) { traceLog();
+		while (it_light != lights.end()) {
 			if (*it_light == nullptr) { traceLog();
 				it_light = lights.erase(it_light);
 
 				continue;
-			} traceLog();
+			}
 
 			Py_XDECREF((*it_light)->model);
 
@@ -2129,18 +2127,18 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 	closeEvent1(&EVENT_IN_HANGAR);
 	closeEvent1(&EVENT_DEL_MODEL);
 
-	if (pCS_NETWORK_NOT_USING != nullptr) {
+	if (pCS_NETWORK_NOT_USING != nullptr) { traceLog();
 		DeleteCriticalSection(pCS_NETWORK_NOT_USING);
 
 		delete pCS_NETWORK_NOT_USING;
 		pCS_NETWORK_NOT_USING = nullptr;
-	}
+	} traceLog();
 
-	if (M_MODELS_NOT_USING != nullptr) {
+	if (M_MODELS_NOT_USING) { traceLog();
 		CloseHandle(M_MODELS_NOT_USING);
 
 		M_MODELS_NOT_USING = nullptr;
-	}
+	} traceLog();
 
 	closeEvent2(&EVENT_ALL_MODELS_CREATED);
 	closeEvent2(&EVENT_BATTLE_ENDED);
@@ -2150,7 +2148,7 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 	if (fini_result) { traceLog();
 		return PyInt_FromSize_t(fini_result);
 	}
-	else {
+	else { traceLog();
 		battleEnded = true;
 
 		current_map.stageID = STAGE_ID::COMPETITION;
@@ -2247,6 +2245,8 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 }
 
 bool createEventsAndSecondThread() { traceLog();
+	INIT_LOCAL_MSG_BUFFER;
+	
 	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog();
 		return false;
 	} traceLog();
@@ -2258,10 +2258,20 @@ bool createEventsAndSecondThread() { traceLog();
 	} traceLog();
 
 	pCS_NETWORK_NOT_USING = new CRITICAL_SECTION;
-	pCS_MODELS_NOT_USING  = new CRITICAL_SECTION;
 
 	InitializeCriticalSection(pCS_NETWORK_NOT_USING);
-	InitializeCriticalSection(pCS_MODELS_NOT_USING);
+
+	M_MODELS_NOT_USING = CreateMutex(
+		NULL,              // default security attributes
+		FALSE,             // initially not owned
+		NULL);             // unnamed mutex
+
+	if (!M_MODELS_NOT_USING)
+	{
+		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
+
+		return false;
+	}
 
 	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog();
 		return false;
@@ -2288,8 +2298,6 @@ bool createEventsAndSecondThread() { traceLog();
 
 	if (hHandlerThread == NULL)
 	{
-		INIT_LOCAL_MSG_BUFFER;
-
 		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
 
 		return false;
