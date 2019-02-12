@@ -1568,11 +1568,9 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 					extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
 
 					//GUI_setWarning(request);
-
-					NETWORK_NOT_USING;
-
-					break;
 				} traceLog();
+
+				NETWORK_NOT_USING;
 
 				superExtendedDebugLog("[NY_Event]: generating token OK!\n");
 
@@ -1610,6 +1608,8 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		CloseHandle(hTimer);
 	}
 	else extendedDebugLog("[NY_Event][ERROR]: CreateWaitableTimer failed\n");
+
+	return NULL;
 }
 
 uint8_t handleInHangarEvent(PyThreadState* _save) {
@@ -1635,15 +1635,17 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 			//GUI_setError(first_check);
 
-			return 6;
+			return 4;
 		} traceLog();
 
 		extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
 
 		//GUI_setWarning(first_check);
 
-		return 5;
+		return 3;
 	} traceLog();
+
+	return NULL;
 }
 
 uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
