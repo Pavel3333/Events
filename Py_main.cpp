@@ -1575,7 +1575,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		0,                                      // use default creation flags 
 		&timerThreadID);                        // returns the thread identifier 
 
-	if (hTimerThread == NULL)
+	if (!hTimerThread)
 	{
 		extendedDebugLogFmt("[NY_Event][ERROR]: CreateThread: error %d\n", GetLastError());
 
@@ -2180,7 +2180,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) { traceLog();
 	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_1));
 
-	if (*pEvent == NULL) //нехватка памяти, завершаем работу
+	if (!(*pEvent)) //нехватка памяти, завершаем работу
 	{
 		ExitProcess(1);
 	} traceLog();
@@ -2192,7 +2192,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) { traceLog();
 		EVENT_NAMES[eventID]       // object name
 	);
 
-	if ((*pEvent)->hEvent == NULL)
+	if (!((*pEvent)->hEvent))
 	{
 		INIT_LOCAL_MSG_BUFFER;
 
@@ -2210,7 +2210,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_2));
 
-	if (*pEvent == NULL) //нехватка памяти, завершаем работу
+	if (!(*pEvent)) //нехватка памяти, завершаем работу
 	{
 		ExitProcess(1);
 	} traceLog();
@@ -2222,7 +2222,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 		eventName                  // object name
 	);
 
-	if ((*pEvent)->hEvent == NULL)
+	if (!((*pEvent)->hEvent))
 	{
 		INIT_LOCAL_MSG_BUFFER;
 
@@ -2286,7 +2286,7 @@ bool createEventsAndSecondThread() { traceLog();
 		0,                                      // use default creation flags 
 		&handlerThreadID);                      // returns the thread identifier 
 
-	if (hHandlerThread == NULL)
+	if (!hHandlerThread)
 	{
 		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
 
