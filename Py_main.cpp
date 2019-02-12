@@ -939,28 +939,43 @@ uint8_t create_models() { traceLog();
 		return 1;
 	} traceLog();
 
-	for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
-		it != current_map.modelsSects.end();
-		it++) {
+	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
+		M_MODELS_NOT_USING,    // handle to mutex
+		INFINITE);             // no time-out interval
 
-		if (!it->isInitialised || it->models.empty()) { traceLog();
-			continue;
-		}
+	switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
+	case WAIT_OBJECT_0: traceLog();
+		for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
+			it != current_map.modelsSects.end();
+			it++) {
 
-		auto it2 = it->models.begin();
-
-		while (it2 != it->models.end()) {
-			if (*it2 == nullptr) { traceLog();
-				it2 = it->models.erase(it2);
-
+			if (!it->isInitialised || it->models.empty()) {
+				traceLog();
 				continue;
 			}
 
-			allModelsCreated++;
+			auto it2 = it->models.begin();
 
-			it2++;
-		}
-	} traceLog();
+			while (it2 != it->models.end()) {
+				if (*it2 == nullptr) {
+					traceLog();
+					it2 = it->models.erase(it2);
+
+					continue;
+				}
+
+				allModelsCreated++;
+
+				it2++;
+			}
+		} traceLog();
+
+		break;
+	case WAIT_ABANDONED: traceLog();
+		extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+
+		return 3;
+	}
 
 	for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
 		it != current_map.modelsSects.cend();
@@ -1270,8 +1285,19 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 						extendedDebugLog("[NY_Event]: creating...\n");
 
-						models.~vector();
-						lights.~vector();
+						DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
+							M_MODELS_NOT_USING,    // handle to mutex
+							INFINITE);             // no time-out interval
+
+						switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
+						case WAIT_OBJECT_0: traceLog();
+							models.~vector();
+							lights.~vector();
+						case WAIT_ABANDONED: traceLog();
+							extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+
+							return 3;
+						}
 
 						Py_BLOCK_THREADS;
 
