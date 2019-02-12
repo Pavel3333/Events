@@ -1378,68 +1378,82 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 			} traceLog();
 
 			if (isModelsAlreadyCreated && isModelsAlreadyInited && eventID == EVENT_ID::IN_BATTLE_GET_SYNC && sync_map.all_models_count && !sync_map.modelsSects_deleting.empty()) { traceLog();
-				uint8_t res = NULL;
-				
-				std::vector<ModelsSection>::iterator it_sect_sync = sync_map.modelsSects_deleting.begin();
+				std::vector<ModelsSection>::iterator it_sect_sync;
+				std::vector<float*>::iterator        it_model;
 
-				while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
-					if (it_sect_sync->isInitialised) {
-						std::vector<float*>::iterator it_model = it_sect_sync->models.begin();
+				DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
+					M_MODELS_NOT_USING,    // handle to mutex
+					INFINITE);             // no time-out interval
 
-						while (it_model != it_sect_sync->models.end()) {
-							if (*it_model == nullptr) { traceLog();
-								it_model = it_sect_sync->models.erase(it_model);
+				switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
+				case WAIT_OBJECT_0: traceLog();
+					it_sect_sync = sync_map.modelsSects_deleting.begin();
 
-								continue;
-							}
+					while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
+						if (it_sect_sync->isInitialised) {
+							it_model = it_sect_sync->models.begin();
 
-							res = delModelPy(*it_model);
+							while (it_model != it_sect_sync->models.end()) {
+								if (*it_model == nullptr) { traceLog();
+									it_model = it_sect_sync->models.erase(it_model);
 
-							if (res) {
-								extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)res);
+									continue;
+								}
 
-								//GUI_setError(res);
+								request = delModelPy(*it_model);
 
-								it_model++;
+								if (request) {
+									extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)request);
 
-								continue;
-							}
+									//GUI_setError(request);
 
-							/*
+									it_model++;
 
-							res = delModelCoords(it_sect_sync->ID, *it_model);
+									continue;
+								}
 
-							if (res) {
-								extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)res);
+								/*
+
+								request = delModelCoords(it_sect_sync->ID, *it_model);
+
+								if (request) {
+									extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)request);
 								
-								//GUI_setError(res);
+									//GUI_setError(res);
 
-								it_model++;
+									it_model++;
 
-								continue;
+									continue;
+								}
+
+								*/
+
+								delete[] * it_model;
+								*it_model = nullptr;
+
+								it_model = it_sect_sync->models.erase(it_model);
 							}
-
-							*/
-
-							delete[] * it_model;
-							*it_model = nullptr;
-
-							it_model = it_sect_sync->models.erase(it_model);
 						}
-					}
 
-					if (it_sect_sync->path != nullptr) {
-						delete[] it_sect_sync->path;
+						if (it_sect_sync->path != nullptr) {
+							delete[] it_sect_sync->path;
 
-						it_sect_sync->path = nullptr;
-					}
+							it_sect_sync->path = nullptr;
+						}
 
-					it_sect_sync->models.~vector();
+						it_sect_sync->models.~vector();
 
-					it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
-				} traceLog();
+						it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
+					} traceLog();
 
-				sync_map.modelsSects_deleting.~vector();
+					sync_map.modelsSects_deleting.~vector();
+
+					break;
+				case WAIT_ABANDONED: traceLog();
+					extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+
+					return 3;
+				}
 			}
 			else {
 				return NULL;
@@ -2063,7 +2077,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			}
 			// An error occurred
 		default: traceLog();
-			extendedDebugLog("[NY_Event][WARNING]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
+			extendedDebugLog("[NY_Event][WARNING]: EVENTS - something wrong with WaitResult!\n");
 
 			lastEventError = 1;
 
