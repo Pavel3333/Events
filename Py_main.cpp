@@ -1093,10 +1093,8 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 							EVENT_ALL_MODELS_CREATED->hEvent, // event handle
 							INFINITE);                        // indefinite wait
 
-						switch (EVENT_ALL_MODELS_CREATED_WaitResult)
-						{
-							// Event object was signaled
-						case WAIT_OBJECT_0:
+						switch (EVENT_ALL_MODELS_CREATED_WaitResult) {
+						case WAIT_OBJECT_0:  traceLog();
 							extendedDebugLog("[NY_Event]: EVENT_ALL_MODELS_CREATED signaled!\n");
 
 							//очищаем ивент
@@ -1152,7 +1150,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 							break;
 
 							// An error occurred
-						default:
+						default: traceLog();
 							ResetEvent(EVENT_ALL_MODELS_CREATED->hEvent);
 
 							extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
@@ -1444,10 +1442,8 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		EVENT_START_TIMER->hEvent, // event handle
 		INFINITE);               // indefinite wait
 
-	switch (EVENT_START_TIMER_WaitResult)
-	{
-		// Event object was signaled
-	case WAIT_OBJECT_0:
+	switch (EVENT_START_TIMER_WaitResult) {
+	case WAIT_OBJECT_0:  traceLog();
 		extendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
 
 		//включаем GIL для этого потока
@@ -1483,7 +1479,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		break;
 
 		// An error occurred
-	default:
+	default: traceLog();
 		if (EVENT_START_TIMER)
 			if(EVENT_START_TIMER->hEvent)
 				ResetEvent(EVENT_START_TIMER->hEvent);
@@ -1530,10 +1526,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		EVENT_IN_HANGAR->hEvent, // event handle
 		INFINITE);               // indefinite wait
 
-	switch (EVENT_IN_HANGAR_WaitResult)
-	{
-		// Event object was signaled
-	case WAIT_OBJECT_0:
+	switch (EVENT_IN_HANGAR_WaitResult) {
+	case WAIT_OBJECT_0: traceLog();
 		extendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!\n");
 
 		//место для рабочего кода
@@ -1548,7 +1542,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		break;
 		// An error occurred
-	default:
+	default: traceLog();
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
 
 		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
@@ -1605,9 +1599,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			FALSE,
 			INFINITE);
 
-		switch (EVENTS_WaitResult)
-		{
-		case WAIT_OBJECT_0 + 0: //сработало событие удаления модели
+		switch (EVENTS_WaitResult) {
+		case WAIT_OBJECT_0 + 0:  traceLog(); //сработало событие удаления модели
 			extendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!\n");
 
 			//место для рабочего кода
@@ -1708,7 +1701,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			break;
 
 			// An error occurred
-		default:
+		default: traceLog();
 			ResetEvent(EVENT_DEL_MODEL->hEvent);
 
 			extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
@@ -2150,7 +2143,7 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 
 			Py_XDECREF(delLabelCBID_p);
 		}
-		else {
+		else { traceLog();
 			delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
 
 			Py_DECREF(delLabelCBID_p);
@@ -2180,8 +2173,8 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) { traceLog();
 	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_1));
 
-	if (!(*pEvent)) //нехватка памяти, завершаем работу
-	{
+	if (!(*pEvent)) { traceLog(); //нехватка памяти, завершаем работу
+	
 		ExitProcess(1);
 	} traceLog();
 
@@ -2192,8 +2185,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) { traceLog();
 		EVENT_NAMES[eventID]       // object name
 	);
 
-	if (!((*pEvent)->hEvent))
-	{
+	if (!((*pEvent)->hEvent)) { traceLog();
 		INIT_LOCAL_MSG_BUFFER;
 
 		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
@@ -2210,8 +2202,8 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_2));
 
-	if (!(*pEvent)) //нехватка памяти, завершаем работу
-	{
+	if (!(*pEvent)) { traceLog(); //нехватка памяти, завершаем работу
+	
 		ExitProcess(1);
 	} traceLog();
 
@@ -2222,8 +2214,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALS
 		eventName                  // object name
 	);
 
-	if (!((*pEvent)->hEvent))
-	{
+	if (!((*pEvent)->hEvent)) { traceLog();
 		INIT_LOCAL_MSG_BUFFER;
 
 		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
@@ -2256,8 +2247,7 @@ bool createEventsAndSecondThread() { traceLog();
 		FALSE,             // initially not owned
 		NULL);             // unnamed mutex
 
-	if (!M_MODELS_NOT_USING)
-	{
+	if (!M_MODELS_NOT_USING) { traceLog();
 		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
 
 		return false;
@@ -2286,8 +2276,7 @@ bool createEventsAndSecondThread() { traceLog();
 		0,                                      // use default creation flags 
 		&handlerThreadID);                      // returns the thread identifier 
 
-	if (!hHandlerThread)
-	{
+	if (!hHandlerThread) { traceLog();
 		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
 
 		return false;
