@@ -77,7 +77,10 @@ PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 //Критические секции
 
 CRITICAL_SECTION* pCS_NETWORK_NOT_USING = nullptr;
-CRITICAL_SECTION* pCS_MODELS_NOT_USING  = nullptr;
+
+//Мутексы
+
+HANDLE M_MODELS_NOT_USING               = nullptr;
 
 //---------------------
 
@@ -2113,15 +2116,6 @@ void closeEvent2(PEVENTDATA_2* pEvent) { traceLog();
 	} traceLog();
 }
 
-void closeCS(CRITICAL_SECTION** CS) {
-	if (*CS != nullptr) {
-		DeleteCriticalSection(*CS);
-
-		delete *CS;
-		(*CS) = nullptr;
-	}
-}
-
 static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 	if (hTimer != NULL) { traceLog(); //закрываем таймер, если он был создан
 		CloseHandle(hTimer);
@@ -2135,8 +2129,18 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 	closeEvent1(&EVENT_IN_HANGAR);
 	closeEvent1(&EVENT_DEL_MODEL);
 
-	closeCS(&pCS_NETWORK_NOT_USING);
-	closeCS(&pCS_MODELS_NOT_USING);
+	if (pCS_NETWORK_NOT_USING != nullptr) {
+		DeleteCriticalSection(pCS_NETWORK_NOT_USING);
+
+		delete pCS_NETWORK_NOT_USING;
+		pCS_NETWORK_NOT_USING = nullptr;
+	}
+
+	if (M_MODELS_NOT_USING != nullptr) {
+		CloseHandle(M_MODELS_NOT_USING);
+
+		M_MODELS_NOT_USING = nullptr;
+	}
 
 	closeEvent2(&EVENT_ALL_MODELS_CREATED);
 	closeEvent2(&EVENT_BATTLE_ENDED);
