@@ -873,7 +873,7 @@ uint8_t create_models() { traceLog();
 }
 
 uint8_t init_models() { traceLog();
-	if (!isInited || first_check || request || battleEnded || models.empty()) { traceLog();
+	if (!isInited || first_check || battleEnded || models.empty()) { traceLog();
 		return 1;
 	} traceLog();
 
@@ -924,7 +924,7 @@ uint8_t init_models() { traceLog();
 }
 
 uint8_t set_visible(bool isVisible) { traceLog();
-	if (!isInited || first_check || request || battleEnded || models.empty()) { traceLog();
+	if (!isInited || first_check || battleEnded || models.empty()) { traceLog();
 		return 1;
 	} traceLog();
 
@@ -964,8 +964,8 @@ uint8_t set_visible(bool isVisible) { traceLog();
 	return NULL;
 };
 
-uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
-	if (!isInited || first_check || request || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR) { traceLog();
+uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
+	if (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR) { traceLog();
 		NETWORK_NOT_USING;
 
 		return 1;
@@ -1242,6 +1242,135 @@ uint8_t handle_battle_event(EVENT_ID eventID) { traceLog();
 	return NULL;
 }
 
+uint8_t handleStartTimerEvent(PyThreadState* _save) {
+	INIT_LOCAL_MSG_BUFFER;
+
+	BOOL            bSuccess;
+	__int64         qwDueTime;
+	LARGE_INTEGER   liDueTime;
+
+	EVENT_ID eventID;
+
+	if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) {
+		traceLog();
+		ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+
+		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n");
+
+		return 2;
+	} traceLog();
+
+	if (first_check || battleEnded) {
+		traceLog();
+		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n");
+
+		return 3;
+	} traceLog();
+
+	//инициализация таймера для получения полного списка моделей и синхронизации
+
+	hTimer = CreateWaitableTimer(
+		NULL,                   // Default security attributes
+		FALSE,                  // Create auto-reset timer
+		TEXT("BattleTimer"));   // Name of waitable timer
+
+	if (hTimer != NULL)
+	{
+		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
+
+		// Copy the relative time into a LARGE_INTEGER.
+		liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
+		liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
+
+		bSuccess = SetWaitableTimer(
+			hTimer,           // Handle to the timer object
+			&liDueTime,       // When timer will become signaled
+			1000,             // Periodic timer interval of 1 seconds
+			TimerAPCProc,     // Completion routine
+			NULL,             // Argument to the completion routine
+			FALSE);           // Do not restore a suspended system
+
+		if (bSuccess)
+		{
+			while (!first_check && !battleEnded && !timerLastError) {
+				traceLog();
+				if (!isTimerStarted) {
+					traceLog();
+					isTimerStarted = true;
+				} traceLog();
+
+				NETWORK_USING;
+
+				//рабочая часть
+
+				eventID = EVENT_ID::IN_BATTLE_GET_FULL;
+
+				if (isModelsAlreadyCreated && isModelsAlreadyInited) eventID = EVENT_ID::IN_BATTLE_GET_SYNC;
+
+				request = send_token(databaseID, mapID, eventID);
+
+				if (request) {
+					traceLog();
+					if (request > 9) {
+						traceLog();
+						extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
+
+						//GUI_setError(request);
+
+						timerLastError = 1;
+
+						NETWORK_NOT_USING;
+
+						break;
+					} traceLog();
+
+					extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
+
+					//GUI_setWarning(request);
+
+					NETWORK_NOT_USING;
+
+					break;
+				} traceLog();
+
+				superExtendedDebugLog("[NY_Event]: generating token OK!\n");
+
+				Py_BLOCK_THREADS;
+
+				request = handleBattleEvent(eventID);
+
+				Py_UNBLOCK_THREADS;
+
+				if (request) {
+					traceLog();
+					extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
+
+					//GUI_setError(request);
+
+					timerLastError = 2;
+
+					break;
+				} traceLog();
+
+				SleepEx(
+					INFINITE,     // Wait forever
+					TRUE);        // Put thread in an alertable state
+			} traceLog();
+
+			if (timerLastError) {
+				traceLog();
+				extendedDebugLog("[NY_Event][ERROR]: Timer got the error\n");
+
+				CancelWaitableTimer(hTimer);
+			} traceLog();
+		}
+		else extendedDebugLog("[NY_Event][ERROR]: SetWaitableTimer failed\n");
+
+		CloseHandle(hTimer);
+	}
+	else extendedDebugLog("[NY_Event][ERROR]: CreateWaitableTimer failed\n");
+}
+
 //threads functions
 
 /*
@@ -1274,15 +1403,9 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		return 1;
 	} traceLog();
 
-	BOOL            bSuccess;
-	__int64         qwDueTime;
-	LARGE_INTEGER   liDueTime;
-
 	PyGILState_STATE gstate;
 
 	PyThreadState* _save;
-
-	EVENT_ID eventID;
 
 	INIT_LOCAL_MSG_BUFFER;
 
@@ -1306,120 +1429,13 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		Py_UNBLOCK_THREADS;
 
-		//место для рабочего кода
-
-		if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) { traceLog();
-			ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
-
-			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n");
-
-			return 2;
-		} traceLog();
-
-		if (first_check || battleEnded) { traceLog();
-			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n");
-
-			return 3;
-		} traceLog();
-
 		//рабочая часть
 
-		//инициализация таймера для получения полного списка моделей и синхронизации
+		request = handleStartTimerEvent(_save);
 
-		hTimer = CreateWaitableTimer(
-			NULL,                   // Default security attributes
-			FALSE,                  // Create auto-reset timer
-			TEXT("BattleTimer"));   // Name of waitable timer
-
-		if (hTimer != NULL)
-		{
-			qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
-
-			// Copy the relative time into a LARGE_INTEGER.
-			liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
-			liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
-
-			bSuccess = SetWaitableTimer(
-				hTimer,           // Handle to the timer object
-				&liDueTime,       // When timer will become signaled
-				1000,             // Periodic timer interval of 1 seconds
-				TimerAPCProc,     // Completion routine
-				NULL,             // Argument to the completion routine
-				FALSE);           // Do not restore a suspended system
-
-			if (bSuccess)
-			{
-				while (!first_check && !battleEnded && !timerLastError) { traceLog();
-					if (!isTimerStarted) { traceLog();
-						isTimerStarted = true;
-					} traceLog();
-
-					NETWORK_USING;
-
-					//рабочая часть
-
-					eventID = EVENT_ID::IN_BATTLE_GET_FULL;
-
-					if (isModelsAlreadyCreated && isModelsAlreadyInited) eventID = EVENT_ID::IN_BATTLE_GET_SYNC;
-
-					request = send_token(databaseID, mapID, eventID);
-
-					if (request) { traceLog();
-						if (request > 9) { traceLog();
-							extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
-
-							//GUI_setError(request);
-
-							timerLastError = 1;
-
-							NETWORK_NOT_USING;
-
-							break;
-						} traceLog();
-
-						extendedDebugLogFmt("[NY_Event][WARNING]: TIMER - send_token - Warning code %d\n", request);
-
-						//GUI_setWarning(request);
-
-						NETWORK_NOT_USING;
-
-						break;
-					} traceLog();
-
-					superExtendedDebugLog("[NY_Event]: generating token OK!\n");
-
-					Py_BLOCK_THREADS;
-
-					request = handle_battle_event(eventID);
-
-					Py_UNBLOCK_THREADS;
-
-					if (request) { traceLog();
-						extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - create_models - Error code %d\n", request);
-
-						//GUI_setError(request);
-
-						timerLastError = 2;
-
-						break;
-					} traceLog();
-
-					SleepEx(
-						INFINITE,     // Wait forever
-						TRUE);        // Put thread in an alertable state
-				} traceLog();
-
-				if (timerLastError) { traceLog();
-					extendedDebugLog("[NY_Event][ERROR]: Timer got the error\n");
-
-					CancelWaitableTimer(hTimer);
-				} traceLog();
-			}
-			else extendedDebugLog("[NY_Event][ERROR]: SetWaitableTimer failed\n");
-
-			CloseHandle(hTimer);
+		if (request) {
+			extendedDebugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
 		}
-		else extendedDebugLog("[NY_Event][ERROR]: CreateWaitableTimer failed\n");
 
 		Py_BLOCK_THREADS;
 
@@ -1862,7 +1878,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 };
 
 uint8_t del_models() { traceLog();
-	if (!isInited || first_check || battleEnded /*|| request*/) { traceLog();
+	if (!isInited || first_check || battleEnded) { traceLog();
 		return 1;
 	} traceLog();
 
@@ -2415,7 +2431,7 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog();
 };
 
 static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) { traceLog();
-	if (!isInited || first_check || request || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog();
+	if (!isInited || first_check || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog();
 		Py_RETURN_NONE;
 	} traceLog();
 
