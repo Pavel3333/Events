@@ -90,6 +90,116 @@ EVENT_ID lastEventID = EVENT_ID::IN_HANGAR;
 uint8_t handleBattleEndEvent(PyThreadState* _save);
 uint8_t makeEventInThread(uint8_t);
 
+void closeEvent1(PEVENTDATA_1* pEvent) {
+	traceLog();
+	if (*pEvent) {
+		traceLog(); //если уже была инициализирована структура - удаляем
+		if ((*pEvent)->hEvent) {
+			traceLog();
+			CloseHandle((*pEvent)->hEvent);
+
+			(*pEvent)->hEvent = NULL;
+		} traceLog();
+
+		HeapFree(GetProcessHeap(), NULL, *pEvent);
+
+		*pEvent = NULL;
+	} traceLog();
+}
+
+void closeEvent2(PEVENTDATA_2* pEvent) {
+	traceLog();
+	if (*pEvent) {
+		traceLog(); //если уже была инициализирована структура - удаляем
+		if ((*pEvent)->hEvent) {
+			traceLog();
+			CloseHandle((*pEvent)->hEvent);
+
+			(*pEvent)->hEvent = NULL;
+		} traceLog();
+
+		HeapFree(GetProcessHeap(), NULL, *pEvent);
+
+		*pEvent = NULL;
+	} traceLog();
+}
+
+bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
+	traceLog();
+	closeEvent1(pEvent); //закрываем ивент, если существует
+
+	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+		sizeof(EVENTDATA_1));
+
+	if (!(*pEvent)) {
+		traceLog(); //нехватка памяти, завершаем работу
+
+		ExitProcess(1);
+	} traceLog();
+
+	(*pEvent)->hEvent = CreateEvent(
+		NULL,                      // default security attributes
+		FALSE,                     // auto-reset event
+		FALSE,                     // initial state is nonsignaled
+		EVENT_NAMES[eventID]       // object name
+	);
+
+	if (!((*pEvent)->hEvent)) {
+		traceLog();
+		INIT_LOCAL_MSG_BUFFER;
+
+		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
+
+		return false;
+	} traceLog();
+
+	return true;
+}
+
+bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling = FALSE) {
+	traceLog();
+	closeEvent2(pEvent); //закрываем ивент, если существует
+
+	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+		sizeof(EVENTDATA_2));
+
+	if (!(*pEvent)) {
+		traceLog(); //нехватка памяти, завершаем работу
+
+		ExitProcess(1);
+	} traceLog();
+
+	(*pEvent)->hEvent = CreateEvent(
+		NULL,                      // default security attributes
+		FALSE,                     // auto-reset event
+		isSignaling,
+		eventName                  // object name
+	);
+
+	if (!((*pEvent)->hEvent)) {
+		traceLog();
+		INIT_LOCAL_MSG_BUFFER;
+
+		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
+
+		return false;
+	} traceLog();
+
+	return true;
+}
+
+VOID CALLBACK TimerAPCProc(
+	LPVOID lpArg,               // Data value
+	DWORD dwTimerLowValue,      // Timer low value
+	DWORD dwTimerHighValue)     // Timer high value
+{
+	// Formal parameters not used in this example.
+	UNREFERENCED_PARAMETER(lpArg);
+
+	UNREFERENCED_PARAMETER(dwTimerLowValue);
+	UNREFERENCED_PARAMETER(dwTimerHighValue);
+}
+
 bool write_data(char* data_path, PyObject* data_p) { traceLog();
 
 	PyObject* arg2 = Py_False;
@@ -965,6 +1075,112 @@ uint8_t set_visible(bool isVisible) { traceLog();
 	return NULL;
 };
 
+uint8_t del_models() {
+	traceLog();
+	if (!isInited || first_check || battleEnded) {
+		traceLog();
+		return 1;
+	} traceLog();
+
+	extendedDebugLog("[NY_Event]: models deleting...\n");
+
+	std::vector<ModModel*>::iterator it_model = models.begin();
+
+	while (it_model != models.end()) {
+		if (*it_model == nullptr) {
+			traceLog();
+			it_model = models.erase(it_model);
+
+			continue;
+		}
+
+		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) {
+			traceLog();
+			superExtendedDebugLog("NULL\n");
+
+			Py_XDECREF((*it_model)->model);
+
+			(*it_model)->model = NULL;
+			(*it_model)->coords = nullptr;
+			(*it_model)->processed = false;
+
+			delete *it_model;
+			*it_model = nullptr;
+
+			it_model = models.erase(it_model);
+
+			continue;
+		}
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
+
+		PyObject* __delModel = PyString_FromString("delModel");
+
+		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __delModel, (*it_model)->model, NULL);
+
+		Py_DECREF(__delModel);
+
+		if (result) {
+			Py_DECREF(result);
+
+			Py_XDECREF((*it_model)->model);
+
+			(*it_model)->model = NULL;
+			(*it_model)->coords = nullptr;
+			(*it_model)->processed = false;
+
+			delete *it_model;
+			*it_model = nullptr;
+
+			it_model = models.erase(it_model);
+
+			continue;
+		}
+
+		it_model++;
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
+	} traceLog();
+
+	std::vector<ModLight*>::iterator it_light = lights.begin();
+
+	while (it_light != lights.end()) {
+		if (*it_light == nullptr) {
+			traceLog();
+			it_light = lights.erase(it_light);
+
+			continue;
+		}
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
+
+		if (!(*it_light)->model || (*it_light)->model == Py_None) {
+			traceLog();
+			superExtendedDebugLog("NULL\n");
+
+			Py_XDECREF((*it_light)->model);
+
+			(*it_light)->model = NULL;
+			(*it_light)->coords = nullptr;
+
+			delete *it_light;
+			*it_light = nullptr;
+
+			it_light = lights.erase(it_light);
+
+			continue;
+		}
+
+		it_light++;
+
+		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
+	} traceLog();
+
+	extendedDebugLog("[NY_Event]: models deleting OK!\n");
+
+	return NULL;
+};
+
 uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 	if (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR) { traceLog();
 		NETWORK_NOT_USING;
@@ -1234,18 +1450,6 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 	else extendedDebugLog("[NY_Event]: Warning - StageID is not correct\n");
 
 	return NULL;
-}
-
-VOID CALLBACK TimerAPCProc(
-	LPVOID lpArg,               // Data value
-	DWORD dwTimerLowValue,      // Timer low value
-	DWORD dwTimerHighValue)     // Timer high value
-{
-	// Formal parameters not used in this example.
-	UNREFERENCED_PARAMETER(lpArg);
-
-	UNREFERENCED_PARAMETER(dwTimerLowValue);
-	UNREFERENCED_PARAMETER(dwTimerHighValue);
 }
 
 uint8_t handleStartTimerEvent(PyThreadState* _save) {
@@ -1674,7 +1878,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	if (!hTimerThread)
 	{
-		extendedDebugLogFmt("[NY_Event][ERROR]: CreateThread: error %d\n", GetLastError());
+		extendedDebugLogFmt("[NY_Event][ERROR]: Creating timer thread: error %d\n", GetLastError());
 
 		return 5;
 	} traceLog();
@@ -1811,6 +2015,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			closeEvent1(&EVENT_IN_HANGAR);
 			closeEvent1(&EVENT_DEL_MODEL);
 
+			closeEvent2(&EVENT_ALL_MODELS_CREATED);
+			closeEvent2(&EVENT_BATTLE_ENDED);
+
 			if (pCS_NETWORK_NOT_USING != nullptr) { traceLog();
 				DeleteCriticalSection(pCS_NETWORK_NOT_USING);
 
@@ -1824,15 +2031,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				M_MODELS_NOT_USING = nullptr;
 			} traceLog();
 
-			closeEvent2(&EVENT_ALL_MODELS_CREATED);
-			closeEvent2(&EVENT_BATTLE_ENDED);
+			request = handleBattleEndEvent(_save);
 
-			uint8_t fini_result = handleBattleEndEvent();
-
-			if (fini_result) { traceLog();
-				return fini_result;
-			}
-			else { traceLog();
+			if (!request) { traceLog();
 				battleEnded = true;
 
 				current_map.stageID = STAGE_ID::COMPETITION;
@@ -1862,7 +2063,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			}
 			// An error occurred
 		default: traceLog();
-			extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
+			extendedDebugLog("[NY_Event][WARNING]: DEL_LAST_MODEL - something wrong with WaitResult!\n");
 
 			lastEventError = 1;
 
@@ -2029,134 +2230,6 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 	Py_RETURN_NONE;
 };
 
-uint8_t del_models() { traceLog();
-	if (!isInited || first_check || battleEnded) { traceLog();
-		return 1;
-	} traceLog();
-
-	extendedDebugLog("[NY_Event]: models deleting...\n");
-
-	std::vector<ModModel*>::iterator it_model = models.begin();
-
-	while (it_model != models.end()) {
-		if (*it_model == nullptr) { traceLog();
-			it_model = models.erase(it_model);
-
-			continue;
-		}
-
-		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) { traceLog();
-			superExtendedDebugLog("NULL\n");
-
-			Py_XDECREF((*it_model)->model);
-
-			(*it_model)->model = NULL;
-			(*it_model)->coords = nullptr;
-			(*it_model)->processed = false;
-
-			delete *it_model;
-			*it_model = nullptr;
-
-			it_model = models.erase(it_model);
-
-			continue;
-		}
-
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
-
-		PyObject* __delModel = PyString_FromString("delModel");
-
-		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __delModel, (*it_model)->model, NULL);
-
-		Py_DECREF(__delModel);
-
-		if (result) {
-			Py_DECREF(result);
-
-			Py_XDECREF((*it_model)->model);
-
-			(*it_model)->model = NULL;
-			(*it_model)->coords = nullptr;
-			(*it_model)->processed = false;
-
-			delete *it_model;
-			*it_model = nullptr;
-
-			it_model = models.erase(it_model);
-
-			continue;
-		}
-
-		it_model++;
-
-		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
-	} traceLog();
-
-	std::vector<ModLight*>::iterator it_light = lights.begin();
-
-	while (it_light != lights.end()) {
-		if (*it_light == nullptr) { traceLog();
-			it_light = lights.erase(it_light);
-
-			continue;
-		}
-
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
-
-		if (!(*it_light)->model || (*it_light)->model == Py_None) { traceLog();
-			superExtendedDebugLog("NULL\n");
-
-			Py_XDECREF((*it_light)->model);
-
-			(*it_light)->model = NULL;
-			(*it_light)->coords = nullptr;
-
-			delete *it_light;
-			*it_light = nullptr;
-
-			it_light = lights.erase(it_light);
-
-			continue;
-		}
-
-		it_light++;
-
-		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
-	} traceLog();
-
-	extendedDebugLog("[NY_Event]: models deleting OK!\n");
-
-	return NULL;
-};
-
-void closeEvent1(PEVENTDATA_1* pEvent) { traceLog();
-	if (*pEvent) { traceLog(); //если уже была инициализирована структура - удаляем
-		if ((*pEvent)->hEvent) { traceLog();
-			CloseHandle((*pEvent)->hEvent);
-
-			(*pEvent)->hEvent = NULL;
-		} traceLog();
-
-		HeapFree(GetProcessHeap(), NULL, *pEvent);
-
-		*pEvent = NULL;
-	} traceLog();
-}
-
-void closeEvent2(PEVENTDATA_2* pEvent) { traceLog();
-	if (*pEvent) { traceLog(); //если уже была инициализирована структура - удаляем
-		if ((*pEvent)->hEvent) { traceLog();
-			CloseHandle((*pEvent)->hEvent);
-
-			(*pEvent)->hEvent = NULL;
-		} traceLog();
-
-		HeapFree(GetProcessHeap(), NULL, *pEvent);
-
-		*pEvent = NULL;
-	} traceLog();
-}
-
 static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 	if (!EVENT_BATTLE_ENDED) { traceLog();
 		return PyInt_FromSize_t(1);
@@ -2176,64 +2249,6 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog();
 	return PyInt_FromSize_t(first_check);
 };
-
-bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) { traceLog();
-	closeEvent1(pEvent); //закрываем ивент, если существует
-
-	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
-		sizeof(EVENTDATA_1));
-
-	if (!(*pEvent)) { traceLog(); //нехватка памяти, завершаем работу
-	
-		ExitProcess(1);
-	} traceLog();
-
-	(*pEvent)->hEvent = CreateEvent(
-		NULL,                      // default security attributes
-		FALSE,                     // auto-reset event
-		FALSE,                     // initial state is nonsignaled
-		EVENT_NAMES[eventID]       // object name
-	);
-
-	if (!((*pEvent)->hEvent)) { traceLog();
-		INIT_LOCAL_MSG_BUFFER;
-
-		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
-
-		return false;
-	} traceLog();
-
-	return true;
-}
-
-bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling=FALSE) { traceLog();
-	closeEvent2(pEvent); //закрываем ивент, если существует
-
-	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
-		sizeof(EVENTDATA_2));
-
-	if (!(*pEvent)) { traceLog(); //нехватка памяти, завершаем работу
-	
-		ExitProcess(1);
-	} traceLog();
-
-	(*pEvent)->hEvent = CreateEvent(
-		NULL,                      // default security attributes
-		FALSE,                     // auto-reset event
-		isSignaling,
-		eventName                  // object name
-	);
-
-	if (!((*pEvent)->hEvent)) { traceLog();
-		INIT_LOCAL_MSG_BUFFER;
-
-		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
-
-		return false;
-	} traceLog();
-
-	return true;
-}
 
 bool createEventsAndSecondThread() { traceLog();
 	INIT_LOCAL_MSG_BUFFER;
