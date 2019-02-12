@@ -1251,8 +1251,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 	EVENT_ID eventID;
 
-	if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) {
-		traceLog();
+	if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) { traceLog();
 		ResetEvent(EVENT_START_TIMER->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
 
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n");
@@ -1260,8 +1259,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		return 2;
 	} traceLog();
 
-	if (first_check || battleEnded) {
-		traceLog();
+	if (first_check || battleEnded) { traceLog();
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n");
 
 		return 3;
@@ -1274,8 +1272,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		FALSE,                  // Create auto-reset timer
 		TEXT("BattleTimer"));   // Name of waitable timer
 
-	if (hTimer != NULL)
-	{
+	if (hTimer) { traceLog();
 		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
 
 		// Copy the relative time into a LARGE_INTEGER.
@@ -1292,10 +1289,8 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 		if (bSuccess)
 		{
-			while (!first_check && !battleEnded && !timerLastError) {
-				traceLog();
-				if (!isTimerStarted) {
-					traceLog();
+			while (!first_check && !battleEnded && !timerLastError) { traceLog();
+				if (!isTimerStarted) { traceLog();
 					isTimerStarted = true;
 				} traceLog();
 
@@ -1309,10 +1304,8 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 				request = send_token(databaseID, mapID, eventID);
 
-				if (request) {
-					traceLog();
-					if (request > 9) {
-						traceLog();
+				if (request) { traceLog();
+					if (request > 9) { traceLog();
 						extendedDebugLogFmt("[NY_Event][ERROR]: TIMER - send_token - Error code %d\n", request);
 
 						//GUI_setError(request);
@@ -1369,6 +1362,42 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		CloseHandle(hTimer);
 	}
 	else extendedDebugLog("[NY_Event][ERROR]: CreateWaitableTimer failed\n");
+}
+
+uint8_t handleInHangarEvent(PyThreadState* _save) {
+	INIT_LOCAL_MSG_BUFFER;
+
+	EVENT_ID eventID = EVENT_IN_HANGAR->eventID;
+
+	if (eventID != EVENT_ID::IN_HANGAR) { traceLog();
+		ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
+
+		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n");
+
+		return 2;
+	} traceLog();
+
+	//рабочая часть
+
+	BEGIN_NETWORK_USING;
+		first_check = send_token(databaseID, mapID, eventID);
+	END_NETWORK_USING;
+
+	if (first_check) { traceLog();
+		if (first_check > 9) { traceLog();
+			extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
+
+			//GUI_setError(first_check);
+
+			return 6;
+		} traceLog();
+
+		extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
+
+		//GUI_setWarning(first_check);
+
+		return 5;
+	} traceLog();
 }
 
 //threads functions
@@ -1433,7 +1462,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		request = handleStartTimerEvent(_save);
 
-		if (request) {
+		if (request) { traceLog();
 			extendedDebugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
 		}
 
@@ -1493,8 +1522,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	Py_UNBLOCK_THREADS;
 
-	DWORD EVENT_NETWORK_NOT_USING_WaitResult;
-
 	INIT_LOCAL_MSG_BUFFER;
 
 	extendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR\n");
@@ -1511,37 +1538,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		//место для рабочего кода
 
-		eventID    = EVENT_IN_HANGAR->eventID;
+		request = handleInHangarEvent(_save);
 
-		if (eventID != EVENT_ID::IN_HANGAR) { traceLog();
-			ResetEvent(EVENT_IN_HANGAR->hEvent); //если ивент не совпал с нужным - что-то идет не так, глушим тред, следующий запуск треда при входе в ангар
-
-			extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - eventID not equal!\n");
-
-			return 2;
-		} traceLog();
-
-		//рабочая часть
-
-		BEGIN_NETWORK_USING;
-			first_check = send_token(databaseID, mapID, eventID);
-		END_NETWORK_USING;
-
-		if (first_check) { traceLog();
-			if (first_check > 9) { traceLog();
-				extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error code %d\n", request);
-
-				//GUI_setError(first_check);
-
-				return 6;
-			} traceLog();
-
-			extendedDebugLogFmt("[NY_Event][WARNING]: IN_HANGAR - Warning code %d\n", request);
-
-			//GUI_setWarning(first_check);
-
-			return 5;
-		} traceLog();
+		if (request) { traceLog();
+			extendedDebugLogFmt("[NY_Event][ERROR]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", request);
+		}
 
 		ResetEvent(EVENT_IN_HANGAR->hEvent);
 
@@ -2076,8 +2077,8 @@ uint8_t event_fini() { traceLog();
 };
 
 void closeEvent1(PEVENTDATA_1* pEvent) { traceLog();
-	if (*pEvent != NULL) { traceLog(); //если уже была инициализирована структура - удаляем
-		if ((*pEvent)->hEvent != NULL) { traceLog();
+	if (*pEvent) { traceLog(); //если уже была инициализирована структура - удаляем
+		if ((*pEvent)->hEvent) { traceLog();
 			CloseHandle((*pEvent)->hEvent);
 
 			(*pEvent)->hEvent = NULL;
@@ -2090,8 +2091,8 @@ void closeEvent1(PEVENTDATA_1* pEvent) { traceLog();
 }
 
 void closeEvent2(PEVENTDATA_2* pEvent) { traceLog();
-	if (*pEvent != NULL) { traceLog(); //если уже была инициализирована структура - удаляем
-		if ((*pEvent)->hEvent != NULL) { traceLog();
+	if (*pEvent) { traceLog(); //если уже была инициализирована структура - удаляем
+		if ((*pEvent)->hEvent) { traceLog();
 			CloseHandle((*pEvent)->hEvent);
 
 			(*pEvent)->hEvent = NULL;
@@ -2104,7 +2105,7 @@ void closeEvent2(PEVENTDATA_2* pEvent) { traceLog();
 }
 
 static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
-	if (hTimer != NULL) { traceLog(); //закрываем таймер, если он был создан
+	if (hTimer) { traceLog(); //закрываем таймер, если он был создан
 		CloseHandle(hTimer);
 
 		hTimer = NULL;
