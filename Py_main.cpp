@@ -2114,7 +2114,7 @@ void closeEvent2(PEVENTDATA_2* pEvent) { traceLog();
 }
 
 void closeCS(CRITICAL_SECTION** CS) {
-	if (CS != nullptr) {
+	if (*CS != nullptr) {
 		DeleteCriticalSection(*CS);
 
 		delete *CS;
