@@ -88,20 +88,28 @@
 
 #define END_USING_MODELS }
 
+#define BEGIN_USING_NETWORK                                    \
+	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
+	M_NETWORK_NOT_USING,    				                   \
+	INFINITE);                                                 \
+	switch (M_MODELS_NOT_USING_WaitResult) {
+
+#define END_USING_NETWORK }
+
 #define NETWORK_USING                                                           \
 	extendedDebugLog("[NY_Event]: NETWORK_USING\n");                            \
-    EnterCriticalSection(pCS_NETWORK_NOT_USING);
+    EnterCriticalSection(M_NETWORK_NOT_USING);
 #define NETWORK_NOT_USING                                                       \
 	extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");                        \
-	LeaveCriticalSection(pCS_NETWORK_NOT_USING);
+	LeaveCriticalSection(M_NETWORK_NOT_USING);
 
 #define BEGIN_NETWORK_USING {                                                   \
 	extendedDebugLog("[NY_Event]: entering NETWORK_NOT_USING\n");               \
-	EnterCriticalSection(pCS_NETWORK_NOT_USING);
+	EnterCriticalSection(M_NETWORK_NOT_USING);
 
 #define END_NETWORK_USING                                                       \
 	extendedDebugLog("[NY_Event]: leaving NETWORK_NOT_USING\n");                \
-	LeaveCriticalSection(pCS_NETWORK_NOT_USING);                                \
+	LeaveCriticalSection(M_NETWORK_NOT_USING);                                  \
 }
 
 #define NET_BUFFER_SIZE 16384
