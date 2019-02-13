@@ -1285,8 +1285,6 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 					if (eventID == EVENT_ID::IN_BATTLE_GET_FULL) { traceLog();
 						superExtendedDebugLogFmt("sect count: %u\npos count: %u\n", current_map.modelsSects.size(), current_map.minimap_count);
 
-						Py_UNBLOCK_THREADS;
-
 						extendedDebugLog("[NY_Event]: creating...\n");
 
 						BEGIN_USING_MODELS;
@@ -1299,13 +1297,13 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 								if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 									extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 								}
+
+								break;
 							case WAIT_ABANDONED: traceLog();
 								extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
 								return 3;
 						END_USING_MODELS;
-
-						Py_BLOCK_THREADS;
 
 						/*
 						Первый способ - нативный вызов в main-потоке добавлением в очередь. Ненадёжно!
@@ -1445,7 +1443,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 									request = delModelCoords(it_sect_sync->ID, *it_model);
 
 									if (request) {
-										extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)request);
+										extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", request);
 								
 										//GUI_setError(res);
 
@@ -1734,9 +1732,9 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 				lights.~vector();
 			} traceLog();
 
-			superExtendedDebugLog("[NY_Event]: fini debug 1\n");
-
 			Py_UNBLOCK_THREADS;
+
+			superExtendedDebugLog("[NY_Event]: fini debug 1\n");
 
 			if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog();
 				superExtendedDebugLog("[NY_Event]: fini debug 2\n");
