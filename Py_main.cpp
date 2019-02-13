@@ -622,10 +622,10 @@ uint8_t delModelCoords(uint16_t ID, float* coords) { traceLog();
 	return 2;
 }
 
-static PyObject* event_light(float coords[3]) { traceLog();
+static PyObject* event_light(float coords[3]) { //traceLog();
 	if (!isInited || battleEnded) { traceLog();
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	superExtendedDebugLog("light creating...\n");
 
@@ -639,7 +639,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		superExtendedDebugLog("PyOmniLight creating FAILED\n");
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	//---------inner radius---------
 
@@ -654,7 +654,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		Py_DECREF(Light);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	Py_DECREF(__innerRadius);
 
@@ -671,7 +671,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		Py_DECREF(Light);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	Py_DECREF(__outerRadius);
 
@@ -688,7 +688,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		Py_DECREF(Light);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	Py_DECREF(__multiplier);
 
@@ -702,7 +702,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		Py_DECREF(Light);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	for (uint8_t i = NULL; i < 3; i++) {
 		if (i == 1) {
@@ -711,7 +711,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		else {
 			PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i]));
 		}
-	} traceLog();
+	} //traceLog();
 
 	PyObject* __position = PyString_FromString("position");
 
@@ -723,7 +723,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		Py_DECREF(Light);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	Py_DECREF(__position);
 
@@ -737,7 +737,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		Py_DECREF(Light);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	double* colour = new double[5];
 
@@ -762,7 +762,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 		Py_DECREF(Light);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	Py_DECREF(__colour);
 
@@ -771,7 +771,7 @@ static PyObject* event_light(float coords[3]) { traceLog();
 	return Light;
 }
 
-bool setModelPosition(PyObject* Model, float* coords_f) { traceLog();
+bool setModelPosition(PyObject* Model, float* coords_f) { //traceLog();
 	PyObject* coords_p = PyTuple_New(3);
 
 	for (uint8_t i = NULL; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords_f[i]));
@@ -784,30 +784,30 @@ bool setModelPosition(PyObject* Model, float* coords_f) { traceLog();
 		Py_DECREF(Model);
 
 		return false;
-	} traceLog();
+	} //traceLog();
 
 	Py_DECREF(__position);
 
 	return true;
 }
 
-static PyObject* event_model(char* path, float coords[3], bool isAsync=false) { traceLog();
+static PyObject* event_model(char* path, float coords[3], bool isAsync=false) { //traceLog();
 	if (!isInited || battleEnded) { traceLog();
 		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	superExtendedDebugLog("model creating...\n");
 
 	PyObject* Model = NULL;
 
-	if (isAsync) { traceLog();
+	if (isAsync) { //traceLog();
 		if (coords == nullptr) { traceLog(); 
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
 			return NULL;
-		} traceLog();
+		} //traceLog();
 
 		PyObject* __partial = PyString_FromString("partial");
 
@@ -821,7 +821,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) { 
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
 			return NULL;
-		} traceLog();
+		} //traceLog();
 
 		PyObject* __fetchModel = PyString_FromString("fetchModel");
 
@@ -831,7 +831,7 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) { 
 		Py_DECREF(__fetchModel);
 
 		return NULL;
-	} traceLog();
+	} //traceLog();
 
 	PyObject* __Model = PyString_FromString("Model");
 
@@ -841,13 +841,13 @@ static PyObject* event_model(char* path, float coords[3], bool isAsync=false) { 
 
 	if (!Model) { traceLog();
 		return NULL;
-	} traceLog();
+	} //traceLog();
 	
 	if (coords != nullptr) { traceLog();
 		if (!setModelPosition(Model, coords)) { traceLog(); //ставим на нужную позицию
 			return NULL;
-		} traceLog();
-	} traceLog();
+		}
+	} //traceLog();
 
 	superExtendedDebugLog("model creating OK!\n");
 
@@ -2578,15 +2578,15 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog();
 	else Py_RETURN_NONE;
 };
 
-static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) { traceLog();
+static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) { //traceLog();
 	if (!isInited || first_check || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog();
 		Py_RETURN_NONE;
-	} traceLog();
+	} //traceLog();
 
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted_Space = NULL;
 
-	if (g_gui) { traceLog();
+	if (g_gui) { //traceLog();
 		PyObject* __get_key = PyString_FromString("get_key");
 		
 		isKeyGetted_Space = PyObject_CallMethodObjArgs(g_gui, __get_key, spaceKey, NULL);
@@ -2601,7 +2601,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 		if (!key) { traceLog();
 			Py_RETURN_NONE;
-		} traceLog();
+		} //traceLog();
 
 		PyObject* ____contains__ = PyString_FromString("__contains__");
 
@@ -2620,7 +2620,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 			Py_RETURN_NONE;
 		} traceLog();
-	} traceLog();
+	} //traceLog();
 
 	Py_XDECREF(isKeyGetted_Space);
 
