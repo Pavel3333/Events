@@ -970,6 +970,8 @@ uint8_t create_models() { traceLog();
 
 			if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 				extendedDebugLogFmt("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+			
+				return 4;
 			}
 
 			extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
@@ -1294,6 +1296,8 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 								if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 									extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+								
+									return 4;
 								}
 
 								extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
@@ -1480,6 +1484,8 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 						if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+						
+							return 4;
 						}
 
 						extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
@@ -1577,12 +1583,12 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 								if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
 									extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-									return 8;
+									return 9;
 								}
 
 								extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
-								return 7;
+								return 8;
 							} traceLog();
 
 							extendedDebugLogFmt("[NY_Event][WARNING]: handleStartTimerEvent - send_token - Warning code %d\n", request);
@@ -1610,12 +1616,12 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 								traceLog();
 								extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-								return 6;
+								return 7;
 							}
 
 							extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
-							return 4;
+							return 6;
 						} traceLog();
 
 						//освобождаем мутекс для этого потока
@@ -1623,7 +1629,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-							return 6;
+							return 5;
 						}
 
 						extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
@@ -1632,7 +1638,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 					case WAIT_ABANDONED: traceLog();
 						extendedDebugLog("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
 
-						return 5;
+						return 4;
 				END_USING_NETWORK;
 
 				SleepEx(
@@ -1801,6 +1807,8 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 
 			if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 				extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEndEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+			
+				return 3;
 			}
 
 			extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
