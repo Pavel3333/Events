@@ -2105,6 +2105,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				request = NULL;
 				mapID = NULL;
 			}
+
+			break;
 			// An error occurred
 		default: traceLog();
 			extendedDebugLog("[NY_Event][WARNING]: EVENTS - something wrong with WaitResult!\n");
