@@ -935,9 +935,11 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog
 }
 
 uint8_t create_models() { traceLog();
-	if (!isInited || battleEnded || !onModelCreatedPyMeth) { traceLog();
+	if (!isInited || battleEnded || !onModelCreatedPyMeth || !M_MODELS_NOT_USING) { traceLog();
 		return 1;
 	} traceLog();
+
+	INIT_LOCAL_MSG_BUFFER;
 
 	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
 		M_MODELS_NOT_USING,    // handle to mutex
@@ -969,6 +971,12 @@ uint8_t create_models() { traceLog();
 				it2++;
 			}
 		} traceLog();
+
+		//освобождаем мутекс для этого потока
+
+		if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+			extendedDebugLogFmt("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+		}
 
 		break;
 	case WAIT_ABANDONED: traceLog();
@@ -1197,7 +1205,7 @@ uint8_t del_models() {
 };
 
 uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
-	if (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR) { traceLog();
+	if (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR || !M_MODELS_NOT_USING) { traceLog();
 		NETWORK_NOT_USING;
 
 		return 1;
@@ -1293,6 +1301,12 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 						case WAIT_OBJECT_0: traceLog();
 							models.~vector();
 							lights.~vector();
+
+							//освобождаем мутекс для этого потока
+
+							if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+								extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+							}
 						case WAIT_ABANDONED: traceLog();
 							extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
@@ -1474,6 +1488,12 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 					sync_map.modelsSects_deleting.~vector();
 
+					//освобождаем мутекс для этого потока
+
+					if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+						extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+					}
+
 					break;
 				case WAIT_ABANDONED: traceLog();
 					extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
@@ -1649,7 +1669,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 }
 
 uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
-	if (!isInited || first_check) { traceLog();
+	if (!isInited || first_check || !M_MODELS_NOT_USING) { traceLog();
 		return 1;
 	} traceLog();
 
@@ -1744,7 +1764,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 
 		current_map.minimap_count = NULL;
 
-		//релизим мутекс для этого потока
+		//освобождаем мутекс для этого потока
 
 		if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 			extendedDebugLogFmt("[NY_Event][ERROR]: event_fini - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
@@ -2070,7 +2090,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			if (M_MODELS_NOT_USING) { traceLog();
 				CloseHandle(M_MODELS_NOT_USING);
 
-				M_MODELS_NOT_USING = nullptr;
+				M_MODELS_NOT_USING = NULL;
 			} traceLog();
 
 			request = handleBattleEndEvent(_save);
