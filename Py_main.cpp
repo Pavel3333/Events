@@ -917,15 +917,14 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog
 	models.push_back(newModel);
 	lights.push_back(newLight);
 
-	if (models.size() >= allModelsCreated) { traceLog(); //если число созданных моделей - столько же или больше, чем надо
-		//сигналим о том, что все модели были успешно созданы
-
-		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent))
-		{
-			extendedDebugLog("[NY_Event][ERROR]: AMCEvent event not setted!\n");
+	if (models.size() >= allModelsCreated) { traceLog();               //если число созданных моделей - столько же или больше, чем надо
+		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent)) { traceLog(); //сигналим о том, что все модели были успешно созданы
+			extendedDebugLog("[NY_Event][ERROR]: event_onModelCreated: AMCEvent event not setted!\n");
 
 			Py_RETURN_NONE;
 		} traceLog();
+
+		allModelsCreated = NULL;
 	} traceLog();
 
 	Py_RETURN_NONE;
@@ -2141,12 +2140,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				M_NETWORK_NOT_USING = NULL;
 			} traceLog();
 
-			if (M_MODELS_NOT_USING) { traceLog();
-				CloseHandle(M_MODELS_NOT_USING);
-
-				M_MODELS_NOT_USING = NULL;
-			} traceLog();
-
 			request = handleBattleEndEvent(_save);
 
 			if (!request) { traceLog();
@@ -2177,6 +2170,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				request = NULL;
 				mapID = NULL;
 			}
+
+			if (M_MODELS_NOT_USING) {
+				traceLog();
+				CloseHandle(M_MODELS_NOT_USING);
+
+				M_MODELS_NOT_USING = NULL;
+			} traceLog();
 
 			break;
 			// An error occurred
