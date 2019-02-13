@@ -941,49 +941,45 @@ uint8_t create_models() { traceLog();
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
-		M_MODELS_NOT_USING,    // handle to mutex
-		INFINITE);             // no time-out interval
+	BEGIN_USING_MODELS;
+		case WAIT_OBJECT_0: traceLog();
+			for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
+				it != current_map.modelsSects.end();
+				it++) {
 
-	switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
-	case WAIT_OBJECT_0: traceLog();
-		for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
-			it != current_map.modelsSects.end();
-			it++) {
-
-			if (!it->isInitialised || it->models.empty()) {
-				traceLog();
-				continue;
-			}
-
-			auto it2 = it->models.begin();
-
-			while (it2 != it->models.end()) {
-				if (*it2 == nullptr) {
+				if (!it->isInitialised || it->models.empty()) {
 					traceLog();
-					it2 = it->models.erase(it2);
-
 					continue;
 				}
 
-				allModelsCreated++;
+				auto it2 = it->models.begin();
 
-				it2++;
+				while (it2 != it->models.end()) {
+					if (*it2 == nullptr) {
+						traceLog();
+						it2 = it->models.erase(it2);
+
+						continue;
+					}
+
+					allModelsCreated++;
+
+					it2++;
+				}
+			} traceLog();
+
+			//освобождаем мутекс для этого потока
+
+			if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+				extendedDebugLogFmt("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 			}
-		} traceLog();
 
-		//освобождаем мутекс для этого потока
+			break;
+		case WAIT_ABANDONED: traceLog();
+			extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-		if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
-			extendedDebugLogFmt("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-		}
-
-		break;
-	case WAIT_ABANDONED: traceLog();
-		extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
-
-		return 3;
-	}
+			return 3;
+	END_USING_MODELS;
 
 	for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
 		it != current_map.modelsSects.cend();
@@ -1293,25 +1289,21 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 						extendedDebugLog("[NY_Event]: creating...\n");
 
-						DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
-							M_MODELS_NOT_USING,    // handle to mutex
-							INFINITE);             // no time-out interval
+						BEGIN_USING_MODELS;
+							case WAIT_OBJECT_0: traceLog();
+								models.~vector();
+								lights.~vector();
 
-						switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
-						case WAIT_OBJECT_0: traceLog();
-							models.~vector();
-							lights.~vector();
+								//освобождаем мутекс для этого потока
 
-							//освобождаем мутекс для этого потока
+								if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+									extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+								}
+							case WAIT_ABANDONED: traceLog();
+								extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-							if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
-								extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-							}
-						case WAIT_ABANDONED: traceLog();
-							extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
-
-							return 3;
-						}
+								return 3;
+						END_USING_MODELS;
 
 						Py_BLOCK_THREADS;
 
@@ -1421,85 +1413,81 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 				std::vector<ModelsSection>::iterator it_sect_sync;
 				std::vector<float*>::iterator        it_model;
 
-				DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
-					M_MODELS_NOT_USING,    // handle to mutex
-					INFINITE);             // no time-out interval
+				BEGIN_USING_MODELS;
+					case WAIT_OBJECT_0: traceLog();
+						it_sect_sync = sync_map.modelsSects_deleting.begin();
 
-				switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
-				case WAIT_OBJECT_0: traceLog();
-					it_sect_sync = sync_map.modelsSects_deleting.begin();
+						while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
+							if (it_sect_sync->isInitialised) {
+								it_model = it_sect_sync->models.begin();
 
-					while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
-						if (it_sect_sync->isInitialised) {
-							it_model = it_sect_sync->models.begin();
+								while (it_model != it_sect_sync->models.end()) {
+									if (*it_model == nullptr) { traceLog();
+										it_model = it_sect_sync->models.erase(it_model);
 
-							while (it_model != it_sect_sync->models.end()) {
-								if (*it_model == nullptr) { traceLog();
-									it_model = it_sect_sync->models.erase(it_model);
+										continue;
+									}
 
-									continue;
-								}
+									request = delModelPy(*it_model);
 
-								request = delModelPy(*it_model);
+									if (request) {
+										extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)request);
 
-								if (request) {
-									extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)request);
+										//GUI_setError(request);
 
-									//GUI_setError(request);
+										it_model++;
 
-									it_model++;
+										continue;
+									}
 
-									continue;
-								}
+									/*
 
-								/*
+									request = delModelCoords(it_sect_sync->ID, *it_model);
 
-								request = delModelCoords(it_sect_sync->ID, *it_model);
-
-								if (request) {
-									extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)request);
+									if (request) {
+										extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", (uint32_t)request);
 								
-									//GUI_setError(res);
+										//GUI_setError(res);
 
-									it_model++;
+										it_model++;
 
-									continue;
+										continue;
+									}
+
+									*/
+
+									delete[] * it_model;
+									*it_model = nullptr;
+
+									it_model = it_sect_sync->models.erase(it_model);
 								}
-
-								*/
-
-								delete[] * it_model;
-								*it_model = nullptr;
-
-								it_model = it_sect_sync->models.erase(it_model);
 							}
+
+							if (it_sect_sync->path != nullptr) {
+								delete[] it_sect_sync->path;
+
+								it_sect_sync->path = nullptr;
+							}
+
+							it_sect_sync->models.~vector();
+
+							it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
+						} traceLog();
+
+						sync_map.modelsSects_deleting.~vector();
+
+						//освобождаем мутекс для этого потока
+
+						if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+							extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 						}
 
-						if (it_sect_sync->path != nullptr) {
-							delete[] it_sect_sync->path;
+						break;
+					case WAIT_ABANDONED: traceLog();
+						extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-							it_sect_sync->path = nullptr;
-						}
-
-						it_sect_sync->models.~vector();
-
-						it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
-					} traceLog();
-
-					sync_map.modelsSects_deleting.~vector();
-
-					//освобождаем мутекс для этого потока
-
-					if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
-						extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-					}
-
-					break;
-				case WAIT_ABANDONED: traceLog();
-					extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
-
-					return 3;
-				}
+						return 3;
+				END_USING_MODELS;
 			}
 			else {
 				return NULL;
@@ -1683,101 +1671,97 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 
 	Py_BLOCK_THREADS;
 
-	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject(
-		M_MODELS_NOT_USING,    // handle to mutex
-		INFINITE);             // no time-out interval
+	BEGIN_USING_MODELS;
+		case WAIT_OBJECT_0: traceLog();
+			if (!models.empty()) { traceLog();
+				request = NULL;
 
-	switch (M_MODELS_NOT_USING_WaitResult) { //работаем с моделями - нужен мутекс
-	case WAIT_OBJECT_0: traceLog();
-		if (!models.empty()) { traceLog();
-			request = NULL;
+				delete_models = del_models();
 
-			delete_models = del_models();
+				if (delete_models) { traceLog();
+					extendedDebugLogFmt("[NY_Event][WARNING]: del_models: %d\n", (uint32_t)delete_models);
+				} traceLog();
 
-			if (delete_models) { traceLog();
-				extendedDebugLogFmt("[NY_Event][WARNING]: del_models: %d\n", (uint32_t)delete_models);
-			} traceLog();
+				it_model = models.begin();
 
-			it_model = models.begin();
+				while (it_model != models.end()) {
+					if (*it_model == nullptr) { traceLog();
+						it_model = models.erase(it_model);
 
-			while (it_model != models.end()) {
-				if (*it_model == nullptr) { traceLog();
+						continue;
+					}
+
+					Py_XDECREF((*it_model)->model);
+
+					(*it_model)->model = NULL;
+					(*it_model)->coords = nullptr;
+					(*it_model)->processed = false;
+
+					delete *it_model;
+					*it_model = nullptr;
+
 					it_model = models.erase(it_model);
 
-					continue;
-				}
+					it_model++;
+				} traceLog();
 
-				Py_XDECREF((*it_model)->model);
-
-				(*it_model)->model = NULL;
-				(*it_model)->coords = nullptr;
-				(*it_model)->processed = false;
-
-				delete *it_model;
-				*it_model = nullptr;
-
-				it_model = models.erase(it_model);
-
-				it_model++;
+				models.~vector();
 			} traceLog();
 
-			models.~vector();
-		} traceLog();
+			isModelsAlreadyInited = false;
 
-		isModelsAlreadyInited = false;
+			if (!lights.empty()) { traceLog();
+				it_light = lights.begin();
 
-		if (!lights.empty()) { traceLog();
-			it_light = lights.begin();
+				while (it_light != lights.end()) {
+					if (*it_light == nullptr) { traceLog();
+						it_light = lights.erase(it_light);
 
-			while (it_light != lights.end()) {
-				if (*it_light == nullptr) { traceLog();
+						continue;
+					}
+
+					Py_XDECREF((*it_light)->model);
+
+					(*it_light)->model = NULL;
+					(*it_light)->coords = nullptr;
+
+					delete *it_light;
+					*it_light = nullptr;
+
 					it_light = lights.erase(it_light);
+				} traceLog();
 
-					continue;
-				}
-
-				Py_XDECREF((*it_light)->model);
-
-				(*it_light)->model = NULL;
-				(*it_light)->coords = nullptr;
-
-				delete *it_light;
-				*it_light = nullptr;
-
-				it_light = lights.erase(it_light);
+				lights.~vector();
 			} traceLog();
 
-			lights.~vector();
-		} traceLog();
+			superExtendedDebugLog("[NY_Event]: fini debug 1\n");
 
-		superExtendedDebugLog("[NY_Event]: fini debug 1\n");
+			Py_UNBLOCK_THREADS;
 
-		Py_UNBLOCK_THREADS;
+			if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog();
+				superExtendedDebugLog("[NY_Event]: fini debug 2\n");
 
-		if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog();
-			superExtendedDebugLog("[NY_Event]: fini debug 2\n");
+				clearModelsSections();
+			} traceLog();
 
-			clearModelsSections();
-		} traceLog();
+			isModelsAlreadyCreated = false;
 
-		isModelsAlreadyCreated = false;
+			current_map.minimap_count = NULL;
 
-		current_map.minimap_count = NULL;
+			//освобождаем мутекс для этого потока
 
-		//освобождаем мутекс для этого потока
+			if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+				extendedDebugLogFmt("[NY_Event][ERROR]: event_fini - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+			}
 
-		if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
-			extendedDebugLogFmt("[NY_Event][ERROR]: event_fini - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-		}
+			Py_BLOCK_THREADS;
 
-		Py_BLOCK_THREADS;
+			break;
+		case WAIT_ABANDONED: traceLog();
+			extendedDebugLog("[NY_Event][ERROR]: event_fini - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-		break;
-	case WAIT_ABANDONED: traceLog();
-		extendedDebugLog("[NY_Event][ERROR]: event_fini - MODELS_NOT_USING: WAIT_ABANDONED!\n");
-
-		return 2;
-	}
+			return 2;
+	END_USING_MODELS;
 
 	if (isTimeVisible) { traceLog();
 		GUI_setTime(NULL);

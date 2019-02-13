@@ -80,6 +80,14 @@
 #define traceLog(X) 0
 #endif
 
+#define BEGIN_USING_MODELS                                     \
+	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
+	M_MODELS_NOT_USING,    				                       \
+	INFINITE);                                                 \
+	switch (M_MODELS_NOT_USING_WaitResult) {
+
+#define END_USING_MODELS }
+
 #define NETWORK_USING                                                           \
 	extendedDebugLog("[NY_Event]: NETWORK_USING\n");                            \
     EnterCriticalSection(pCS_NETWORK_NOT_USING);
