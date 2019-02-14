@@ -20,7 +20,7 @@ typedef struct {
 } ModLight;
 
 std::vector<ModModel*> models;
-std::vector<ModLight*> lights;
+//std::vector<ModLight*> lights;
 
 std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
@@ -909,13 +909,13 @@ static PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog
 		coords_f
 	};
 
-	ModLight* newLight = new ModLight {
+	/*ModLight* newLight = new ModLight {
 		event_light(coords_f),
 		coords_f
-	};
+	};*/
 
 	models.push_back(newModel);
-	lights.push_back(newLight);
+	//lights.push_back(newLight);
 
 	if (models.size() >= allModelsCreated) { traceLog();               //если число созданных моделей - столько же или больше, чем надо
 		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent)) { traceLog(); //сигналим о том, что все модели были успешно созданы
@@ -1163,7 +1163,7 @@ uint8_t del_models() {
 		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
 	} traceLog();
 
-	std::vector<ModLight*>::iterator it_light = lights.begin();
+	/*std::vector<ModLight*>::iterator it_light = lights.begin();
 
 	while (it_light != lights.end()) {
 		if (*it_light == nullptr) {
@@ -1195,7 +1195,7 @@ uint8_t del_models() {
 		it_light++;
 
 		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
-	} traceLog();
+	} traceLog();*/
 
 	extendedDebugLog("[NY_Event]: models deleting OK!\n");
 
@@ -1290,7 +1290,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 								extendedDebugLog("[NY_Event]: MODELS_USING\n");
 
 								models.~vector();
-								lights.~vector();
+								//lights.~vector();
 
 								//освобождаем мутекс для этого потока
 
@@ -1769,7 +1769,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 
 			isModelsAlreadyInited = false;
 
-			if (!lights.empty()) { traceLog();
+			/*if (!lights.empty()) { traceLog();
 				it_light = lights.begin();
 
 				while (it_light != lights.end()) {
@@ -1791,7 +1791,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 				} traceLog();
 
 				lights.~vector();
-			} traceLog();
+			} traceLog();*/
 
 			Py_UNBLOCK_THREADS;
 
