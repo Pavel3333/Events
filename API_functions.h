@@ -7,10 +7,10 @@
 #include <tchar.h>
 
 #define debug_log                true
-#define extended_debug_log       true
+#define extended_debug_log       false
 #define super_extended_debug_log false
 
-#define trace_log true
+#define trace_log false
 
 #define INIT_LOCAL_MSG_BUFFER \
 	char log_buf_c[512];      \
@@ -95,22 +95,6 @@
 	switch (M_MODELS_NOT_USING_WaitResult) {
 
 #define END_USING_NETWORK }
-
-#define NETWORK_USING                                                           \
-	extendedDebugLog("[NY_Event]: NETWORK_USING\n");                            \
-    EnterCriticalSection(M_NETWORK_NOT_USING);
-#define NETWORK_NOT_USING                                                       \
-	extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");                        \
-	LeaveCriticalSection(M_NETWORK_NOT_USING);
-
-#define BEGIN_NETWORK_USING {                                                   \
-	extendedDebugLog("[NY_Event]: entering NETWORK_NOT_USING\n");               \
-	EnterCriticalSection(M_NETWORK_NOT_USING);
-
-#define END_NETWORK_USING                                                       \
-	extendedDebugLog("[NY_Event]: leaving NETWORK_NOT_USING\n");                \
-	LeaveCriticalSection(M_NETWORK_NOT_USING);                                  \
-}
 
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12
