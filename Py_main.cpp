@@ -939,7 +939,7 @@ uint8_t create_models() { traceLog();
 
 	BEGIN_USING_MODELS;
 		case WAIT_OBJECT_0: traceLog();
-			extendedDebugLog("[NY_Event]: MODELS_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
 			for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
 				it != current_map.modelsSects.end();
@@ -974,7 +974,7 @@ uint8_t create_models() { traceLog();
 				return 4;
 			}
 
-			extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
 
 			break;
 		case WAIT_ABANDONED: traceLog();
@@ -1287,7 +1287,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 						BEGIN_USING_MODELS;
 							case WAIT_OBJECT_0: traceLog();
-								extendedDebugLog("[NY_Event]: MODELS_USING\n");
+								superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
 								models.~vector();
 								//lights.~vector();
@@ -1300,7 +1300,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 									return 4;
 								}
 
-								extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+								superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
 
 								break;
 							case WAIT_ABANDONED: traceLog();
@@ -1339,7 +1339,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 						//ожидаем события полного создания моделей
 
-						extendedDebugLog("[NY_Event]: waiting EVENT_ALL_MODELS_CREATED\n");
+						superExtendedDebugLog("[NY_Event]: waiting EVENT_ALL_MODELS_CREATED\n");
 
 						DWORD EVENT_ALL_MODELS_CREATED_WaitResult = WaitForSingleObject(
 							EVENT_ALL_MODELS_CREATED->hEvent, // event handle
@@ -1347,7 +1347,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 						switch (EVENT_ALL_MODELS_CREATED_WaitResult) {
 						case WAIT_OBJECT_0:  traceLog();
-							extendedDebugLog("[NY_Event]: EVENT_ALL_MODELS_CREATED signaled!\n");
+							superExtendedDebugLog("[NY_Event]: EVENT_ALL_MODELS_CREATED signaled!\n");
 
 							//-------------
 
@@ -1417,7 +1417,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 				BEGIN_USING_MODELS;
 					case WAIT_OBJECT_0: traceLog();
-						extendedDebugLog("[NY_Event]: MODELS_USING\n");
+						superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
 						it_sect_sync = sync_map.modelsSects_deleting.begin();
 
@@ -1488,7 +1488,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 							return 4;
 						}
 
-						extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+						superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
 
 						break;
 					case WAIT_ABANDONED: traceLog();
@@ -1566,7 +1566,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 				BEGIN_USING_NETWORK;
 					case WAIT_OBJECT_0: traceLog();
-						extendedDebugLog("[NY_Event]: NETWORK_USING\n");
+						superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
 
 						request = send_token(databaseID, mapID, eventID);
 
@@ -1586,7 +1586,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 									return 9;
 								}
 
-								extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
+								superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
 								return 8;
 							} traceLog();
@@ -1619,7 +1619,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 								return 7;
 							}
 
-							extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
+							superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
 							return 6;
 						} traceLog();
@@ -1632,7 +1632,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 							return 5;
 						}
 
-						extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
+						superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
 						break;
 					case WAIT_ABANDONED: traceLog();
@@ -1676,7 +1676,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 	BEGIN_USING_NETWORK;
 		case WAIT_OBJECT_0: traceLog();
-			extendedDebugLog("[NY_Event]: NETWORK_USING\n");
+			superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
 
 			first_check = send_token(databaseID, mapID, eventID);
 
@@ -1688,7 +1688,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 				return 4;
 			}
 
-			extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
+			superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
 			break;
 		case WAIT_ABANDONED: traceLog();
@@ -1732,7 +1732,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 
 	BEGIN_USING_MODELS;
 		case WAIT_OBJECT_0: traceLog();
-			extendedDebugLog("[NY_Event]: MODELS_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
 			if (!models.empty()) { traceLog();
 				request = del_models();
@@ -1811,7 +1811,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 				return 3;
 			}
 
-			extendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
 
 			Py_BLOCK_THREADS;
 
@@ -1862,7 +1862,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	extendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
+	superExtendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
 
 	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
 		EVENT_START_TIMER->hEvent, // event handle
@@ -1870,7 +1870,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 	switch (EVENT_START_TIMER_WaitResult) {
 	case WAIT_OBJECT_0:  traceLog();
-		extendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
+		superExtendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
 
 		//включаем GIL для этого потока
 
@@ -1936,7 +1936,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	extendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR\n");
+	superExtendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR\n");
 
 	DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
 		EVENT_IN_HANGAR->hEvent, // event handle
@@ -1944,7 +1944,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	switch (EVENT_IN_HANGAR_WaitResult) {
 	case WAIT_OBJECT_0: traceLog();
-		extendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!\n");
+		superExtendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!\n");
 
 		//место для рабочего кода
 
@@ -2003,7 +2003,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	uint8_t lastEventError = NULL;
 
 	while (!first_check && !battleEnded && !lastEventError) { traceLog();
-		extendedDebugLog("[NY_Event]: waiting EVENTS\n");
+	superExtendedDebugLog("[NY_Event]: waiting EVENTS\n");
 
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
 			HEVENTS_COUNT,
@@ -2013,7 +2013,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		switch (EVENTS_WaitResult) {
 		case WAIT_OBJECT_0 + 0:  traceLog(); //сработало событие удаления модели
-			extendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!\n");
+			superExtendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!\n");
 
 			//место для рабочего кода
 
@@ -2040,7 +2040,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			if (!find_result) { traceLog();
 				BEGIN_USING_NETWORK;
 					case WAIT_OBJECT_0: traceLog();
-						extendedDebugLog("[NY_Event]: NETWORK_USING\n");
+						superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
 
 						server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
 
@@ -2052,7 +2052,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 							return 4;
 						}
 
-						extendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
+						superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
 						break;
 					case WAIT_ABANDONED: traceLog();
@@ -2197,7 +2197,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		} traceLog();
 	} traceLog();
 
-	if (lastEventError) extendedDebugLogFmt("Error in event: %d\n", lastEventError);
+	if (lastEventError) extendedDebugLogFmt("[NY_Event][WARNING]: Error in event: %d\n", lastEventError);
 
 	//закрываем поток
 
