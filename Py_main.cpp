@@ -1304,7 +1304,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 								break;
 							case WAIT_ABANDONED: traceLog();
-								extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+								extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
 								return 3;
 						END_USING_MODELS;
@@ -1332,7 +1332,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 						Py_UNBLOCK_THREADS;
 
 						if (request) { traceLog();
-							extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - Error code %d\n", request);
+							extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - handleBattleEvent - Error code %d\n", request);
 
 							return 3;
 						} traceLog();
@@ -1435,7 +1435,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 									request = delModelPy(*it_model);
 
 									if (request) {
-										extendedDebugLogFmt("[NY_Event][ERROR]: create_models - delModelPy - Error code %d\n", (uint32_t)request);
+										extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - delModelPy - Error code %d\n", (uint32_t)request);
 
 										//GUI_setError(request);
 
@@ -1444,12 +1444,10 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 										continue;
 									}
 
-									/*
-
 									request = delModelCoords(it_sect_sync->ID, *it_model);
 
 									if (request) {
-										extendedDebugLogFmt("[NY_Event]: Error - create_models - delModelCoords - Error code %d\n", request);
+										extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - delModelCoords - Error code %d\n", request);
 								
 										//GUI_setError(res);
 
@@ -1457,8 +1455,6 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog();
 
 										continue;
 									}
-
-									*/
 
 									delete[] * it_model;
 									*it_model = nullptr;
@@ -1721,14 +1717,10 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 		return 1;
 	} traceLog();
 
-	Py_UNBLOCK_THREADS;
-
 	INIT_LOCAL_MSG_BUFFER;
 
 	std::vector<ModModel*>::iterator it_model;
 	std::vector<ModLight*>::iterator it_light;
-
-	Py_BLOCK_THREADS;
 
 	BEGIN_USING_MODELS;
 		case WAIT_OBJECT_0: traceLog();
