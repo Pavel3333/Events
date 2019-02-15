@@ -2,10 +2,6 @@
 
 #include "API_functions.h"
 
-// Sample custom data structure for threads to use.
-// This is passed by void pointer so it can be any data type
-// that can be passed using a single void pointer (LPVOID).
-
 typedef struct {
 	HANDLE hEvent = NULL;
 

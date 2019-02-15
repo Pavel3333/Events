@@ -137,16 +137,22 @@
     <ClInclude Include="API_functions.h" />
     <ClInclude Include="BW_native.h" />
     <ClInclude Include="GUI.h" />
+    <ClInclude Include="Handlers.h" />
     <ClInclude Include="ModThreads.h" />
+    <ClInclude Include="Py_API.h" />
     <ClInclude Include="Py_config.h" />
+    <ClInclude Include="ThreadSync.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="API_functions.cpp" />
     <ClCompile Include="BW_native.cpp" />
     <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="Handlers.cpp" />
     <ClCompile Include="ModThreads.cpp" />
+    <ClCompile Include="Py_API.cpp" />
     <ClCompile Include="Py_config.cpp" />
     <ClCompile Include="Py_main.cpp" />
+    <ClCompile Include="ThreadSync.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libcurl.dll">

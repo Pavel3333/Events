@@ -2,6 +2,8 @@
 
 long delLabelCBID = NULL;
 
+PyObject* modGUI = NULL;
+
 //GUI methods
 
 PyObject* GUI_getAttr(char* attribute) {

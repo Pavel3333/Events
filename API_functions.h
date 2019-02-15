@@ -164,6 +164,8 @@ extern int8_t scoreID;
 extern STAGE_ID lastStageID;
 extern bool isStreamer;
 
+extern std::ofstream dbg_log;
+
 
 struct ModelsSection  {
 	bool isInitialised = false;

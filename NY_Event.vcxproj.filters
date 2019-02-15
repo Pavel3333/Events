@@ -39,6 +39,15 @@
     <ClCompile Include="Py_config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Py_API.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadSync.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Handlers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="API_functions.h">
@@ -54,6 +63,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BW_native.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Py_API.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadSync.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
