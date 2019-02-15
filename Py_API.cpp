@@ -243,8 +243,6 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 
 	Py_DECREF(__player);
 
-	isModelsAlreadyCreated = false;
-
 	if (!player) {
 		traceLog();
 		return 1;
@@ -320,7 +318,6 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 			for (auto it2 = it->models.cbegin();
 				it2 != it->models.cend();
 				it2++) {
-				traceLog();
 				if (*it2 == nullptr) {
 					traceLog();
 					continue;

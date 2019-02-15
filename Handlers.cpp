@@ -633,20 +633,20 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 			extendedDebugLog("[NY_Event][ERROR]: handleBattleEndEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
 			return 2;
-			END_USING_MODELS;
+		END_USING_MODELS;
 
-			if (isTimeVisible) { traceLog();
-				GUI_setTime(NULL);
-				GUI_setTimerVisible(false);
+		if (isTimeVisible) { traceLog();
+			GUI_setTime(NULL);
+			GUI_setTimerVisible(false);
 
-				isTimeVisible = false;
+			isTimeVisible = false;
 
-				current_map.time_preparing = NULL;
-			} traceLog();
+			current_map.time_preparing = NULL;
+		} traceLog();
 
-			extendedDebugLog("[NY_Event]: fini OK!\n");
+		extendedDebugLog("[NY_Event]: fini OK!\n");
 
-			return NULL;
+		return NULL;
 };
 
 uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
@@ -681,7 +681,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 				traceLog();
 				extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-				return 9;
+				return 14;
 			}
 
 			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
@@ -690,7 +690,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 		case WAIT_ABANDONED: traceLog();
 			extendedDebugLog("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-			return 8;
+			return 13;
 	END_USING_MODELS;
 
 	Py_UNBLOCK_THREADS;
@@ -707,7 +707,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 			if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
 				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-				return 7;
+				return 12;
 			}
 
 			superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
@@ -725,14 +725,14 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 				//GUI_setError(server_req);
 
-				return 5;
+				return 11;
 			} traceLog();
 
 			extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
 
 			//GUI_setWarning(server_req);
 
-			return 4;
+			return 10;
 		} traceLog();
 
 		BEGIN_USING_MODELS;
@@ -747,7 +747,15 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 					//GUI_setError(request);
 
-					return 3;
+					//освобождаем мутекс для этого потока
+
+					if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+						extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+
+						return 9;
+					}
+
+					return 8;
 				} traceLog();
 
 				scoreID = modelID;
@@ -764,16 +772,24 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 					//GUI_setError(request);
 
-					return 2;
+					//освобождаем мутекс для этого потока
+
+					if (!ReleaseMutex(M_MODELS_NOT_USING)) {
+						traceLog();
+						extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+
+						return 7;
+					}
+
+					return 6;
 				} traceLog();
 
 				//освобождаем мутекс для этого потока
 
-				if (!ReleaseMutex(M_MODELS_NOT_USING)) {
-					traceLog();
+				if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 					extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-					return 9;
+					return 5;
 				}
 
 				superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
@@ -782,7 +798,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 			case WAIT_ABANDONED: traceLog();
 				extendedDebugLog("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-				return 8;
+				return 4;
 		END_USING_MODELS;
 	}
 	else if (request == 7) { traceLog();
