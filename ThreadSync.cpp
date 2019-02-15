@@ -116,4 +116,3 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 
 	return true;
 }
-

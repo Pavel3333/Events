@@ -755,6 +755,8 @@ uint8_t handleDelModelEvent(PyThreadState* _save) {
 
 			request = delModelCoords(modelID, coords);
 
+			delete[] coords;
+
 			if (request) {
 				traceLog();
 				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", request);
