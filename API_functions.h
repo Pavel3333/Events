@@ -7,14 +7,14 @@
 #include <tchar.h>
 
 #define debug_log                true
-#define extended_debug_log       false
+#define extended_debug_log       true
 #define super_extended_debug_log false
 
-#define trace_log false
+#define trace_log true
 
 #define INIT_LOCAL_MSG_BUFFER \
-	char log_buf_c[512];      \
-	WCHAR log_buf[512];                          
+	char log_buf_c[1024];      \
+	WCHAR log_buf[1024];                          
 
 #if debug_log
 #define debugLog(X)           \
@@ -80,21 +80,21 @@
 #define traceLog() 0
 #endif
 
-#define BEGIN_USING_MODELS                                     \
+#define BEGIN_USING_MODELS {                                   \
 	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
 	M_MODELS_NOT_USING,    				                       \
 	INFINITE);                                                 \
 	switch (M_MODELS_NOT_USING_WaitResult) {
 
-#define END_USING_MODELS }
+#define END_USING_MODELS }}
 
-#define BEGIN_USING_NETWORK                                    \
+#define BEGIN_USING_NETWORK {                                  \
 	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
 	M_NETWORK_NOT_USING,    				                   \
 	INFINITE);                                                 \
 	switch (M_MODELS_NOT_USING_WaitResult) {
 
-#define END_USING_NETWORK }
+#define END_USING_NETWORK }}
 
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12
@@ -212,7 +212,7 @@ struct Config {
 	char* ids = "NY_Event";
 	char* author = "by Pavel3333 & RAINN VOD";
 	char* version = "v1.0.0.1 (10.02.2019)";
-	char* patch = "1.4.0.0";
+	char* patch = "1.4.0.1";
 	uint16_t version_id = 100U;
 	data_c data;
 	i18n_c i18n;
