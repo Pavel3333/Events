@@ -1828,6 +1828,114 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 	return NULL;
 };
 
+uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
+	EVENT_ID eventID = EVENT_DEL_MODEL->eventID;
+
+	if (eventID != EVENT_ID::DEL_LAST_MODEL) { traceLog();
+		extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - eventID not equal!\n");
+
+		return 1;
+	} traceLog();
+
+	//рабочая часть
+
+	uint8_t server_req;
+	uint8_t modelID;
+
+	float* coords = new float[3];
+
+	Py_BLOCK_THREADS;
+
+	request = findLastModelCoords(5.0, &modelID, &coords);
+
+	Py_UNBLOCK_THREADS;
+
+	if (!request) { traceLog();
+		BEGIN_USING_NETWORK;
+			case WAIT_OBJECT_0: traceLog();
+				superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
+
+				server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
+
+				//освобождаем мутекс для этого потока
+
+				if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
+					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+
+					return 7;
+				}
+
+				superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
+
+				break;
+			case WAIT_ABANDONED: traceLog();
+				extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
+
+				return 6;
+		END_USING_NETWORK;
+
+		if (request) { traceLog();
+			if (server_req > 9) { traceLog();
+				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", request);
+
+				//GUI_setError(server_req);
+
+				return 5;
+			} traceLog();
+
+			extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
+
+			//GUI_setWarning(server_req);
+
+			return 4;
+		} traceLog();
+
+
+		request = delModelPy(coords);
+
+		if (request) { traceLog();
+			extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", request);
+
+			//GUI_setError(request);
+
+			return 3;
+		} traceLog();
+
+		scoreID = modelID;
+		current_map.stageID = STAGE_ID::GET_SCORE;
+
+		
+		request = delModelCoords(modelID, coords);
+
+		if (request) { traceLog();
+				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", request);
+						
+				//GUI_setError(request);
+
+				return 2;
+		} traceLog();
+		
+	}
+	else if (request == 7) { traceLog();
+		current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
+	} traceLog();
+
+	Py_BLOCK_THREADS;
+
+	if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) { traceLog();
+		GUI_setMsg(current_map.stageID, scoreID, 5.0f);
+
+		scoreID = -1;
+	}
+	else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) { traceLog();
+		GUI_setMsg(current_map.stageID);
+	} traceLog();
+
+	Py_UNBLOCK_THREADS;
+
+	return NULL;
+}
+
 //threads functions
 
 /*
@@ -1985,13 +2093,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		EVENT_BATTLE_ENDED->hEvent //событие выхода из боя
 	};
 
-	uint8_t find_result;
-	uint8_t server_req;
-	uint8_t deleting_py_models;
-
-	uint8_t modelID;
-	float* coords;
-
 	uint8_t lastEventError = NULL;
 
 	while (!first_check && !battleEnded && !lastEventError) { traceLog();
@@ -2009,113 +2110,13 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			//место для рабочего кода
 
-			eventID    = EVENT_DEL_MODEL->eventID;
+			lastEventError = handleDelModelEvent(_save);
 
-			if (eventID != EVENT_ID::DEL_LAST_MODEL) { traceLog();
-				extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - eventID not equal!\n");
-
-				lastEventError = 6;
+			if (lastEventError) {
+				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - handleDelModelEvent: error %d!\n", lastEventError);
 
 				break;
-			} traceLog();
-
-			//рабочая часть
-
-			coords = new float[3];
-
-			Py_BLOCK_THREADS;
-
-			find_result = findLastModelCoords(5.0, &modelID, &coords);
-
-			Py_UNBLOCK_THREADS;
-
-			if (!find_result) { traceLog();
-				BEGIN_USING_NETWORK;
-					case WAIT_OBJECT_0: traceLog();
-						superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
-
-						server_req = send_token(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
-
-						//освобождаем мутекс для этого потока
-
-						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
-							extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-
-							return 4;
-						}
-
-						superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
-
-						break;
-					case WAIT_ABANDONED: traceLog();
-						extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
-
-						return 3;
-				END_USING_NETWORK;
-
-				if (server_req) { traceLog();
-					if (server_req > 9) { traceLog();
-						extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", (uint32_t)server_req);
-
-						//GUI_setError(server_req);
-
-						lastEventError = 5;
-
-						break;
-					} traceLog();
-
-					extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
-
-					//GUI_setWarning(server_req);
-
-					lastEventError = 4;
-
-					break;
-				} traceLog();
-
-				deleting_py_models = delModelPy(coords);
-
-				if (deleting_py_models) { traceLog();
-					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", (uint32_t)deleting_py_models);
-
-					//GUI_setError(deleting_py_models);
-
-					lastEventError = 3;
-
-					break;
-				} traceLog();
-
-				scoreID = modelID;
-				current_map.stageID = STAGE_ID::GET_SCORE;
-
-				/*
-				uint8_t deleting_coords = delModelCoords(modelID, coords);
-
-				if (deleting_coords) { traceLog();
-						extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", deleting_coords);
-						
-						//GUI_setError(deleting_coords);
-
-						return 6;
-				} traceLog();
-				*/
 			}
-			else if (find_result == 7) { traceLog();
-				current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
-			} traceLog();
-
-			Py_BLOCK_THREADS;
-
-			if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) { traceLog();
-				GUI_setMsg(current_map.stageID, scoreID, 5.0f);
-
-				scoreID = -1;
-			}
-			else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) { traceLog();
-				GUI_setMsg(current_map.stageID);
-			} traceLog();
-
-			Py_UNBLOCK_THREADS;
 
 			break;
 		case WAIT_OBJECT_0 + 1: traceLog(); //сработало событие окончания боя

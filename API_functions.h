@@ -77,7 +77,7 @@
 	dbg_log << __LINE__ << " - " << __FUNCTION__ << std::endl; \
 }
 #else
-#define traceLog(X) 0
+#define traceLog() 0
 #endif
 
 #define BEGIN_USING_MODELS                                     \
