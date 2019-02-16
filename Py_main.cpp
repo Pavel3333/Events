@@ -181,36 +181,19 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			//место для рабочего кода
 
-			lastEventError = handleDelModelEvent(_save);
+			request = handleDelModelEvent(_save);
 
-			if (lastEventError) {
-				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - handleDelModelEvent: error %d!\n", lastEventError);
+			if (request) {
+				extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - handleDelModelEvent: error %d!\n", request);
 
 				break;
 			}
 
 			break;
 		case WAIT_OBJECT_0 + 1: traceLog(); //сработало событие окончания боя
-			if (hTimer) { traceLog(); //закрываем таймер, если он был создан
-				CloseHandle(hTimer);
-
-				hTimer = NULL;
-			} traceLog();
-
 			isTimerStarted = false;
 
-			closeEvent1(&EVENT_START_TIMER);
-			closeEvent1(&EVENT_IN_HANGAR);
-			closeEvent1(&EVENT_DEL_MODEL);
-
-			closeEvent2(&EVENT_ALL_MODELS_CREATED);
-			closeEvent2(&EVENT_BATTLE_ENDED);
-
-			if (M_NETWORK_NOT_USING) { traceLog();
-				CloseHandle(M_NETWORK_NOT_USING);
-
-				M_NETWORK_NOT_USING = NULL;
-			} traceLog();
+			Py_BLOCK_THREADS;
 
 			request = handleBattleEndEvent(_save);
 
@@ -243,11 +226,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				mapID   = NULL;
 			}
 
-			if (M_MODELS_NOT_USING) { traceLog();
-				CloseHandle(M_MODELS_NOT_USING);
-
-				M_MODELS_NOT_USING = NULL;
-			} traceLog();
+			Py_UNBLOCK_THREADS;
 
 			break;
 			// An error occurred
@@ -261,6 +240,39 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	} traceLog();
 
 	if (lastEventError) extendedDebugLogFmt("[NY_Event][WARNING]: Error in event: %d\n", lastEventError);
+
+	if (hTimer) { traceLog(); //закрываем таймер, если он был создан
+		CancelWaitableTimer(hTimer);
+		CloseHandle(hTimer);
+
+		hTimer = NULL;
+	} traceLog();
+
+	if (hTimerThread) {
+		TerminateThread(hTimerThread, NULL);
+		CloseHandle(hTimerThread);
+
+		hTimerThread = NULL;
+	}
+
+	closeEvent1(&EVENT_START_TIMER);
+	closeEvent1(&EVENT_IN_HANGAR);
+	closeEvent1(&EVENT_DEL_MODEL);
+
+	closeEvent2(&EVENT_ALL_MODELS_CREATED);
+	closeEvent2(&EVENT_BATTLE_ENDED);
+
+	if (M_NETWORK_NOT_USING) { traceLog();
+		CloseHandle(M_NETWORK_NOT_USING);
+
+		M_NETWORK_NOT_USING = NULL;
+	} traceLog();
+
+	if (M_MODELS_NOT_USING) { traceLog();
+		CloseHandle(M_MODELS_NOT_USING);
+
+		M_MODELS_NOT_USING = NULL;
+	} traceLog();
 
 	//закрываем поток
 

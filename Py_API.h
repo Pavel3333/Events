@@ -68,7 +68,7 @@ uint8_t findLastModelCoords(float, uint8_t*, float**);
 
 uint8_t delModelPy(float*);
 
-uint8_t delModelCoords(uint16_t, float*);
+uint8_t delModelCoords(uint8_t, float*);
 
 PyObject* event_light(float coords[3]);
 

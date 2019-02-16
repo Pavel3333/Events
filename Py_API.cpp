@@ -164,8 +164,7 @@ bool read_data(bool isData) {
 	return true;
 }
 
-void clearModelsSections() {
-	traceLog();
+void clearModelsSections() { traceLog();
 	std::vector<ModelsSection>::iterator it_sect = current_map.modelsSects.begin();
 
 	while (it_sect != current_map.modelsSects.end()) {
@@ -173,15 +172,14 @@ void clearModelsSections() {
 			std::vector<float*>::iterator it_model = it_sect->models.begin();
 
 			while (it_model != it_sect->models.end()) {
-				if (*it_model == nullptr) {
-					traceLog();
+				if (*it_model == nullptr) { traceLog();
 					it_model = it_sect->models.erase(it_model);
 
 					continue;
 				}
 
 				for (uint8_t counter = NULL; counter < 3; counter++) {
-					memset(&(*it_model)[counter], NULL, 4);
+					(*it_model)[counter] = NULL;
 				}
 
 				delete[] * it_model;
@@ -291,15 +289,13 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 
 		Py_DECREF(__tuple);
 
-		if (!position) {
-			traceLog();
+		if (!position) { traceLog();
 			return 5;
 		} traceLog();
 
 		PyObject* coord_p = PyTuple_GetItem(position, i);
 
-		if (!coord_p) {
-			traceLog();
+		if (!coord_p) { traceLog();
 			return 6;
 		} traceLog();
 
@@ -311,29 +307,53 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 	int8_t modelTypeLast = -1;
 	float* coords_res = nullptr;
 
-	for (auto it = current_map.modelsSects.cbegin();
-		it != current_map.modelsSects.cend();
-		it++) {
-		if (it->isInitialised) {
-			for (auto it2 = it->models.cbegin();
-				it2 != it->models.cend();
-				it2++) {
-				if (*it2 == nullptr) {
-					traceLog();
-					continue;
+	BEGIN_USING_MODELS;
+		case WAIT_OBJECT_0: traceLog();
+			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
+
+			for (auto it = current_map.modelsSects.cbegin();
+				it != current_map.modelsSects.cend();
+				it++) {
+				if (it->isInitialised) {
+					for (auto it2 = it->models.cbegin();
+						it2 != it->models.cend();
+						it2++) {
+						if (*it2 == nullptr) { traceLog();
+							continue;
+						}
+
+						distTemp = getDist2Points(coords_pos, *it2);
+
+						if (dist == -1.0 || distTemp < dist) {
+							dist = distTemp;
+							modelTypeLast = it->ID;
+
+							coords_res = *it2;
+						}
+					}
 				}
+			} traceLog();
 
-				distTemp = getDist2Points(coords_pos, *it2);
+			//освобождаем мутекс для этого потока
 
-				if (dist == -1.0 || distTemp < dist) {
-					dist = distTemp;
-					modelTypeLast = it->ID;
+			if (!ReleaseMutex(M_MODELS_NOT_USING)) {
+				traceLog();
 
-					coords_res = *it2;
-				}
+				INIT_LOCAL_MSG_BUFFER;
+
+				extendedDebugLogFmt("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+
+				return 14;
 			}
-		}
-	} traceLog();
+
+			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+
+			break;
+		case WAIT_ABANDONED: traceLog();
+			extendedDebugLog("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+
+			return 13;
+	END_USING_MODELS;
 
 	delete[] coords_pos;
 
@@ -440,55 +460,53 @@ uint8_t delModelPy(float* coords) {
 	return 2;
 }
 
-uint8_t delModelCoords(uint16_t ID, float* coords) {
-	traceLog();
-	if (coords == nullptr) {
-		traceLog();
+uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog();
+	if (coords == nullptr) { traceLog();
 		return 1;
 	} traceLog();
 
 	std::vector<ModelsSection>::iterator it_sect = current_map.modelsSects.begin();
 
-	float* model;
+	try {
+		while (it_sect != current_map.modelsSects.end()) {
+			if (!it_sect->models.empty() && it_sect->isInitialised && it_sect->ID == ID) { traceLog();
+				std::vector<float*>::iterator it_model = it_sect->models.begin(); traceLog();
 
-	while (it_sect != current_map.modelsSects.end()) {
-		if (!it_sect->models.empty() && it_sect->isInitialised) {
-			if (it_sect->ID == ID) {
-				std::vector<float*>::iterator it_model = it_sect->models.begin();
-
-				while (it_model != it_sect->models.end()) {
-					if (*it_model == nullptr) {
-						traceLog();
-						it_model = it_sect->models.erase(it_model);
+				while (it_model != it_sect->models.end()) { traceLog();
+					if ((*it_model) == nullptr) { traceLog();
+						it_model = it_sect->models.erase(it_model); traceLog();
 
 						continue;
-					}
-
-					model = *it_model;
-
-					if (model[0] == coords[0] &&
-						model[1] == coords[1] &&
-						model[2] == coords[2]
-						) {
-						for (uint8_t counter = NULL; counter < 3; counter++) {
-							memset(&model[counter], NULL, 4);
+					} traceLog();
+					traceLog();
+					if ((*it_model)[0] == coords[0] &&
+						(*it_model)[1] == coords[1] &&
+						(*it_model)[2] == coords[2]
+						) { traceLog();
+						for (uint8_t counter = NULL; counter < 3; counter++) { traceLog();
+							(*it_model)[counter] = NULL; traceLog();
 						}
 
-						delete[] * it_model;
-						*it_model = nullptr;
+						delete[] *it_model;   traceLog();
+						*it_model = nullptr;  traceLog();
 
-						it_sect->models.erase(it_model);
+						it_model = it_sect->models.erase(it_model);  traceLog(); //TODO: fix crash
 
 						return NULL;
-					}
+					} traceLog();
 
 					it_model++;
 				}
 			}
-		}
 
-		it_sect++;
-	} traceLog();
+			it_sect++;
+		} traceLog();
+	}
+	catch (const char* msg) {
+		dbg_log << msg << std::endl;
+
+		return 3;
+	}
 
 	return 2;
 }
@@ -865,6 +883,24 @@ uint8_t create_models() {
 				}
 			} traceLog();
 
+			for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
+				it != current_map.modelsSects.cend();
+				it++) {
+				if (!it->isInitialised || it->models.empty()) { traceLog();
+					continue;
+				}
+
+				for (auto it2 = it->models.cbegin(); it2 != it->models.cend(); it2++) {
+					superExtendedDebugLog("[");
+
+					event_model(it->path, *it2, true);
+
+					superExtendedDebugLog("], ");
+				}
+			} traceLog();
+
+			superExtendedDebugLog("], \n");
+
 			//освобождаем мутекс для этого потока
 
 			if (!ReleaseMutex(M_MODELS_NOT_USING)) {
@@ -882,25 +918,6 @@ uint8_t create_models() {
 
 			return 3;
 			END_USING_MODELS;
-
-			for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
-				it != current_map.modelsSects.cend();
-				it++) {
-				if (!it->isInitialised || it->models.empty()) {
-					traceLog();
-					continue;
-				}
-
-				for (auto it2 = it->models.cbegin(); it2 != it->models.cend(); it2++) {
-					superExtendedDebugLog("[");
-
-					event_model(it->path, *it2, true);
-
-					superExtendedDebugLog("], ");
-				}
-			} traceLog();
-
-			superExtendedDebugLog("], \n");
 
 			return NULL;
 }

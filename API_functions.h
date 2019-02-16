@@ -8,7 +8,7 @@
 
 #define debug_log                true
 #define extended_debug_log       true
-#define super_extended_debug_log false
+#define super_extended_debug_log true
 
 #define trace_log true
 

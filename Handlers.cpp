@@ -14,21 +14,52 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 	PyThreadState *_save;
 
-	Py_UNBLOCK_THREADS;
+	BEGIN_USING_MODELS;
+		case WAIT_OBJECT_0: traceLog();
+			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
-	if      (eventID == EVENT_ID::IN_BATTLE_GET_FULL) parsing_result = parse_config();
-	else if (eventID == EVENT_ID::IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
-	else if (eventID == EVENT_ID::DEL_LAST_MODEL)     parsing_result = parse_del_model();
+			Py_UNBLOCK_THREADS;
 
-	if (parsing_result) { traceLog();
-		extendedDebugLogFmt("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
+			if      (eventID == EVENT_ID::IN_BATTLE_GET_FULL) parsing_result = parse_config();
+			else if (eventID == EVENT_ID::IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
+			else if (eventID == EVENT_ID::DEL_LAST_MODEL)     parsing_result = parse_del_model();
 
-		//GUI_setError(parsing_result);
+			if (parsing_result) { traceLog();
+				extendedDebugLogFmt("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
 
-		return 2;
-	} traceLog();
+				//GUI_setError(parsing_result);
 
-	Py_BLOCK_THREADS;
+				//освобождаем мутекс для этого потока
+
+				if (!ReleaseMutex(M_MODELS_NOT_USING)) {
+					traceLog();
+					extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+
+					return 3;
+				}
+
+				return 4;
+			} traceLog();
+
+			Py_BLOCK_THREADS;
+
+			//освобождаем мутекс для этого потока
+
+			if (!ReleaseMutex(M_MODELS_NOT_USING)) {
+				traceLog();
+				extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+
+				return 3;
+			}
+
+			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+
+			break;
+		case WAIT_ABANDONED: traceLog();
+			extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+
+			return 2;
+	END_USING_MODELS;
 
 	extendedDebugLog("[NY_Event]: parsing OK!\n");
 
@@ -97,7 +128,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 								if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 									extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-									return 4;
+									return 6;
 								}
 
 								superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
@@ -106,7 +137,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 							case WAIT_ABANDONED: traceLog();
 								extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-								return 3;
+								return 5;
 						END_USING_MODELS;
 
 						/*
@@ -134,7 +165,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 						if (request) { traceLog();
 							extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - handleBattleEvent - Error code %d\n", request);
 
-							return 3;
+							return 7;
 						} traceLog();
 
 						//ожидаем события полного создания моделей
@@ -167,14 +198,14 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 									//GUI_setError(request);
 
-									return 5;
+									return 9;
 								} traceLog();
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
 
 								//GUI_setWarning(request);
 
-								return 4;
+								return 8;
 							} traceLog();
 
 							request = set_visible(true);
@@ -187,14 +218,14 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 									//GUI_setError(request);
 
-									return 5;
+									return 12;
 								} traceLog();
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 
 								//GUI_setWarning(request);
 
-								return 4;
+								return 11;
 							} traceLog();
 
 							isModelsAlreadyInited = true;
@@ -207,7 +238,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 							Py_BLOCK_THREADS;
 
-							return 3;
+							return 10;
 						} traceLog();
 					} traceLog();
 
@@ -231,8 +262,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 								it_model = it_sect_sync->models.begin();
 
 								while (it_model != it_sect_sync->models.end()) {
-									if (*it_model == nullptr) {
-										traceLog();
+									if (*it_model == nullptr) { traceLog();
 										it_model = it_sect_sync->models.erase(it_model);
 
 										continue;
@@ -240,7 +270,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 									request = delModelPy(*it_model);
 
-									if (request) {
+									if (request) { traceLog();
 										extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - delModelPy - Error code %d\n", (uint32_t)request);
 
 										//GUI_setError(request);
@@ -252,7 +282,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 									request = delModelCoords(it_sect_sync->ID, *it_model);
 
-									if (request) {
+									if (request) { traceLog();
 										extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - delModelCoords - Error code %d\n", request);
 
 										//GUI_setError(res);
@@ -284,11 +314,10 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 						//освобождаем мутекс для этого потока
 
-						if (!ReleaseMutex(M_MODELS_NOT_USING)) {
-							traceLog();
+						if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-							return 4;
+							return 14;
 						}
 
 						superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
@@ -297,10 +326,10 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 					case WAIT_ABANDONED: traceLog();
 						extendedDebugLog("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-						return 3;
-						END_USING_MODELS;
+						return 13;
+					END_USING_MODELS;
 			}
-			else {
+			else { traceLog();
 				return NULL;
 			} traceLog();
 		}
@@ -437,8 +466,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 						//освобождаем мутекс для этого потока
 
-						if (!ReleaseMutex(M_NETWORK_NOT_USING)) {
-							traceLog();
+						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 							return 5;
@@ -669,29 +697,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 	Py_BLOCK_THREADS;
 
-	BEGIN_USING_MODELS;
-		case WAIT_OBJECT_0: traceLog();
-			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
-
-			request = findLastModelCoords(5.0, &modelID, &coords);
-
-			//освобождаем мутекс для этого потока
-
-			if (!ReleaseMutex(M_MODELS_NOT_USING)) {
-				traceLog();
-				extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-
-				return 14;
-			}
-
-			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
-
-			break;
-		case WAIT_ABANDONED: traceLog();
-			extendedDebugLog("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
-
-			return 13;
-	END_USING_MODELS;
+	request = findLastModelCoords(5.0, &modelID, &coords);
 
 	Py_UNBLOCK_THREADS;
 
@@ -741,8 +747,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 				request = delModelPy(coords);
 
-				if (request) {
-					traceLog();
+				if (request) { traceLog();
 					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", request);
 
 					//GUI_setError(request);
@@ -766,16 +771,14 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 				delete[] coords;
 
-				if (request) {
-					traceLog();
+				if (request) { traceLog();
 					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", request);
 
 					//GUI_setError(request);
 
 					//освобождаем мутекс для этого потока
 
-					if (!ReleaseMutex(M_MODELS_NOT_USING)) {
-						traceLog();
+					if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 						extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 						return 7;

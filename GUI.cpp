@@ -118,10 +118,12 @@ void GUI_setText(char* msg, float time_f) {
 	if (delLabelCBID) {
 		cancelCallback(&delLabelCBID);
 
-		Py_INCREF(Py_None);
+		PyObject* none = Py_None;
 
-		if (!GUI_setAttr("delLabelCBID", Py_None)) {
-			return;
+		Py_INCREF(none);
+
+		if (!GUI_setAttr("delLabelCBID", none)) {
+			extendedDebugLog("[NY_Event][WARNING]: GUI_setText - failed to set delLabelCBID");
 		}
 	}
 
@@ -136,12 +138,12 @@ void GUI_setText(char* msg, float time_f) {
 		PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
 		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = NULL;
-		else delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
+		else delLabelCBID = PyInt_AsLong(delLabelCBID_p);
 	}
 }
 
 void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
-	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= MESSAGES_COUNT) {
+	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= SECTIONS_COUNT) {
 		return;
 	}
 
