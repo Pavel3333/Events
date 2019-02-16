@@ -293,63 +293,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 //-----------------
 
-uint8_t makeEventInThread(EVENT_ID eventID) { traceLog(); //переводим ивенты в сигнальные состояния
-	if (!isInited || !databaseID || battleEnded) { traceLog();
-		return 1;
-	} traceLog();
-
-	INIT_LOCAL_MSG_BUFFER;
-
-	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC || eventID == EVENT_ID::DEL_LAST_MODEL) { traceLog(); //посылаем ивент и обрабатываем в треде
-		if      (eventID == EVENT_ID::IN_HANGAR) { traceLog();
-			if (!EVENT_IN_HANGAR) { traceLog();
-				return 4;
-			} traceLog();
-
-			EVENT_IN_HANGAR->eventID = eventID;
-
-			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
-			{
-				debugLogFmt("[NY_Event][ERROR]: EVENT_IN_HANGAR not setted!\n");
-
-				return 5;
-			} traceLog();
-		}
-		else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) { traceLog();
-			if (!EVENT_START_TIMER) { traceLog();
-				return 4;
-			} traceLog();
-
-			EVENT_START_TIMER->eventID    = eventID;
-
-			if (!SetEvent(EVENT_START_TIMER->hEvent))
-			{
-				debugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER not setted!\n");
-
-				return 5;
-			} traceLog();
-		}
-		else if (eventID == EVENT_ID::DEL_LAST_MODEL) { traceLog();
-			if (!EVENT_DEL_MODEL) { traceLog();
-				return 4;
-			} traceLog();
-
-			EVENT_DEL_MODEL->eventID = eventID;
-
-			if (!SetEvent(EVENT_DEL_MODEL->hEvent))
-			{
-				debugLogFmt("[NY_Event][ERROR]: EVENT_DEL_MODEL not setted!\n");
-
-				return 5;
-			} traceLog();
-		} traceLog();
-
-		return NULL;
-	} traceLog();
-
-	return 2;
-};
-
 static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 	if (!isInited || first_check) { traceLog();
 		return PyInt_FromSize_t(1);

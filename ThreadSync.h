@@ -21,7 +21,7 @@ extern HANDLE M_MODELS_NOT_USING;
 
 //---------------------
 
-void closeEvent1(PEVENTDATA_1* pEvent);
+void closeEvent1(PEVENTDATA_1*);
 
 void closeEvent2(PEVENTDATA_2*);
 

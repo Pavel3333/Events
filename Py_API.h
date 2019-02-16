@@ -82,7 +82,7 @@ uint8_t create_models();
 
 uint8_t init_models();
 
-uint8_t set_visible(bool isVisible);
+uint8_t set_visible(bool);
 
 uint8_t del_models();
 

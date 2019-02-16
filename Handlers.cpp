@@ -1,5 +1,7 @@
 #include "Handlers.h"
 
+//обработка событий
+
 uint8_t handleBattleEvent(EVENT_ID eventID) {
 	traceLog();
 	if (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR || !M_MODELS_NOT_USING) { traceLog();
@@ -713,7 +715,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 			if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
 				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-				return 12;
+				return 11;
 			}
 
 			superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
@@ -722,7 +724,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 		case WAIT_ABANDONED: traceLog();
 			extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
 
-			return 6;
+			return 10;
 		END_USING_NETWORK;
 
 		if (request) { traceLog();
@@ -731,14 +733,14 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 				//GUI_setError(server_req);
 
-				return 11;
+				return 9;
 			} traceLog();
 
 			extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
 
 			//GUI_setWarning(server_req);
 
-			return 10;
+			return 8;
 		} traceLog();
 
 		BEGIN_USING_MODELS;
@@ -757,19 +759,19 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 					if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
 						extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-						return 9;
+						return 7;
 					}
 
-					return 8;
+					return 6;
 				} traceLog();
 
 				scoreID = modelID;
 				current_map.stageID = STAGE_ID::GET_SCORE;
 
-
-				request = delModelCoords(modelID, coords);
-
 				delete[] coords;
+
+				/*
+				request = delModelCoords(modelID, coords);
 
 				if (request) { traceLog();
 					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", request);
@@ -786,6 +788,8 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 					return 6;
 				} traceLog();
+
+				*/
 
 				//освобождаем мутекс для этого потока
 
@@ -823,3 +827,71 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 	return NULL;
 }
+
+//заставить событие сигнализировать
+
+uint8_t makeEventInThread(EVENT_ID eventID) {
+	traceLog(); //переводим ивенты в сигнальные состояния
+	if (!isInited || !databaseID || battleEnded) {
+		traceLog();
+		return 1;
+	} traceLog();
+
+	INIT_LOCAL_MSG_BUFFER;
+
+	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC || eventID == EVENT_ID::DEL_LAST_MODEL) {
+		traceLog(); //посылаем ивент и обрабатываем в треде
+		if (eventID == EVENT_ID::IN_HANGAR) {
+			traceLog();
+			if (!EVENT_IN_HANGAR) {
+				traceLog();
+				return 4;
+			} traceLog();
+
+			EVENT_IN_HANGAR->eventID = eventID;
+
+			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
+			{
+				debugLogFmt("[NY_Event][ERROR]: EVENT_IN_HANGAR not setted!\n");
+
+				return 5;
+			} traceLog();
+		}
+		else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
+			traceLog();
+			if (!EVENT_START_TIMER) {
+				traceLog();
+				return 4;
+			} traceLog();
+
+			EVENT_START_TIMER->eventID = eventID;
+
+			if (!SetEvent(EVENT_START_TIMER->hEvent))
+			{
+				debugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER not setted!\n");
+
+				return 5;
+			} traceLog();
+		}
+		else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
+			traceLog();
+			if (!EVENT_DEL_MODEL) {
+				traceLog();
+				return 4;
+			} traceLog();
+
+			EVENT_DEL_MODEL->eventID = eventID;
+
+			if (!SetEvent(EVENT_DEL_MODEL->hEvent))
+			{
+				debugLogFmt("[NY_Event][ERROR]: EVENT_DEL_MODEL not setted!\n");
+
+				return 5;
+			} traceLog();
+		} traceLog();
+
+		return NULL;
+	} traceLog();
+
+	return 2;
+};
