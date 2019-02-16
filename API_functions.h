@@ -1,10 +1,13 @@
 ﻿#pragma once
-
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <Windows.h>
-#include <tchar.h>
+#include "python2.7/Python.h" // For PySys_WriteStdout
+#include "easylogging/easylogging++.h"
+
+
+extern el::Logger* defaultLogger;
+
 
 #define debug_log                true
 #define extended_debug_log       true
@@ -12,72 +15,48 @@
 
 #define trace_log true
 
-#define INIT_LOCAL_MSG_BUFFER \
-	char log_buf_c[1024];      \
-	WCHAR log_buf[1024];                          
 
 #if debug_log
-#define debugLog(X)           \
-	OutputDebugString(_T(X)); \
-	PySys_WriteStdout(X);     \
-    dbg_log << X;
+#define debugLog(fmt, ...) \
+	do { \
+	defaultLogger->verbose(1, fmt, ##__VA_ARGS__); \
+	PySys_WriteStdout(fmt, ##__VA_ARGS__); \
+	} while (0)
 
-#define debugLogFmt(fmt, ...) {                  \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
-	OutputDebugString(log_buf);                  \
-	PySys_WriteStdout(fmt, __VA_ARGS__);         \
-    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
-    dbg_log << log_buf_c;                        \
-	}
 
 #if extended_debug_log
-#define extendedDebugLog(X)                      \
-	OutputDebugString(_T(X));                    \
-	dbg_log << X; 
-#define extendedDebugLogFmt(fmt, ...) {          \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
-	OutputDebugString(log_buf);                  \
-    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
-    dbg_log << log_buf_c;                        \
-	}
+#define extendedDebugLog(fmt, ...) \
+	do { \
+	defaultLogger->verbose(2, fmt, ##__VA_ARGS__); \
+	} while (0)
 
 
 #if super_extended_debug_log
-#define superExtendedDebugLog(X)                 \
-	OutputDebugString(_T(X));                    \
-	dbg_log << X; 
-#define superExtendedDebugLogFmt(fmt, ...) {     \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
-	OutputDebugString(log_buf);                  \
-    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
-    dbg_log << log_buf_c;                        \
-	}
+#define superExtendedDebugLog(fmt, ...) \
+	do { \
+	defaultLogger->verbose(3, fmt, ##__VA_ARGS__); \
+	} while (0)
 
 #else
-#define superExtendedDebugLog(X)      0
-#define superExtendedDebugLogFmt(...) 0
+#define superExtendedDebugLog(...) (void)
 #endif
 #else
-#define extendedDebugLog(X)           0
-#define extendedDebugLogFmt(...)      0
-#define superExtendedDebugLog(X)      0
-#define superExtendedDebugLogFmt(...) 0
+#define extendedDebugLog(...)      (void)
+#define superExtendedDebugLog(...) (void)
 #endif
 #else
-#define debugLog(X)                   0
-#define debugLogFmt(...)              0
-#define extendedDebugLog(X)           0
-#define extendedDebugLogFmt(...)      0
-#define superExtendedDebugLog(X)      0
-#define superExtendedDebugLogFmt(...) 0
+#define debugLog(...)              (void)
+#define extendedDebugLog(...)      (void)
+#define superExtendedDebugLog(...) (void)
 #endif
 
 #if trace_log
-#define traceLog() {                                           \
-	dbg_log << __LINE__ << " - " << __FUNCTION__ << std::endl; \
-}
+#define traceLog() \
+	do { \
+	LOG(INFO) << __FILE__ << ": " << __LINE__ << " - " << __FUNCTION__; \
+	} while (0)
 #else
-#define traceLog() 0
+#define traceLog() (void)
 #endif
 
 #define BEGIN_USING_MODELS {                                   \
@@ -163,9 +142,6 @@ extern bool isModelsAlreadyCreated;
 extern int8_t scoreID;
 extern STAGE_ID lastStageID;
 extern bool isStreamer;
-
-extern std::ofstream dbg_log;
-
 
 struct ModelsSection  {
 	bool isInitialised = false;

@@ -1,4 +1,4 @@
-﻿#include "BW_native.h"
+#include "BW_native.h"
 
 PyObject* BigWorld    = NULL;
 PyObject* g_gui       = NULL;
@@ -34,9 +34,7 @@ void callback(long* CBID, PyObject* func, float time_f) {
 
 	*CBID = PyInt_AS_LONG(res);
 
-#if debug_log && extended_debug_log && super_extended_debug_log
-	OutputDebugString(_T("[NY_Event]: Callback created!\n"));
-#endif
+	superExtendedDebugLog("[NY_Event]: Callback created!");
 
 	Py_DECREF(res);
 }

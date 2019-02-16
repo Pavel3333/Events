@@ -75,9 +75,8 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 	if (!((*pEvent)->hEvent)) {
 		traceLog();
-		INIT_LOCAL_MSG_BUFFER;
 
-		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
+		extendedDebugLog("[NY_Event][ERROR]: Primary event creating: error %v", GetLastError());
 
 		return false;
 	} traceLog();
@@ -107,9 +106,8 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 
 	if (!((*pEvent)->hEvent)) {
 		traceLog();
-		INIT_LOCAL_MSG_BUFFER;
 
-		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
+		extendedDebugLog("[NY_Event][ERROR]: Secondary event creating: error %v", GetLastError());
 
 		return false;
 	} traceLog();

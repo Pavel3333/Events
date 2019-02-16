@@ -1,10 +1,11 @@
-﻿#include "API_functions.h"
-
+#include "API_functions.h"
 #include <cmath>
 #include <filesystem>
 #include <sstream>
 #include "curl/curl.h"
-#pragma comment(lib,"libcurl.lib")
+
+
+el::Logger* defaultLogger = el::Loggers::getLogger("default");
 
 #undef debug_log
 #define debug_log false
@@ -438,7 +439,7 @@ uint8_t parse_sync() { // синхронизация
 				if      (modelSectionID == 0U && wr_buf[offset] == 0U) sect = &(sync_map.modelsSects_creating);
 				else if (modelSectionID == 1U && wr_buf[offset] == 1U) sect = &(sync_map.modelsSects_deleting);
 				else {
-					OutputDebugString(_T("[NY_Event]: Found unexpected section while synchronizing!\n"));
+					debugLog("[NY_Event]: Found unexpected section while synchronizing!");
 
 					break;
 				}

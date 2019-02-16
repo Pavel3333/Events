@@ -1,11 +1,16 @@
-﻿#define CONSOLE_VER1
+#define CONSOLE_VER1
 
 #include "Handlers.h"
 #include "Py_config.h"
 #include <cstdlib>
 #include <direct.h>
+#include "easylogging/easylogging++.h"
 
-std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
+
+// Инициализация логгера
+INITIALIZE_EASYLOGGINGPP
+
+
 
 //threads functions
 
@@ -31,9 +36,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 	PyThreadState* _save;
 
-	INIT_LOCAL_MSG_BUFFER;
-
-	superExtendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
+	superExtendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER");
 
 	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
 		EVENT_START_TIMER->hEvent, // event handle
@@ -41,7 +44,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 	switch (EVENT_START_TIMER_WaitResult) {
 	case WAIT_OBJECT_0:  traceLog();
-		superExtendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
+		superExtendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!");
 
 		//включаем GIL для этого потока
 
@@ -56,7 +59,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		request = handleStartTimerEvent(_save);
 
 		if (request) { traceLog();
-			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
+			extendedDebugLog("[NY_Event][WARNING]: EVENT_START_TIMER - handleStartTimerEvent: error %v", request);
 		}
 
 		Py_BLOCK_THREADS;
@@ -71,14 +74,14 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		// An error occurred
 	default: traceLog();
-		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
+		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!");
 
 		return 3;
 	} traceLog();
 
 	//закрываем поток
 
-	extendedDebugLogFmt("[NY_Event]: Closing timer thread %d\n", handlerThreadID);
+	extendedDebugLog("[NY_Event]: Closing timer thread %v", handlerThreadID);
 
 	ExitThread(NULL); //завершаем поток
 
@@ -105,9 +108,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	Py_UNBLOCK_THREADS;
 
-	INIT_LOCAL_MSG_BUFFER;
-
-	superExtendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR\n");
+	superExtendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR");
 
 	DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
 		EVENT_IN_HANGAR->hEvent, // event handle
@@ -115,25 +116,25 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	switch (EVENT_IN_HANGAR_WaitResult) {
 	case WAIT_OBJECT_0: traceLog();
-		superExtendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!\n");
+		superExtendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!");
 
 		//место для рабочего кода
 
 		request = handleInHangarEvent(_save);
 
 		if (request) { traceLog();
-			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", request);
+			extendedDebugLog("[NY_Event][WARNING]: EVENT_IN_HANGAR - handleInHangarEvent: error %v", request);
 		}
 
 		break;
 		// An error occurred
 	default: traceLog();
-		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
+		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!");
 
 		return 3;
 	} traceLog();
 	if (first_check) { traceLog();
-		extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n", (uint32_t)first_check);
+		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - Error %v!", (uint32_t)first_check);
 
 		return 4;
 	} traceLog();
@@ -154,7 +155,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	if (!hTimerThread)
 	{
-		extendedDebugLogFmt("[NY_Event][ERROR]: Creating timer thread: error %d\n", GetLastError());
+		extendedDebugLog("[NY_Event][ERROR]: Creating timer thread: error %v", GetLastError());
 
 		return 5;
 	} traceLog();
@@ -167,7 +168,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	uint8_t lastEventError = NULL;
 
 	while (!first_check && !battleEnded && !lastEventError) { traceLog();
-	superExtendedDebugLog("[NY_Event]: waiting EVENTS\n");
+	superExtendedDebugLog("[NY_Event]: waiting EVENTS");
 
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
 			HEVENTS_COUNT,
@@ -177,14 +178,14 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		switch (EVENTS_WaitResult) {
 		case WAIT_OBJECT_0 + 0:  traceLog(); //сработало событие удаления модели
-			superExtendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!\n");
+			superExtendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!");
 
 			//место для рабочего кода
 
 			request = handleDelModelEvent(_save);
 
 			if (request) {
-				extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - handleDelModelEvent: error %d!\n", request);
+				extendedDebugLog("[NY_Event][WARNING]: DEL_LAST_MODEL - handleDelModelEvent: error %v!", request);
 
 				break;
 			}
@@ -231,7 +232,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			break;
 			// An error occurred
 		default: traceLog();
-			extendedDebugLog("[NY_Event][WARNING]: EVENTS - something wrong with WaitResult!\n");
+			extendedDebugLog("[NY_Event][WARNING]: EVENTS - something wrong with WaitResult!");
 
 			lastEventError = 1;
 
@@ -239,7 +240,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		} traceLog();
 	} traceLog();
 
-	if (lastEventError) extendedDebugLogFmt("[NY_Event][WARNING]: Error in event: %d\n", lastEventError);
+	if (lastEventError) extendedDebugLog("[NY_Event][WARNING]: Error in event: %v", lastEventError);
 
 	if (hTimer) { traceLog(); //закрываем таймер, если он был создан
 		CancelWaitableTimer(hTimer);
@@ -276,7 +277,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	//закрываем поток
 
-	extendedDebugLogFmt("Closing handler thread %d\n", handlerThreadID);
+	extendedDebugLog("Closing handler thread %v", handlerThreadID);
 
 	Py_BLOCK_THREADS;
 
@@ -297,8 +298,6 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 	if (!isInited || first_check) { traceLog();
 		return PyInt_FromSize_t(1);
 	} traceLog();
-
-	INIT_LOCAL_MSG_BUFFER;
 
 	PyObject* __player = PyString_FromString("player");
 
@@ -354,7 +353,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 
 	mapID = atoi(map_ID_s);
 
-	extendedDebugLogFmt("[NY_Event]: mapID = %d\n", (uint32_t)mapID);
+	extendedDebugLog("[NY_Event]: mapID = %v", mapID);
 
 	battleEnded = false;
 
@@ -366,7 +365,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 	request = makeEventInThread(EVENT_ID::IN_BATTLE_GET_FULL);
 
 	if (request) { traceLog();
-		debugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
+		debugLog("[NY_Event][ERROR]: start - error %v", request);
 
 		return PyInt_FromSize_t(6);
 	} traceLog();
@@ -379,10 +378,8 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
 		return PyInt_FromSize_t(1);
 	} traceLog();
 
-	INIT_LOCAL_MSG_BUFFER;
-
 	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog();
-		debugLogFmt("[NY_Event][ERROR]: EVENT_BATTLE_ENDED not setted!\n");
+		debugLog("[NY_Event][ERROR]: EVENT_BATTLE_ENDED not setted!");
 
 		return PyInt_FromSize_t(2);
 	} traceLog();
@@ -395,7 +392,7 @@ static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog();
 };
 
 bool createEventsAndSecondThread() { traceLog();
-	INIT_LOCAL_MSG_BUFFER;
+	
 	
 	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog();
 		return false;
@@ -413,7 +410,7 @@ bool createEventsAndSecondThread() { traceLog();
 		NULL);             // unnamed mutex
 
 	if (!M_NETWORK_NOT_USING) { traceLog();
-		debugLogFmt("[NY_Event][ERROR]: NETWORK_NOT_USING creating: error %d\n", GetLastError());
+		debugLog("[NY_Event][ERROR]: NETWORK_NOT_USING creating: error %v", GetLastError());
 
 		return false;
 	}
@@ -424,7 +421,7 @@ bool createEventsAndSecondThread() { traceLog();
 		NULL);             // unnamed mutex
 
 	if (!M_MODELS_NOT_USING) { traceLog();
-		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
+		debugLog("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %v", GetLastError());
 
 		return false;
 	}
@@ -453,7 +450,7 @@ bool createEventsAndSecondThread() { traceLog();
 		&handlerThreadID);                      // returns the thread identifier 
 
 	if (!hHandlerThread) { traceLog();
-		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
+		debugLog("[NY_Event][ERROR]: Handler thread creating: error %v", GetLastError());
 
 		return false;
 	} traceLog();
@@ -474,9 +471,7 @@ uint8_t event_сheck() { traceLog();
 
 	//------------------------------------------------------------------------------------------------
 
-	INIT_LOCAL_MSG_BUFFER;
-
-	debugLogFmt("[NY_Event]: checking...\n");
+	debugLog("[NY_Event]: checking...");
 
 	PyObject* __player = PyString_FromString("player");
 	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
@@ -509,7 +504,7 @@ uint8_t event_сheck() { traceLog();
 
 	Py_DECREF(DBID_int);
 
-	debugLogFmt("[NY_Event]: DBID created\n");
+	debugLog("[NY_Event]: DBID created");
 
 	mapID = NULL;
 
@@ -632,9 +627,8 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 		request = makeEventInThread(EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) { traceLog();
-			INIT_LOCAL_MSG_BUFFER;
 
-			debugLogFmt("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n", request);
+			debugLog("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %v", request);
 
 			Py_RETURN_NONE;
 		} traceLog();
@@ -701,7 +695,7 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	} traceLog();
 
-	debugLog("[NY_Event]: Config init...\n");
+	debugLog("[NY_Event]: Config init...");
 
 	if (PyType_Ready(&Config_p)) { traceLog();
 		Py_DECREF(g_appLoader);
@@ -710,7 +704,7 @@ PyMODINIT_FUNC initevent(void)
 
 	Py_INCREF(&Config_p);
 
-	debugLog("[NY_Event]: Config init OK\n");
+	debugLog("[NY_Event]: Config init OK");
 
 	PyObject* g_config = PyObject_CallObject((PyObject*)&Config_p, NULL);
 
@@ -756,9 +750,7 @@ PyMODINIT_FUNC initevent(void)
 
 	//---------
 
-#if debug_log
-	OutputDebugString(_T("Mod_GUI module loading...\n"));
-#endif
+	debugLog("Mod_GUI module loading...");
 
 	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
 
@@ -767,7 +759,7 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	} traceLog();
 
-	debugLog("[NY_Event]: Mod_GUI class loading...\n");
+	debugLog("[NY_Event]: Mod_GUI class loading...");
 
 	PyObject* __Mod_GUI = PyString_FromString("Mod_GUI");
 
@@ -781,9 +773,9 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	} traceLog();
 
-	debugLog("[NY_Event]: Mod_GUI class loaded OK!\n");
+	debugLog("[NY_Event]: Mod_GUI class loaded OK!");
 
-	debugLog("[NY_Event]: g_gui module loading...\n");
+	debugLog("[NY_Event]: g_gui module loading...");
 
 	PyObject* mod_mods_gui = PyImport_ImportModule("gui.mods.mod_mods_gui");
 
@@ -791,7 +783,7 @@ PyMODINIT_FUNC initevent(void)
 		PyErr_Clear();
 		g_gui = NULL;
 
-		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
+		debugLog("[NY_Event]: mod_mods_gui is NULL!");
 	}
 	else {
 		PyObject* __g_gui = PyString_FromString("g_gui");
@@ -807,7 +799,7 @@ PyMODINIT_FUNC initevent(void)
 			return;
 		} traceLog();
 
-		debugLog("[NY_Event]: mod_mods_gui loaded OK!\n");
+		debugLog("[NY_Event]: mod_mods_gui loaded OK!");
 	} traceLog();
 
 	if (!g_gui) { traceLog();
@@ -869,9 +861,8 @@ PyMODINIT_FUNC initevent(void)
 	uint32_t curl_init_result = curl_init();
 
 	if (curl_init_result) { traceLog();
-		INIT_LOCAL_MSG_BUFFER;
 
-		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
+		debugLog("[NY_Event][ERROR]: Initialising CURL handle: error %v", curl_init_result);
 
 		return;
 	} traceLog();

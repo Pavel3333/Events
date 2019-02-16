@@ -227,7 +227,7 @@ void clearModelsSections() { traceLog();
 
 		it_sect_sync->models.~vector();
 
-		it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
+		it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //СѓРґР°Р»СЏРµРј СЃРµРєС†РёСЋ РёР· РІРµРєС‚РѕСЂР° СЃРµРєС†РёР№ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 	} traceLog();
 
 	sync_map.modelsSects_deleting.~vector();
@@ -309,7 +309,7 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 
 	BEGIN_USING_MODELS;
 		case WAIT_OBJECT_0: traceLog();
-			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_USING");
 
 			for (auto it = current_map.modelsSects.cbegin();
 				it != current_map.modelsSects.cend();
@@ -334,23 +334,21 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 				}
 			} traceLog();
 
-			//освобождаем мутекс для этого потока
+			//РѕСЃРІРѕР±РѕР¶РґР°РµРј РјСѓС‚РµРєСЃ РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 			if (!ReleaseMutex(M_MODELS_NOT_USING)) {
 				traceLog();
 
-				INIT_LOCAL_MSG_BUFFER;
-
-				extendedDebugLogFmt("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+				extendedDebugLog("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING - ReleaseMutex: error %v!", GetLastError());
 
 				return 14;
 			}
 
-			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING");
 
 			break;
 		case WAIT_ABANDONED: traceLog();
-			extendedDebugLog("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+			extendedDebugLog("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING: WAIT_ABANDONED!");
 
 			return 13;
 	END_USING_MODELS;
@@ -391,7 +389,7 @@ uint8_t delModelPy(float* coords) {
 		}
 
 		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) {
-			superExtendedDebugLog("NULL\n");
+			superExtendedDebugLog("NULL");
 
 			Py_XDECREF((*it_model)->model);
 
@@ -407,7 +405,7 @@ uint8_t delModelPy(float* coords) {
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
+		superExtendedDebugLog("[NY_Event]: del debug 1.1");
 
 		if ((*it_model)->coords[0] == coords[0] &&
 			(*it_model)->coords[1] == coords[1] &&
@@ -455,7 +453,7 @@ uint8_t delModelPy(float* coords) {
 		it_model++;
 	} traceLog();
 
-	superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
+	superExtendedDebugLog("[NY_Event]: del debug 1.2");
 
 	return 2;
 }
@@ -503,7 +501,7 @@ uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog();
 		} traceLog();
 	}
 	catch (const char* msg) {
-		dbg_log << msg << std::endl;
+		LOG(INFO) << msg; 
 
 		return 3;
 	}
@@ -517,7 +515,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 		return NULL;
 	} //traceLog();
 
-	superExtendedDebugLog("light creating...\n");
+	superExtendedDebugLog("light creating...");
 
 	PyObject* __PyOmniLight = PyString_FromString("PyOmniLight");
 
@@ -527,7 +525,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (!Light) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight creating FAILED\n");
+		superExtendedDebugLog("PyOmniLight creating FAILED");
 
 		return NULL;
 	} //traceLog();
@@ -539,7 +537,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (PyObject_SetAttr(Light, __innerRadius, innerRadius)) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight innerRadius setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight innerRadius setting FAILED");
 
 		Py_DECREF(__innerRadius);
 		Py_DECREF(innerRadius);
@@ -557,7 +555,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (PyObject_SetAttr(Light, __outerRadius, outerRadius)) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight outerRadius setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight outerRadius setting FAILED");
 
 		Py_DECREF(outerRadius);
 		Py_DECREF(__outerRadius);
@@ -575,7 +573,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (PyObject_SetAttr(Light, __multiplier, multiplier)) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight multiplier setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight multiplier setting FAILED");
 
 		Py_DECREF(multiplier);
 		Py_DECREF(__multiplier);
@@ -592,7 +590,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (!coords_p) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight coords creating FAILED\n");
+		superExtendedDebugLog("PyOmniLight coords creating FAILED");
 
 		Py_DECREF(Light);
 
@@ -612,7 +610,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (PyObject_SetAttr(Light, __position, coords_p)) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight coords setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight coords setting FAILED");
 
 		Py_DECREF(__position);
 		Py_DECREF(coords_p);
@@ -629,7 +627,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (!colour_p) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight colour creating FAILED\n");
+		superExtendedDebugLog("PyOmniLight colour creating FAILED");
 
 		Py_DECREF(Light);
 
@@ -653,7 +651,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	if (PyObject_SetAttr(Light, __colour, colour_p)) {
 		traceLog();
-		superExtendedDebugLog("PyOmniLight colour setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight colour setting FAILED");
 
 		Py_DECREF(__colour);
 		Py_DECREF(colour_p);
@@ -664,7 +662,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	Py_DECREF(__colour);
 
-	superExtendedDebugLog("light creating OK!\n");
+	superExtendedDebugLog("light creating OK!");
 
 	return Light;
 }
@@ -693,26 +691,26 @@ bool setModelPosition(PyObject* Model, float* coords_f) { //traceLog();
 PyObject* event_model(char* path, float coords[3], bool isAsync) { //traceLog();
 	if (!isInited || battleEnded) {
 		traceLog();
-		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //СЃРѕР·РґР°С‚СЊ РјРѕРґРµР»СЊ РЅРµРІРѕР·РјРѕР¶РЅРѕ, СѓР±Р°РІР»СЏРµРј СЃС‡РµС‚С‡РёРє С‡РёСЃР»Р° РјРѕРґРµР»РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРѕР·РґР°РЅС‹
 
 		return NULL;
 	} //traceLog();
 
-	superExtendedDebugLog("model creating...\n");
+	superExtendedDebugLog("model creating...");
 
 	PyObject* Model = NULL;
 
 	if (isAsync) { //traceLog();
 		if (coords == nullptr) {
 			traceLog();
-			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+			if (allModelsCreated > NULL) allModelsCreated--; //СЃРѕР·РґР°С‚СЊ РјРѕРґРµР»СЊ РЅРµРІРѕР·РјРѕР¶РЅРѕ, СѓР±Р°РІР»СЏРµРј СЃС‡РµС‚С‡РёРє С‡РёСЃР»Р° РјРѕРґРµР»РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРѕР·РґР°РЅС‹
 
 			return NULL;
 		} //traceLog();
 
 		PyObject* __partial = PyString_FromString("partial");
 
-		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
+		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //РїРµСЂРµРґР°РµРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° 3 РєРѕРѕСЂРґРёРЅР°С‚С‹
 
 		PyObject* partialized = PyObject_CallMethodObjArgs(functools, __partial, onModelCreatedPyMeth, coords_p, NULL);
 
@@ -720,14 +718,14 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) { //traceLog();
 
 		if (!partialized) {
 			traceLog();
-			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+			if (allModelsCreated > NULL) allModelsCreated--; //СЃРѕР·РґР°С‚СЊ РјРѕРґРµР»СЊ РЅРµРІРѕР·РјРѕР¶РЅРѕ, СѓР±Р°РІР»СЏРµРј СЃС‡РµС‚С‡РёРє С‡РёСЃР»Р° РјРѕРґРµР»РµР№, РєРѕС‚РѕСЂС‹Рµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРѕР·РґР°РЅС‹
 
 			return NULL;
 		} //traceLog();
 
 		PyObject* __fetchModel = PyString_FromString("fetchModel");
 
-		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), partialized, NULL); //Р·Р°РїСѓСЃРєР°РµРј Р°СЃРёРЅС…СЂРѕРЅРЅРѕРµ РґРѕР±Р°РІР»РµРЅРёРµ РјРѕРґРµР»Рё
 
 		Py_XDECREF(Model);
 		Py_DECREF(__fetchModel);
@@ -749,18 +747,18 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) { //traceLog();
 	if (coords != nullptr) {
 		traceLog();
 		if (!setModelPosition(Model, coords)) {
-			traceLog(); //ставим на нужную позицию
+			traceLog(); //СЃС‚Р°РІРёРј РЅР° РЅСѓР¶РЅСѓСЋ РїРѕР·РёС†РёСЋ
 			return NULL;
 		}
 	} //traceLog();
 
-	superExtendedDebugLog("model creating OK!\n");
+	superExtendedDebugLog("model creating OK!");
 
 	return Model;
 };
 
 PyObject* event_onModelCreated(PyObject *self, PyObject *args) {
-	traceLog(); //принимает аргументы: указатель на координаты и саму модель
+	traceLog(); //РїСЂРёРЅРёРјР°РµС‚ Р°СЂРіСѓРјРµРЅС‚С‹: СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РєРѕРѕСЂРґРёРЅР°С‚С‹ Рё СЃР°РјСѓ РјРѕРґРµР»СЊ
 	if (!isInited || battleEnded || models.size() >= allModelsCreated) {
 		traceLog();
 		Py_RETURN_NONE;
@@ -768,12 +766,12 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) {
 
 	if (!EVENT_ALL_MODELS_CREATED->hEvent) {
 		traceLog();
-		extendedDebugLog("[NY_Event][ERROR]: AMCEvent or createModelsPyMeth event is NULL!\n");
+		extendedDebugLog("[NY_Event][ERROR]: AMCEvent or createModelsPyMeth event is NULL!");
 
 		Py_RETURN_NONE;
 	} traceLog();
 
-	//рабочая часть
+	//СЂР°Р±РѕС‡Р°СЏ С‡Р°СЃС‚СЊ
 
 	PyObject* coords_pointer = NULL;
 	PyObject* Model = NULL;
@@ -810,7 +808,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) {
 	float* coords_f = (float*)(coords_vptr);
 
 	if (!setModelPosition(Model, coords_f)) {
-		traceLog(); //ставим на нужную позицию
+		traceLog(); //СЃС‚Р°РІРёРј РЅР° РЅСѓР¶РЅСѓСЋ РїРѕР·РёС†РёСЋ
 		Py_RETURN_NONE;
 	} traceLog();
 
@@ -831,10 +829,10 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) {
 	//lights.push_back(newLight);
 
 	if (models.size() >= allModelsCreated) {
-		traceLog();               //если число созданных моделей - столько же или больше, чем надо
+		traceLog();               //РµСЃР»Рё С‡РёСЃР»Рѕ СЃРѕР·РґР°РЅРЅС‹С… РјРѕРґРµР»РµР№ - СЃС‚РѕР»СЊРєРѕ Р¶Рµ РёР»Рё Р±РѕР»СЊС€Рµ, С‡РµРј РЅР°РґРѕ
 		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent)) {
-			traceLog(); //сигналим о том, что все модели были успешно созданы
-			extendedDebugLog("[NY_Event][ERROR]: event_onModelCreated: AMCEvent event not setted!\n");
+			traceLog(); //СЃРёРіРЅР°Р»РёРј Рѕ С‚РѕРј, С‡С‚Рѕ РІСЃРµ РјРѕРґРµР»Рё Р±С‹Р»Рё СѓСЃРїРµС€РЅРѕ СЃРѕР·РґР°РЅС‹
+			extendedDebugLog("[NY_Event][ERROR]: event_onModelCreated: AMCEvent event not setted!");
 
 			Py_RETURN_NONE;
 		} traceLog();
@@ -852,13 +850,11 @@ uint8_t create_models() {
 		return 1;
 	} traceLog();
 
-	INIT_LOCAL_MSG_BUFFER;
-
 	BEGIN_USING_MODELS;
 		case WAIT_OBJECT_0: traceLog();
-			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_USING");
 
-			for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
+			for (auto it = current_map.modelsSects.begin(); //РїРµСЂРІС‹Р№ РїСЂРѕС…РѕРґ - РїРѕР»СѓС‡Р°РµРј С‡РёСЃР»Рѕ РІСЃРµС… СЃРѕР·РґР°РЅРЅС‹С… РјРѕРґРµР»РµР№
 				it != current_map.modelsSects.end();
 				it++) {
 
@@ -883,7 +879,7 @@ uint8_t create_models() {
 				}
 			} traceLog();
 
-			for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
+			for (auto it = current_map.modelsSects.cbegin(); //РІС‚РѕСЂРѕР№ РїСЂРѕС…РѕРґ - СЃРѕР·РґР°РµРј РјРѕРґРµР»Рё
 				it != current_map.modelsSects.cend();
 				it++) {
 				if (!it->isInitialised || it->models.empty()) { traceLog();
@@ -899,22 +895,22 @@ uint8_t create_models() {
 				}
 			} traceLog();
 
-			superExtendedDebugLog("], \n");
+			superExtendedDebugLog("], ");
 
-			//освобождаем мутекс для этого потока
+			//РѕСЃРІРѕР±РѕР¶РґР°РµРј РјСѓС‚РµРєСЃ РґР»СЏ СЌС‚РѕРіРѕ РїРѕС‚РѕРєР°
 
 			if (!ReleaseMutex(M_MODELS_NOT_USING)) {
 				traceLog();
-				extendedDebugLogFmt("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+				extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %v!", GetLastError());
 
 				return 4;
 			}
 
-			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING");
 
 			break;
 		case WAIT_ABANDONED: traceLog();
-			extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+			extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!");
 
 			return 3;
 			END_USING_MODELS;
@@ -929,7 +925,7 @@ uint8_t init_models() {
 		return 1;
 	} traceLog();
 
-	extendedDebugLog("[NY_Event]: models adding...\n");
+	extendedDebugLog("[NY_Event]: models adding...");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) {
@@ -951,7 +947,7 @@ uint8_t init_models() {
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: addModel debug 2.1\n");
+		superExtendedDebugLog("[NY_Event]: addModel debug 2.1");
 
 		PyObject* __addModel = PyString_FromString("addModel");
 
@@ -959,20 +955,20 @@ uint8_t init_models() {
 
 		Py_DECREF(__addModel);
 
-		superExtendedDebugLog("[NY_Event]: addModel debug 2.2\n");
+		superExtendedDebugLog("[NY_Event]: addModel debug 2.2");
 
 		if (result) {
 			Py_DECREF(result);
 
 			models[i]->processed = true;
 
-			superExtendedDebugLog("True\n");
+			superExtendedDebugLog("True");
 		}
-		else superExtendedDebugLog("False\n");
-		superExtendedDebugLog("[NY_Event]: addModel debug 2.3\n");
+		else superExtendedDebugLog("False");
+		superExtendedDebugLog("[NY_Event]: addModel debug 2.3");
 	} traceLog();
 
-	extendedDebugLog("[NY_Event]: models adding OK!\n");
+	extendedDebugLog("[NY_Event]: models adding OK!");
 
 	return NULL;
 }
@@ -986,7 +982,7 @@ uint8_t set_visible(bool isVisible) {
 
 	PyObject* py_visible = PyBool_FromLong(isVisible);
 
-	extendedDebugLog("[NY_Event]: Models visiblity changing...\n");
+	extendedDebugLog("[NY_Event]: Models visiblity changing...");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) {
@@ -1017,7 +1013,7 @@ uint8_t set_visible(bool isVisible) {
 
 	Py_DECREF(py_visible);
 
-	extendedDebugLog("[NY_Event]: Models visiblity changing OK!\n");
+	extendedDebugLog("[NY_Event]: Models visiblity changing OK!");
 
 	return NULL;
 };
@@ -1029,7 +1025,7 @@ uint8_t del_models() {
 		return 1;
 	} traceLog();
 
-	extendedDebugLog("[NY_Event]: models deleting...\n");
+	extendedDebugLog("[NY_Event]: models deleting...");
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
 
@@ -1043,7 +1039,7 @@ uint8_t del_models() {
 
 		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) {
 			traceLog();
-			superExtendedDebugLog("NULL\n");
+			superExtendedDebugLog("NULL");
 
 			Py_XDECREF((*it_model)->model);
 
@@ -1059,7 +1055,7 @@ uint8_t del_models() {
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
+		superExtendedDebugLog("[NY_Event]: del debug 1.1");
 
 		PyObject* __delModel = PyString_FromString("delModel");
 
@@ -1086,7 +1082,7 @@ uint8_t del_models() {
 
 		it_model++;
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
+		superExtendedDebugLog("[NY_Event]: del debug 1.2");
 	} traceLog();
 
 	/*std::vector<ModLight*>::iterator it_light = lights.begin();
@@ -1099,11 +1095,11 @@ uint8_t del_models() {
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
+		superExtendedDebugLog("[NY_Event]: del debug 1.1");
 
 		if (!(*it_light)->model || (*it_light)->model == Py_None) {
 			traceLog();
-			superExtendedDebugLog("NULL\n");
+			superExtendedDebugLog("NULL");
 
 			Py_XDECREF((*it_light)->model);
 
@@ -1120,10 +1116,10 @@ uint8_t del_models() {
 
 		it_light++;
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
+		superExtendedDebugLog("[NY_Event]: del debug 1.2");
 	} traceLog();*/
 
-	extendedDebugLog("[NY_Event]: models deleting OK!\n");
+	extendedDebugLog("[NY_Event]: models deleting OK!");
 
 	return NULL;
 };

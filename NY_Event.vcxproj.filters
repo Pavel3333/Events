@@ -19,6 +19,9 @@
     <Filter Include="dll">
       <UniqueIdentifier>{7158c383-0bd1-48e5-a6a8-4380a04e37fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="easylogging">
+      <UniqueIdentifier>{066d332f-1d0d-4519-8e93-76605be067bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="API_functions.cpp">
@@ -48,6 +51,9 @@
     <ClCompile Include="Handlers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="third-party\easylogging\easylogging++.cc">
+      <Filter>easylogging</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="API_functions.h">
@@ -74,11 +80,9 @@
     <ClInclude Include="Handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="libcurl.dll">
-      <Filter>dll</Filter>
-    </None>
+    <ClInclude Include="third-party\easylogging\easylogging++.h">
+      <Filter>easylogging</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libcurl.lib">
