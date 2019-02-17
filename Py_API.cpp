@@ -9,9 +9,9 @@ uint16_t allModelsCreated = NULL;
 PyObject* onModelCreatedPyMeth = NULL;
 
 uint8_t  first_check = 100;
-uint32_t request = 100;
+uint32_t request     = 100;
 
-uint8_t  mapID = NULL;
+uint8_t  mapID      = NULL;
 uint32_t databaseID = NULL;
 
 bool isInited = false;
@@ -19,23 +19,24 @@ bool isInited = false;
 bool battleEnded = true;
 
 bool isModelsAlreadyCreated = false;
-bool isModelsAlreadyInited = false;
+bool isModelsAlreadyInited  = false;
 
 bool isTimerStarted = false;
-bool isTimeVisible = false;
+bool isTimeVisible  = false;
 
 bool isStreamer = false;
 
-HANDLE hTimer = NULL;
 HANDLE hHangarTimer = NULL;
+HANDLE hBattleTimer = NULL;
 
-HANDLE hTimerThread = NULL;
+HANDLE hTimerThread  = NULL;
 DWORD  timerThreadID = NULL;
 
-HANDLE hHandlerThread = NULL;
+HANDLE hHandlerThread  = NULL;
 DWORD  handlerThreadID = NULL;
 
-uint8_t timerLastError = NULL;
+uint8_t hangarTimerLastError = NULL;
+uint8_t battleTimerLastError = NULL;
 
 STAGE_ID lastStageID = STAGE_ID::COMPETITION;
 EVENT_ID lastEventID = EVENT_ID::IN_HANGAR;

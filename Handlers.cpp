@@ -367,12 +367,12 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 	//инициализация таймера для получения полного списка моделей и синхронизации
 
-	hTimer = CreateWaitableTimer(
+	hBattleTimer = CreateWaitableTimer(
 		NULL,                   // Default security attributes
 		FALSE,                  // Create auto-reset timer
 		TEXT("NY_Event_BattleTimer"));   // Name of waitable timer
 
-	if (hTimer) {
+	if (hBattleTimer) {
 		traceLog();
 		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
 
@@ -381,7 +381,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
 
 		bSuccess = SetWaitableTimer(
-			hTimer,           // Handle to the timer object
+			hBattleTimer,           // Handle to the timer object
 			&liDueTime,       // When timer will become signaled
 			1000,             // Periodic timer interval of 1 seconds
 			TimerAPCProc,     // Completion routine
@@ -390,7 +390,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 		if (bSuccess)
 		{
-			while (!first_check && !battleEnded && !timerLastError) {
+			while (!first_check && !battleEnded && !battleTimerLastError) {
 				traceLog();
 				if (!isTimerStarted) {
 					traceLog();
@@ -417,7 +417,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 								//GUI_setError(request);
 
-								timerLastError = 1;
+								battleTimerLastError = 1;
 
 								//освобождаем мутекс для этого потока
 
@@ -425,12 +425,14 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 									traceLog();
 									extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-									return 9;
+									battleTimerLastError = 8;
+
+									break;
 								}
 
 								superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
-								return 8;
+								break;
 							} traceLog();
 
 							extendedDebugLogFmt("[NY_Event][WARNING]: handleStartTimerEvent - send_token - Warning code %d\n", request);
@@ -450,20 +452,22 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 							//GUI_setError(request);
 
-							timerLastError = 2;
-
 							//освобождаем мутекс для этого потока
 
 							if (!ReleaseMutex(M_NETWORK_NOT_USING)) {
 								traceLog();
 								extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-								return 7;
+								battleTimerLastError = 6;
+
+								break;
 							}
 
 							superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
-							return 6;
+							battleTimerLastError = 5;
+
+							break;
 						} traceLog();
 
 						//освобождаем мутекс для этого потока
@@ -471,7 +475,9 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-							return 5;
+							battleTimerLastError = 4;
+
+							break;
 						}
 
 						superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
@@ -480,30 +486,32 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 					case WAIT_ABANDONED: traceLog();
 						extendedDebugLog("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
 
-						return 4;
-						END_USING_NETWORK;
+						battleTimerLastError = 3;
 
-						SleepEx(
-							INFINITE,     // Wait forever
-							TRUE);        // Put thread in an alertable state
+						break;
+					END_USING_NETWORK;
+
+					SleepEx(
+						INFINITE,     // Wait forever
+						TRUE);        // Put thread in an alertable state
 			} traceLog();
 
-			if (timerLastError) {
+			if (battleTimerLastError) {
 				traceLog();
-				extendedDebugLogFmt("[NY_Event][WARNING]: handleStartTimerEvent: error %d\n", timerLastError);
+				extendedDebugLogFmt("[NY_Event][WARNING]: handleStartTimerEvent: error %d\n", battleTimerLastError);
 
-				CancelWaitableTimer(hTimer);
+				CancelWaitableTimer(hBattleTimer);
 			} traceLog();
 		}
 		else extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - SetWaitableTimer: error %d\n", GetLastError());
 
-		CloseHandle(hTimer);
+		CloseHandle(hBattleTimer);
 		
-		hTimer = NULL;
+		hBattleTimer = NULL;
 	}
 	else extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent: CreateWaitableTimer: error %d\n", GetLastError());
 
-	return NULL;
+	return battleTimerLastError;
 }
 
 uint8_t handleInHangarEvent(PyThreadState* _save) {
@@ -545,7 +553,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 		if (bSuccess)
 		{
-			while (first_check && !timerLastError) {
+			while (first_check && !hangarTimerLastError) {
 				BEGIN_USING_NETWORK;
 					case WAIT_OBJECT_0: traceLog();
 						superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
@@ -557,7 +565,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-							timerLastError = 4;
+							hangarTimerLastError = 4;
 						}
 
 						superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
@@ -566,16 +574,16 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 					case WAIT_ABANDONED: traceLog();
 						extendedDebugLog("[NY_Event][ERROR]: handleInHangarEvent - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
 
-						timerLastError = 3;
+						hangarTimerLastError = 3;
 				END_USING_NETWORK;
 
-				if (first_check) { traceLog();
+				if (first_check) { traceLog(); //TODO: добавить отображение ошибки в ангаре
 					if (first_check > 9) { traceLog();
 						extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - Error code %d\n", first_check);
 
 						//GUI_setError(first_check);
 
-						timerLastError = 2;
+						hangarTimerLastError = 2;
 					}
 					else {
 						extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - Warning code %d\n", first_check);
@@ -583,10 +591,14 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 						//GUI_setWarning(first_check);
 					} traceLog();
 				} traceLog();
+
+				SleepEx(
+					INFINITE,     // Wait forever
+					TRUE);        // Put thread in an alertable state
 			} traceLog();
 
-			if (timerLastError) { traceLog();
-				extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent: error %d\n", timerLastError);
+			if (hangarTimerLastError) { traceLog();
+				extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent: error %d\n", hangarTimerLastError);
 
 				CancelWaitableTimer(hHangarTimer);
 			} traceLog();
@@ -599,7 +611,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 	}
 	else extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent: CreateWaitableTimer: error %d\n", GetLastError());
 
-	return NULL;
+	return hangarTimerLastError;
 }
 
 uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();

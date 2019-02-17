@@ -145,12 +145,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		hHangarTimer = NULL;
 	} traceLog();
 
-	if (hTimerThread) {
-		TerminateThread(hTimerThread, NULL);
-		CloseHandle(hTimerThread);
+	//вывод сообщения в центр уведомлений
 
-		hTimerThread = NULL;
-	}
+	//создаем поток с таймером
 
 	if (hTimerThread) { traceLog();
 		CloseHandle(hTimerThread);
@@ -158,7 +155,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		hTimerThread = NULL;
 	} traceLog();
 
-	hTimerThread = CreateThread( //создаем поток с таймером
+	hTimerThread = CreateThread(
 		NULL,                                   // default security attributes
 		0,                                      // use default stack size  
 		TimerThread,                            // thread function name
@@ -255,11 +252,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	if (lastEventError) extendedDebugLogFmt("[NY_Event][WARNING]: Error in event: %d\n", lastEventError);
 
-	if (hTimer) { traceLog(); //закрываем таймер, если он был создан
-		CancelWaitableTimer(hTimer);
-		CloseHandle(hTimer);
+	if (hBattleTimer) { traceLog(); //закрываем таймер, если он был создан
+		CancelWaitableTimer(hBattleTimer);
+		CloseHandle(hBattleTimer);
 
-		hTimer = NULL;
+		hBattleTimer = NULL;
 	} traceLog();
 
 	if (hTimerThread) {
@@ -529,9 +526,9 @@ uint8_t event_сheck() { traceLog();
 
 	battleEnded = false;
 
-	first_check = makeEventInThread(EVENT_ID::IN_HANGAR);
+	request = makeEventInThread(EVENT_ID::IN_HANGAR);
 
-	if (first_check) { traceLog();
+	if (request) { traceLog();
 		return 6;
 	}
 	else {

@@ -42,8 +42,8 @@ extern bool isTimeVisible;
 
 extern bool isStreamer;
 
-extern HANDLE hTimer;
 extern HANDLE hHangarTimer;
+extern HANDLE hBattleTimer;
 
 extern HANDLE hTimerThread;
 extern DWORD  timerThreadID;
@@ -51,7 +51,8 @@ extern DWORD  timerThreadID;
 extern HANDLE hHandlerThread;
 extern DWORD  handlerThreadID;
 
-extern uint8_t timerLastError;
+extern uint8_t hangarTimerLastError;
+extern uint8_t battleTimerLastError;
 
 extern STAGE_ID lastStageID;
 extern EVENT_ID lastEventID;
