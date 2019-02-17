@@ -5,8 +5,6 @@ PyObject* g_gui       = NULL;
 PyObject* g_appLoader = NULL;
 PyObject* functools   = NULL;
 PyObject* json        = NULL;
-PyObject* SM_TYPE     = NULL;
-PyObject* pushMessage = NULL;
 
 //native functions
 

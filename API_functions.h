@@ -162,6 +162,8 @@ extern char* MODEL_NAMES[SECTIONS_COUNT];
 
 extern bool isInited;
 
+extern uint8_t first_check;
+
 extern bool battleEnded;
 
 extern bool isModelsAlreadyCreated;

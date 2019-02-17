@@ -4,6 +4,7 @@
 #include "ThreadSync.h"
 #include "BW_native.h"
 #include "GUI.h"
+#include "HangarMessages.h"
 
 typedef struct {
 	bool processed = false;
@@ -24,23 +25,15 @@ extern uint16_t allModelsCreated;
 
 extern PyObject* onModelCreatedPyMeth;
 
-extern uint8_t  first_check;
 extern uint32_t request;
 
 extern uint8_t  mapID;
 extern uint32_t databaseID;
 
-extern bool isInited;
-
-extern bool battleEnded;
-
-extern bool isModelsAlreadyCreated;
 extern bool isModelsAlreadyInited;
 
 extern bool isTimerStarted;
 extern bool isTimeVisible;
-
-extern bool isStreamer;
 
 extern HANDLE hHangarTimer;
 extern HANDLE hBattleTimer;
@@ -53,9 +46,6 @@ extern DWORD  handlerThreadID;
 
 extern uint8_t hangarTimerLastError;
 extern uint8_t battleTimerLastError;
-
-extern STAGE_ID lastStageID;
-extern EVENT_ID lastEventID;
 
 extern std::vector<ModModel*> models;
 //extern std::vector<ModLight*> lights;

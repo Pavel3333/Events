@@ -136,7 +136,14 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n", (uint32_t)first_check);
 
 		return 4;
-	} traceLog();
+	}
+	else {
+		Py_BLOCK_THREADS;
+
+		showMessage(g_self->i18n);
+
+		Py_UNBLOCK_THREADS;
+	}
 
 	if (hHangarTimer) { traceLog(); //закрываем таймер, если он был создан
 		CancelWaitableTimer(hHangarTimer);
@@ -681,6 +688,38 @@ PyMODINIT_FUNC initevent(void)
 	BigWorld = PyImport_AddModule("BigWorld");
 
 	if (!BigWorld) { traceLog();
+		return;
+	} traceLog();
+
+	//загрузка SM_TYPE и pushMessage
+
+	PyObject* SystemMessages = PyImport_ImportModule("gui.SystemMessages");
+
+	if (!SystemMessages) { traceLog();
+		return;
+	} traceLog();
+
+	PyObject* __SM_TYPE = PyString_FromString("SM_TYPE");
+
+	SM_TYPE = PyObject_GetAttr(SystemMessages, __SM_TYPE);
+
+	Py_DECREF(__SM_TYPE);
+
+	if (!SM_TYPE) { traceLog();
+		Py_DECREF(SystemMessages);
+		
+		return;
+	} traceLog();
+
+	PyObject* __pushMessage = PyString_FromString("pushMessage");
+
+	pushMessage = PyObject_GetAttr(SystemMessages, __pushMessage);
+
+	Py_DECREF(__pushMessage);
+	Py_DECREF(SystemMessages);
+
+	if (!pushMessage) { traceLog();
+		Py_DECREF(SM_TYPE);
 		return;
 	} traceLog();
 

@@ -577,7 +577,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 						hangarTimerLastError = 3;
 				END_USING_NETWORK;
 
-				if (first_check) { traceLog(); //TODO: добавить отображение ошибки в ангаре
+				if (first_check) { traceLog();
 					if (first_check > 9) { traceLog();
 						extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - Error code %d\n", first_check);
 
@@ -590,6 +590,12 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 						//GUI_setWarning(first_check);
 					} traceLog();
+
+					Py_BLOCK_THREADS;
+
+					showMessage(g_self->i18n);
+
+					Py_UNBLOCK_THREADS;
 				} traceLog();
 
 				SleepEx(
