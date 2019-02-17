@@ -676,11 +676,15 @@ PyDoc_STRVAR(event_methods__doc__,
 
 PyMODINIT_FUNC initevent(void)
 {
+	//загрузка BigWorld
+
 	BigWorld = PyImport_AddModule("BigWorld");
 
 	if (!BigWorld) { traceLog();
 		return;
 	} traceLog();
+
+	//загрузка g_appLoader
 
 	PyObject* appLoader = PyImport_ImportModule("gui.app_loader");
 
@@ -699,11 +703,16 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	} traceLog();
 
+	//загрузка functools
+
 	functools = PyImport_ImportModule("functools");
 
 	if (!functools) { traceLog();
+		Py_DECREF(g_appLoader);
 		return;
 	} traceLog();
+
+	//загрузка json
 
 	json = PyImport_ImportModule("json");
 
@@ -723,6 +732,8 @@ PyMODINIT_FUNC initevent(void)
 
 	debugLog("[NY_Event]: Config init OK\n");
 
+	//загрузка конфига мода
+
 	PyObject* g_config = PyObject_CallObject((PyObject*)&Config_p, NULL);
 
 	Py_DECREF(&Config_p);
@@ -731,6 +742,8 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(g_appLoader);
 		return;
 	} traceLog();
+
+	//инициализация модуля
 
 	event_module = Py_InitModule3("event",
 		event_methods,
@@ -745,6 +758,8 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(g_appLoader);
 		return;
 	} traceLog();
+
+	//получение указателя на метод модуля onModelCreated
 
 	PyObject* __omc = PyString_FromString("omc");
 
@@ -765,7 +780,7 @@ PyMODINIT_FUNC initevent(void)
 		PyList_SET_ITEM(spaceKey, 0U, PyInt_FromSize_t(57));
 	} traceLog();
 
-	//---------
+	//загрузка modGUI
 
 #if debug_log
 	OutputDebugString(_T("Mod_GUI module loading...\n"));
@@ -793,6 +808,8 @@ PyMODINIT_FUNC initevent(void)
 	} traceLog();
 
 	debugLog("[NY_Event]: Mod_GUI class loaded OK!\n");
+
+	//загрузка g_gui
 
 	debugLog("[NY_Event]: g_gui module loading...\n");
 
@@ -877,6 +894,8 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(data_i18n);
 	} traceLog();
 	
+	//инициализация curl
+
 	uint32_t curl_init_result = curl_init();
 
 	if (curl_init_result) { traceLog();

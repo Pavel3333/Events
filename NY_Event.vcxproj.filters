@@ -48,6 +48,9 @@
     <ClCompile Include="Handlers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HangarMessages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="API_functions.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Handlers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HangarMessages.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

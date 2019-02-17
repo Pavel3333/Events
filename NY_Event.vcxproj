@@ -138,6 +138,7 @@
     <ClInclude Include="BW_native.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="Handlers.h" />
+    <ClInclude Include="HangarMessages.h" />
     <ClInclude Include="ModThreads.h" />
     <ClInclude Include="Py_API.h" />
     <ClInclude Include="Py_config.h" />
@@ -148,6 +149,7 @@
     <ClCompile Include="BW_native.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="Handlers.cpp" />
+    <ClCompile Include="HangarMessages.cpp" />
     <ClCompile Include="ModThreads.cpp" />
     <ClCompile Include="Py_API.cpp" />
     <ClCompile Include="Py_config.cpp" />
