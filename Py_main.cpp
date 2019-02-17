@@ -138,6 +138,20 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		return 4;
 	} traceLog();
 
+	if (hHangarTimer) { traceLog(); //закрываем таймер, если он был создан
+		CancelWaitableTimer(hHangarTimer);
+		CloseHandle(hHangarTimer);
+
+		hHangarTimer = NULL;
+	} traceLog();
+
+	if (hTimerThread) {
+		TerminateThread(hTimerThread, NULL);
+		CloseHandle(hTimerThread);
+
+		hTimerThread = NULL;
+	}
+
 	if (hTimerThread) { traceLog();
 		CloseHandle(hTimerThread);
 

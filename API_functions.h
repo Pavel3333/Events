@@ -8,9 +8,9 @@
 
 #define debug_log                true
 #define extended_debug_log       true
-#define super_extended_debug_log true
+#define super_extended_debug_log false
 
-#define trace_log true
+#define trace_log false
 
 #define INIT_LOCAL_MSG_BUFFER \
 	char log_buf_c[1024];      \
@@ -20,7 +20,8 @@
 #define debugLog(X)           \
 	OutputDebugString(_T(X)); \
 	PySys_WriteStdout(X);     \
-    dbg_log << X;
+    dbg_log << X;             \
+	dbg_log.flush();
 
 #define debugLogFmt(fmt, ...) {                  \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
@@ -28,29 +29,34 @@
 	PySys_WriteStdout(fmt, __VA_ARGS__);         \
     sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
     dbg_log << log_buf_c;                        \
+	dbg_log.flush();                             \
 	}
 
 #if extended_debug_log
 #define extendedDebugLog(X)                      \
 	OutputDebugString(_T(X));                    \
-	dbg_log << X; 
+	dbg_log << X;                                \
+	dbg_log.flush();
 #define extendedDebugLogFmt(fmt, ...) {          \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
 	OutputDebugString(log_buf);                  \
     sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
     dbg_log << log_buf_c;                        \
+    dbg_log.flush();                             \
 	}
 
 
 #if super_extended_debug_log
 #define superExtendedDebugLog(X)                 \
 	OutputDebugString(_T(X));                    \
-	dbg_log << X; 
+	dbg_log << X;                                \
+	dbg_log.flush();
 #define superExtendedDebugLogFmt(fmt, ...) {     \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
 	OutputDebugString(log_buf);                  \
     sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
     dbg_log << log_buf_c;                        \
+    dbg_log.flush();                             \
 	}
 
 #else
@@ -211,7 +217,7 @@ struct i18n_c {
 struct Config {
 	char* ids = "NY_Event";
 	char* author = "by Pavel3333 & RAINN VOD";
-	char* version = "v1.0.0.1 (10.02.2019)";
+	char* version = "v1.0.0.1 (17.02.2019)";
 	char* patch = "1.4.0.1";
 	uint16_t version_id = 100U;
 	data_c data;

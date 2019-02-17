@@ -27,6 +27,7 @@ bool isTimeVisible = false;
 bool isStreamer = false;
 
 HANDLE hTimer = NULL;
+HANDLE hHangarTimer = NULL;
 
 HANDLE hTimerThread = NULL;
 DWORD  timerThreadID = NULL;

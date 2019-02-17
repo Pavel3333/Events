@@ -43,6 +43,7 @@ extern bool isTimeVisible;
 extern bool isStreamer;
 
 extern HANDLE hTimer;
+extern HANDLE hHangarTimer;
 
 extern HANDLE hTimerThread;
 extern DWORD  timerThreadID;

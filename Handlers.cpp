@@ -370,7 +370,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 	hTimer = CreateWaitableTimer(
 		NULL,                   // Default security attributes
 		FALSE,                  // Create auto-reset timer
-		TEXT("BattleTimer"));   // Name of waitable timer
+		TEXT("NY_Event_BattleTimer"));   // Name of waitable timer
 
 	if (hTimer) {
 		traceLog();
@@ -498,6 +498,8 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		else extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - SetWaitableTimer: error %d\n", GetLastError());
 
 		CloseHandle(hTimer);
+		
+		hTimer = NULL;
 	}
 	else extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent: CreateWaitableTimer: error %d\n", GetLastError());
 
@@ -509,58 +511,95 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 	EVENT_ID eventID = EVENT_IN_HANGAR->eventID;
 
-	if (eventID != EVENT_ID::IN_HANGAR) {
-		traceLog();
+	if (eventID != EVENT_ID::IN_HANGAR) { traceLog();
 		extendedDebugLog("[NY_Event][ERROR]: handleInHangarEvent - eventID not equal!\n");
 
-		return 2;
+		return 1;
 	} traceLog();
+
+	BOOL            bSuccess;
+	__int64         qwDueTime;
+	LARGE_INTEGER   liDueTime;
 
 	//рабочая часть
 
-	BEGIN_USING_NETWORK;
-		case WAIT_OBJECT_0: traceLog();
-			superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
+	hHangarTimer = CreateWaitableTimer(
+		NULL,                   // Default security attributes
+		FALSE,                  // Create auto-reset timer
+		TEXT("NY_Event_HangarTimer"));   // Name of waitable timer
 
-			first_check = send_token(databaseID, mapID, eventID);
+	if (hHangarTimer) { traceLog();
+		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
 
-			//освобождаем мутекс для этого потока
+		// Copy the relative time into a LARGE_INTEGER.
+		liDueTime.LowPart  = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
+		liDueTime.HighPart = (LONG)NULL; //(qwDueTime >> 32);
 
-			if (!ReleaseMutex(M_NETWORK_NOT_USING)) {
-				traceLog();
-				extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
+		bSuccess = SetWaitableTimer(
+			hHangarTimer,     // Handle to the timer object
+			&liDueTime,       // When timer will become signaled
+			15000,            // Periodic timer interval of 15 seconds
+			TimerAPCProc,     // Completion routine
+			NULL,             // Argument to the completion routine
+			FALSE);           // Do not restore a suspended system
 
-				return 4;
-			}
+		if (bSuccess)
+		{
+			while (first_check && !timerLastError) {
+				BEGIN_USING_NETWORK;
+					case WAIT_OBJECT_0: traceLog();
+						superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
 
-			superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
+						first_check = send_token(databaseID, mapID, eventID);
 
-			break;
-		case WAIT_ABANDONED: traceLog();
-			extendedDebugLog("[NY_Event][ERROR]: handleInHangarEvent - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
+						//освобождаем мутекс для этого потока
 
-			return 3;
-			END_USING_NETWORK;
+						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
+							extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
-			if (first_check) {
-				traceLog();
-				if (first_check > 9) {
-					traceLog();
-					extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - Error code %d\n", first_check);
+							timerLastError = 4;
+						}
 
-					//GUI_setError(first_check);
+						superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
-					return 6;
+						break;
+					case WAIT_ABANDONED: traceLog();
+						extendedDebugLog("[NY_Event][ERROR]: handleInHangarEvent - NETWORK_NOT_USING: WAIT_ABANDONED!\n");
+
+						timerLastError = 3;
+				END_USING_NETWORK;
+
+				if (first_check) { traceLog();
+					if (first_check > 9) { traceLog();
+						extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - Error code %d\n", first_check);
+
+						//GUI_setError(first_check);
+
+						timerLastError = 2;
+					}
+					else {
+						extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - Warning code %d\n", first_check);
+
+						//GUI_setWarning(first_check);
+					} traceLog();
 				} traceLog();
-
-				extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - Warning code %d\n", first_check);
-
-				//GUI_setWarning(first_check);
-
-				return 5;
 			} traceLog();
 
-			return NULL;
+			if (timerLastError) { traceLog();
+				extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent: error %d\n", timerLastError);
+
+				CancelWaitableTimer(hHangarTimer);
+			} traceLog();
+		}
+		else extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - SetWaitableTimer: error %d\n", GetLastError());
+
+		CloseHandle(hHangarTimer);
+
+		hHangarTimer = NULL;
+	}
+	else extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent: CreateWaitableTimer: error %d\n", GetLastError());
+
+	return NULL;
 }
 
 uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
