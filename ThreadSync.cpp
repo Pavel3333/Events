@@ -63,7 +63,7 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 	if (!(*pEvent)) {
 		traceLog(); //нехватка памяти, завершаем работу
 
-		ExitProcess(1);
+		return false;
 	} traceLog();
 
 	(*pEvent)->hEvent = CreateEvent(
@@ -95,7 +95,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 	if (!(*pEvent)) {
 		traceLog(); //нехватка памяти, завершаем работу
 
-		ExitProcess(1);
+		return false;
 	} traceLog();
 
 	(*pEvent)->hEvent = CreateEvent(
