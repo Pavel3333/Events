@@ -102,11 +102,6 @@
 
 #define END_USING_NETWORK }}
 
-#define if_traced(X) if(X) { traceLog(); 
-#define else_traced  else  { traceLog(); 
-#define end_if }
-#define end_traced } traceLog();
-
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12
 
