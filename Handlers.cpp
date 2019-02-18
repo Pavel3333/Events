@@ -4,9 +4,9 @@
 
 uint8_t handleBattleEvent(EVENT_ID eventID) {
 	traceLog();
-	if (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR || !M_MODELS_NOT_USING) { traceLog();
+	if_traced (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR || !M_MODELS_NOT_USING)
 		return 1;
-	} traceLog();
+	end_traced;
 
 	INIT_LOCAL_MSG_BUFFER;
 
@@ -26,29 +26,27 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 			else if (eventID == EVENT_ID::IN_BATTLE_GET_SYNC) parsing_result = parse_sync();
 			else if (eventID == EVENT_ID::DEL_LAST_MODEL)     parsing_result = parse_del_model();
 
-			if (parsing_result) { traceLog();
+			if_traced (parsing_result)
 				extendedDebugLogFmt("[NY_Event]: parsing FAILED! Error code: %d\n", (uint32_t)parsing_result);
 
 				//GUI_setError(parsing_result);
 
 				//освобождаем мутекс для этого потока
 
-				if (!ReleaseMutex(M_MODELS_NOT_USING)) {
-					traceLog();
+				if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 					extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 					return 3;
 				}
 
 				return 4;
-			} traceLog();
+			end_traced;
 
 			Py_BLOCK_THREADS;
 
 			//освобождаем мутекс для этого потока
 
-			if (!ReleaseMutex(M_MODELS_NOT_USING)) {
-				traceLog();
+			if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 				extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 				return 3;
@@ -68,52 +66,51 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 	if (current_map.time_preparing)  //выводим время
 		GUI_setTime(current_map.time_preparing);
 
-	if (current_map.stageID >= 0 && current_map.stageID < STAGES_COUNT) { traceLog();
-		if (    //выводим сообщение
+	if_traced (current_map.stageID >= 0 && current_map.stageID < STAGES_COUNT)
+		if_traced (    //выводим сообщение
 			current_map.stageID == STAGE_ID::WAITING ||
 			current_map.stageID == STAGE_ID::START ||
 			current_map.stageID == STAGE_ID::COMPETITION ||
 			current_map.stageID == STAGE_ID::END_BY_TIME ||
 			current_map.stageID == STAGE_ID::END_BY_COUNT ||
 			current_map.stageID == STAGE_ID::STREAMER_MODE
-			) { traceLog();
+			)
 			if (lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) GUI_setMsg(current_map.stageID);
 
-			if (current_map.stageID == STAGE_ID::END_BY_TIME || current_map.stageID == STAGE_ID::END_BY_COUNT) { traceLog();
+			if_traced (current_map.stageID == STAGE_ID::END_BY_TIME || current_map.stageID == STAGE_ID::END_BY_COUNT)
 				current_map.time_preparing = NULL;
 
 				GUI_setTime(NULL);
 
-				if (current_map.stageID == STAGE_ID::END_BY_COUNT) {
-					traceLog();
+				if_traced (current_map.stageID == STAGE_ID::END_BY_COUNT)
 					GUI_setTimerVisible(false);
 
 					isTimeVisible = false;
-				} traceLog();
+				end_traced;
 
 				GUI_setMsg(current_map.stageID);
 
 				uint8_t event_result = handleBattleEndEvent(_save);
 
-				if (event_result) { traceLog();
+				if_traced (event_result)
 					extendedDebugLogFmt("[NY_Event]: Warning - handle_battle_event - event_fini - Error code %d\n", (uint32_t)event_result);
 
 					//GUI_setWarning(event_result);
-				} traceLog();
+				end_traced;
 			}
-			else {
-				if (!isTimeVisible) { traceLog();
+			else_traced
+				if_traced (!isTimeVisible)
 					GUI_setTimerVisible(true);
 
 					isTimeVisible = true;
-				} traceLog();
-			} traceLog();
+				end_traced;
+			end_traced;
 
-			if (current_map.stageID == STAGE_ID::START ||
+			if_traced (current_map.stageID == STAGE_ID::START ||
 				current_map.stageID == STAGE_ID::COMPETITION ||
-				current_map.stageID == STAGE_ID::STREAMER_MODE) { traceLog();
-				if (isModelsAlreadyCreated && !isModelsAlreadyInited && current_map.minimap_count && current_map.modelsSects.size()) { traceLog();
-					if (eventID == EVENT_ID::IN_BATTLE_GET_FULL) { traceLog();
+				current_map.stageID == STAGE_ID::STREAMER_MODE)
+				if_traced (isModelsAlreadyCreated && !isModelsAlreadyInited && current_map.minimap_count && current_map.modelsSects.size())
+					if_traced (eventID == EVENT_ID::IN_BATTLE_GET_FULL)
 						superExtendedDebugLogFmt("sect count: %u\npos count: %u\n", current_map.modelsSects.size(), current_map.minimap_count);
 
 						extendedDebugLog("[NY_Event]: creating...\n");
@@ -127,7 +124,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 								//освобождаем мутекс для этого потока
 
-								if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+								if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 									extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 									return 6;
@@ -147,11 +144,11 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 						int creating_result = Py_AddPendingCall(&create_models, nullptr); //create_models();
 
-						if (creating_result == -1) { traceLog();
+						if_traced (creating_result == -1)
 							extendedDebugLog("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - create_models - failed to start PendingCall of creating models!\n");
 
 							return 3;
-						} traceLog();
+						end_traced;
 						*/
 
 						/*
@@ -164,11 +161,11 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 						Py_UNBLOCK_THREADS;
 
-						if (request) { traceLog();
+						if_traced (request)
 							extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - handleBattleEvent - Error code %d\n", request);
 
 							return 7;
-						} traceLog();
+						end_traced;
 
 						//ожидаем события полного создания моделей
 
@@ -192,43 +189,39 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 							request = init_models();
 
-							if (request) {
-								traceLog();
-								if (request > 9) {
-									traceLog();
+							if_traced (request)
+								if_traced (request > 9)
 									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - init_models - Error code %d\n", request);
 
 									//GUI_setError(request);
 
 									return 9;
-								} traceLog();
+								end_traced;
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - init_models - Warning code %d\n", request);
 
 								//GUI_setWarning(request);
 
 								return 8;
-							} traceLog();
+							end_traced;
 
 							request = set_visible(true);
 
-							if (request) {
-								traceLog();
-								if (request > 9) {
-									traceLog();
+							if_traced (request)
+								if_traced (request > 9)
 									extendedDebugLogFmt("[NY_Event][ERROR]: IN_BATTLE_GET_FULL - set_visible - Error code %d\n", request);
 
 									//GUI_setError(request);
 
 									return 12;
-								} traceLog();
+								end_traced;
 
 								extendedDebugLogFmt("[NY_Event][WARNING]: IN_BATTLE_GET_FULL - set_visible - Warning code %d\n", request);
 
 								//GUI_setWarning(request);
 
 								return 11;
-							} traceLog();
+							end_traced;
 
 							isModelsAlreadyInited = true;
 
@@ -241,15 +234,14 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 							Py_BLOCK_THREADS;
 
 							return 10;
-						} traceLog();
-					} traceLog();
+						end_traced;
+					end_traced;
 
 					return NULL;
-				} traceLog();
-			} traceLog();
+				end_traced;
+			end_traced;
 
-			if (isModelsAlreadyCreated && isModelsAlreadyInited && eventID == EVENT_ID::IN_BATTLE_GET_SYNC && sync_map.all_models_count && !sync_map.modelsSects_deleting.empty()) {
-				traceLog();
+			if_traced (isModelsAlreadyCreated && isModelsAlreadyInited && eventID == EVENT_ID::IN_BATTLE_GET_SYNC && sync_map.all_models_count && !sync_map.modelsSects_deleting.empty())
 				std::vector<ModelsSection>::iterator it_sect_sync;
 				std::vector<float*>::iterator        it_model;
 
@@ -264,7 +256,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 								it_model = it_sect_sync->models.begin();
 
 								while (it_model != it_sect_sync->models.end()) {
-									if (*it_model == nullptr) { traceLog();
+									if_traced (*it_model == nullptr)
 										it_model = it_sect_sync->models.erase(it_model);
 
 										continue;
@@ -272,7 +264,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 									request = delModelPy(*it_model);
 
-									if (request) { traceLog();
+									if_traced (request)
 										extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - delModelPy - Error code %d\n", (uint32_t)request);
 
 										//GUI_setError(request);
@@ -284,7 +276,7 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 
 									request = delModelCoords(it_sect_sync->ID, *it_model);
 
-									if (request) { traceLog();
+									if_traced (request)
 										extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - delModelCoords - Error code %d\n", request);
 
 										//GUI_setError(res);
@@ -310,13 +302,13 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 							it_sect_sync->models.~vector();
 
 							it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
-						} traceLog();
+						end_traced;
 
 						sync_map.modelsSects_deleting.~vector();
 
 						//освобождаем мутекс для этого потока
 
-						if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+						if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 							return 14;
@@ -331,9 +323,9 @@ uint8_t handleBattleEvent(EVENT_ID eventID) {
 						return 13;
 					END_USING_MODELS;
 			}
-			else { traceLog();
+			else_traced
 				return NULL;
-			} traceLog();
+			end_traced;
 		}
 		else extendedDebugLog("[NY_Event]: Warning - StageID is not right for this event\n");
 	}
@@ -351,19 +343,17 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 	EVENT_ID eventID;
 
-	if (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC) {
-		traceLog();
+	if_traced (EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_FULL && EVENT_START_TIMER->eventID != EVENT_ID::IN_BATTLE_GET_SYNC)
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - eventID not equal!\n");
 
 		return 2;
-	} traceLog();
+	end_traced;
 
-	if (first_check || battleEnded) {
-		traceLog();
+	if_traced (first_check || battleEnded)
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - first_check or battleEnded!\n");
 
 		return 3;
-	} traceLog();
+	end_traced;
 
 	//инициализация таймера для получения полного списка моделей и синхронизации
 
@@ -372,8 +362,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		FALSE,                  // Create auto-reset timer
 		TEXT("NY_Event_BattleTimer"));   // Name of waitable timer
 
-	if (hBattleTimer) {
-		traceLog();
+	if_traced (hBattleTimer)
 		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
 
 		// Copy the relative time into a LARGE_INTEGER.
@@ -392,10 +381,9 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 		{
 			while (!first_check && !battleEnded && !battleTimerLastError) {
 				traceLog();
-				if (!isTimerStarted) {
-					traceLog();
+				if_traced (!isTimerStarted)
 					isTimerStarted = true;
-				} traceLog();
+				end_traced;
 
 				//рабочая часть
 
@@ -409,10 +397,8 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 						request = send_token(databaseID, mapID, eventID);
 
-						if (request) {
-							traceLog();
-							if (request > 9) {
-								traceLog();
+						if_traced (request)
+							if_traced (request > 9)
 								extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - send_token - Error code %d\n", request);
 
 								//GUI_setError(request);
@@ -421,8 +407,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 								//освобождаем мутекс для этого потока
 
-								if (!ReleaseMutex(M_NETWORK_NOT_USING)) {
-									traceLog();
+								if_traced (!ReleaseMutex(M_NETWORK_NOT_USING))
 									extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 									battleTimerLastError = 8;
@@ -433,10 +418,10 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 								superExtendedDebugLog("[NY_Event]: NETWORK_NOT_USING\n");
 
 								break;
-							} traceLog();
+							end_traced;
 
 							extendedDebugLogFmt("[NY_Event][WARNING]: handleStartTimerEvent - send_token - Warning code %d\n", request);
-						} traceLog();
+						end_traced;
 
 						superExtendedDebugLog("[NY_Event]: generating token OK!\n");
 
@@ -446,16 +431,14 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 						Py_UNBLOCK_THREADS;
 
-						if (request) {
-							traceLog();
+						if_traced (request)
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - create_models - Error code %d\n", request);
 
 							//GUI_setError(request);
 
 							//освобождаем мутекс для этого потока
 
-							if (!ReleaseMutex(M_NETWORK_NOT_USING)) {
-								traceLog();
+							if_traced (!ReleaseMutex(M_NETWORK_NOT_USING))
 								extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 								battleTimerLastError = 6;
@@ -468,11 +451,11 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 							battleTimerLastError = 5;
 
 							break;
-						} traceLog();
+						end_traced;
 
 						//освобождаем мутекс для этого потока
 
-						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
+						if_traced (!ReleaseMutex(M_NETWORK_NOT_USING))
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 							battleTimerLastError = 4;
@@ -494,14 +477,13 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 					SleepEx(
 						INFINITE,     // Wait forever
 						TRUE);        // Put thread in an alertable state
-			} traceLog();
+			end_traced;
 
-			if (battleTimerLastError) {
-				traceLog();
+			if_traced (battleTimerLastError)
 				extendedDebugLogFmt("[NY_Event][WARNING]: handleStartTimerEvent: error %d\n", battleTimerLastError);
 
 				CancelWaitableTimer(hBattleTimer);
-			} traceLog();
+			end_traced;
 		}
 		else extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - SetWaitableTimer: error %d\n", GetLastError());
 
@@ -519,11 +501,11 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 	EVENT_ID eventID = EVENT_IN_HANGAR->eventID;
 
-	if (eventID != EVENT_ID::IN_HANGAR) { traceLog();
+	if_traced (eventID != EVENT_ID::IN_HANGAR)
 		extendedDebugLog("[NY_Event][ERROR]: handleInHangarEvent - eventID not equal!\n");
 
 		return 1;
-	} traceLog();
+	end_traced;
 
 	BOOL            bSuccess;
 	__int64         qwDueTime;
@@ -536,7 +518,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 		FALSE,                  // Create auto-reset timer
 		TEXT("NY_Event_HangarTimer"));   // Name of waitable timer
 
-	if (hHangarTimer) { traceLog();
+	if_traced (hHangarTimer)
 		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
 
 		// Copy the relative time into a LARGE_INTEGER.
@@ -562,7 +544,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 						//освобождаем мутекс для этого потока
 
-						if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
+						if_traced (!ReleaseMutex(M_NETWORK_NOT_USING))
 							extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 							hangarTimerLastError = 4;
@@ -577,41 +559,41 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 						hangarTimerLastError = 3;
 				END_USING_NETWORK;
 
-				if (first_check) { traceLog();
-					if (first_check > 9) { traceLog();
+				if_traced (first_check)
+					if_traced (first_check > 9)
 						extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - Error code %d\n", first_check);
 
 						//GUI_setError(first_check);
 
 						hangarTimerLastError = 2;
 					}
-					else {
+					else_traced
 						extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - Warning code %d\n", first_check);
 
 						//GUI_setWarning(first_check);
-					} traceLog();
+					end_traced;
 
 					Py_BLOCK_THREADS;
 
 					request = showMessage(g_self->i18n);
 
-					if (request) {
+					if_traced (request)
 						extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - showMessage: error %d\n", request);
 					}
 
 					Py_UNBLOCK_THREADS;
-				} traceLog();
+				end_traced;
 
 				SleepEx(
 					INFINITE,     // Wait forever
 					TRUE);        // Put thread in an alertable state
-			} traceLog();
+			end_traced;
 
-			if (hangarTimerLastError) { traceLog();
+			if_traced (hangarTimerLastError)
 				extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent: error %d\n", hangarTimerLastError);
 
 				CancelWaitableTimer(hHangarTimer);
-			} traceLog();
+			end_traced;
 		}
 		else extendedDebugLogFmt("[NY_Event][ERROR]: handleInHangarEvent - SetWaitableTimer: error %d\n", GetLastError());
 
@@ -625,9 +607,9 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 }
 
 uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
-	if (!isInited || first_check || !M_MODELS_NOT_USING) { traceLog();
+	if_traced (!isInited || first_check || !M_MODELS_NOT_USING)
 		return 1;
-	} traceLog();
+	end_traced;
 
 	INIT_LOCAL_MSG_BUFFER;
 
@@ -638,17 +620,17 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 		case WAIT_OBJECT_0: traceLog();
 			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
-			if (!models.empty()) { traceLog();
+			if_traced (!models.empty())
 				request = del_models();
 
-				if (request) { traceLog();
+				if_traced (request)
 					extendedDebugLogFmt("[NY_Event][WARNING]: handleBattleEndEvent - del_models: %d\n", request);
-				} traceLog();
+				end_traced;
 
 				it_model = models.begin();
 
 				while (it_model != models.end()) {
-					if (*it_model == nullptr) { traceLog();
+					if_traced (*it_model == nullptr)
 						it_model = models.erase(it_model);
 
 						continue;
@@ -666,18 +648,18 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 					it_model = models.erase(it_model);
 
 					it_model++;
-				} traceLog();
+				end_traced;
 
 				models.~vector();
-			} traceLog();
+			end_traced;
 
 			isModelsAlreadyInited = false;
 
-			/*if (!lights.empty()) { traceLog();
+			/*if_traced (!lights.empty())
 				it_light = lights.begin();
 
 				while (it_light != lights.end()) {
-					if (*it_light == nullptr) { traceLog();
+					if_traced (*it_light == nullptr)
 						it_light = lights.erase(it_light);
 
 						continue;
@@ -692,16 +674,16 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 					*it_light = nullptr;
 
 					it_light = lights.erase(it_light);
-				} traceLog();
+				end_traced;
 
 				lights.~vector();
-			} traceLog();*/
+			end_traced;*/
 
 			Py_UNBLOCK_THREADS;
 
-			if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog();
+			if_traced (!current_map.modelsSects.empty() && current_map.minimap_count)
 				clearModelsSections();
-			} traceLog();
+			end_traced;
 
 			isModelsAlreadyCreated = false;
 
@@ -709,7 +691,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 
 			//освобождаем мутекс для этого потока
 
-			if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+			if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 				extendedDebugLogFmt("[NY_Event][ERROR]: handleBattleEndEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 				return 3;
@@ -726,14 +708,14 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 			return 2;
 		END_USING_MODELS;
 
-		if (isTimeVisible) { traceLog();
+		if_traced (isTimeVisible)
 			GUI_setTime(NULL);
 			GUI_setTimerVisible(false);
 
 			isTimeVisible = false;
 
 			current_map.time_preparing = NULL;
-		} traceLog();
+		end_traced;
 
 		extendedDebugLog("[NY_Event]: fini OK!\n");
 
@@ -743,11 +725,11 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog();
 uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 	EVENT_ID eventID = EVENT_DEL_MODEL->eventID;
 
-	if (eventID != EVENT_ID::DEL_LAST_MODEL) { traceLog();
+	if_traced (eventID != EVENT_ID::DEL_LAST_MODEL)
 		extendedDebugLog("[NY_Event][ERROR]: DEL_LAST_MODEL - eventID not equal!\n");
 
 		return 1;
-	} traceLog();
+	end_traced;
 
 	//рабочая часть
 
@@ -764,7 +746,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 	Py_UNBLOCK_THREADS;
 
-	if (!request) { traceLog();
+	if_traced (!request)
 		BEGIN_USING_NETWORK;
 		case WAIT_OBJECT_0: traceLog();
 			superExtendedDebugLog("[NY_Event]: NETWORK_USING\n");
@@ -773,7 +755,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 			//освобождаем мутекс для этого потока
 
-			if (!ReleaseMutex(M_NETWORK_NOT_USING)) { traceLog();
+			if_traced (!ReleaseMutex(M_NETWORK_NOT_USING))
 				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - NETWORK_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 				return 11;
@@ -788,21 +770,21 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 			return 10;
 		END_USING_NETWORK;
 
-		if (request) { traceLog();
-			if (server_req > 9) { traceLog();
+		if_traced (request)
+			if_traced (server_req > 9)
 				extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - send_token - Error code %d\n", request);
 
 				//GUI_setError(server_req);
 
 				return 9;
-			} traceLog();
+			end_traced;
 
 			extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token - Warning code %d\n", (uint32_t)server_req);
 
 			//GUI_setWarning(server_req);
 
 			return 8;
-		} traceLog();
+		end_traced;
 
 		BEGIN_USING_MODELS;
 			case WAIT_OBJECT_0: traceLog();
@@ -810,21 +792,21 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 				request = delModelPy(coords);
 
-				if (request) { traceLog();
+				if_traced (request)
 					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", request);
 
 					//GUI_setError(request);
 
 					//освобождаем мутекс для этого потока
 
-					if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+					if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 						extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 						return 7;
 					}
 
 					return 6;
-				} traceLog();
+				end_traced;
 
 				scoreID = modelID;
 				current_map.stageID = STAGE_ID::GET_SCORE;
@@ -834,27 +816,27 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 				/*
 				request = delModelCoords(modelID, coords);
 
-				if (request) { traceLog();
+				if_traced (request)
 					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelCoords - Error code %d\n", request);
 
 					//GUI_setError(request);
 
 					//освобождаем мутекс для этого потока
 
-					if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+					if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 						extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 						return 7;
 					}
 
 					return 6;
-				} traceLog();
+				end_traced;
 
 				*/
 
 				//освобождаем мутекс для этого потока
 
-				if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog();
+				if_traced (!ReleaseMutex(M_MODELS_NOT_USING))
 					extendedDebugLogFmt("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
 
 					return 5;
@@ -869,20 +851,20 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 				return 4;
 		END_USING_MODELS;
 	}
-	else if (request == 7) { traceLog();
+	else if_traced (request == 7)
 		current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
-	} traceLog();
+	end_traced;
 
 	Py_BLOCK_THREADS;
 
-	if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) { traceLog();
+	if_traced (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1)
 		GUI_setMsg(current_map.stageID, scoreID, 5.0f);
 
 		scoreID = -1;
 	}
-	else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) { traceLog();
+	else if_traced (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS)
 		GUI_setMsg(current_map.stageID);
-	} traceLog();
+	end_traced;
 
 	Py_UNBLOCK_THREADS;
 
@@ -893,66 +875,55 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog();
 
 uint8_t makeEventInThread(EVENT_ID eventID) {
 	traceLog(); //переводим ивенты в сигнальные состояния
-	if (!isInited || !databaseID || battleEnded) {
-		traceLog();
+	if_traced (!isInited || !databaseID || battleEnded)
 		return 1;
-	} traceLog();
+	end_traced;
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC || eventID == EVENT_ID::DEL_LAST_MODEL) {
-		traceLog(); //посылаем ивент и обрабатываем в треде
-		if (eventID == EVENT_ID::IN_HANGAR) {
-			traceLog();
-			if (!EVENT_IN_HANGAR) {
-				traceLog();
+	if_traced (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC || eventID == EVENT_ID::DEL_LAST_MODEL) //посылаем ивент и обрабатываем в треде
+		if_traced (eventID == EVENT_ID::IN_HANGAR)
+			if_traced (!EVENT_IN_HANGAR)
 				return 4;
-			} traceLog();
+			end_traced;
 
 			EVENT_IN_HANGAR->eventID = eventID;
 
-			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
-			{
+			if_traced (!SetEvent(EVENT_IN_HANGAR->hEvent))
 				debugLogFmt("[NY_Event][ERROR]: EVENT_IN_HANGAR not setted!\n");
 
 				return 5;
-			} traceLog();
+			end_traced;
 		}
-		else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
-			traceLog();
-			if (!EVENT_START_TIMER) {
-				traceLog();
+		else if_traced (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC)
+			if_traced (!EVENT_START_TIMER)
 				return 4;
-			} traceLog();
+			end_traced;
 
 			EVENT_START_TIMER->eventID = eventID;
 
-			if (!SetEvent(EVENT_START_TIMER->hEvent))
-			{
+			if_traced (!SetEvent(EVENT_START_TIMER->hEvent))
 				debugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER not setted!\n");
 
 				return 5;
-			} traceLog();
+			end_traced;
 		}
-		else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
-			traceLog();
-			if (!EVENT_DEL_MODEL) {
-				traceLog();
+		else if_traced (eventID == EVENT_ID::DEL_LAST_MODEL)
+			if_traced (!EVENT_DEL_MODEL)
 				return 4;
-			} traceLog();
+			end_traced;
 
 			EVENT_DEL_MODEL->eventID = eventID;
 
-			if (!SetEvent(EVENT_DEL_MODEL->hEvent))
-			{
+			if_traced (!SetEvent(EVENT_DEL_MODEL->hEvent))
 				debugLogFmt("[NY_Event][ERROR]: EVENT_DEL_MODEL not setted!\n");
 
 				return 5;
-			} traceLog();
-		} traceLog();
+			end_traced;
+		end_traced;
 
 		return NULL;
-	} traceLog();
+	end_traced;
 
 	return 2;
 };
