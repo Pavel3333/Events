@@ -137,13 +137,16 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		return 4;
 	}
-	else {
-		Py_BLOCK_THREADS;
+	
+	Py_BLOCK_THREADS;
 
-		showMessage(g_self->i18n);
+	request = showMessage(g_self->i18n);
 
-		Py_UNBLOCK_THREADS;
+	if (request) {
+		extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - showMessage: error %d\n", request);
 	}
+
+	Py_UNBLOCK_THREADS;
 
 	if (hHangarTimer) { traceLog(); //закрываем таймер, если он был создан
 		CancelWaitableTimer(hHangarTimer);

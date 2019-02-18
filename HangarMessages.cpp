@@ -6,7 +6,7 @@ PyObject* pushMessage = NULL;
 uint8_t showed = false;
 
 uint8_t showMessage(PyObject* i18n) {
-	if (!first_check && !showed) return NULL;
+	if (!first_check && showed) return NULL;
 
 	PyObject* __GameGreeting = PyString_FromString("GameGreeting");
 
@@ -148,6 +148,9 @@ uint8_t showMessage(PyObject* i18n) {
 	Py_XDECREF(res);
 
 	Py_DECREF(GameGreeting);
+
+	if (!first_check) showed = true;
+	else showed = false;
 
 	return NULL;
 }

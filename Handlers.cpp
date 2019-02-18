@@ -593,7 +593,11 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 					Py_BLOCK_THREADS;
 
-					showMessage(g_self->i18n);
+					request = showMessage(g_self->i18n);
+
+					if (request) {
+						extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - showMessage: error %d\n", request);
+					}
 
 					Py_UNBLOCK_THREADS;
 				} traceLog();
