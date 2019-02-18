@@ -323,7 +323,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 
 	PyObject* __player = PyString_FromString("player");
 
-	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
+	PyObject* player = PyObject_CallMethodObjArgs(m_BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
@@ -500,7 +500,7 @@ uint8_t event_сheck() { traceLog();
 	debugLogFmt("[NY_Event]: checking...\n");
 
 	PyObject* __player = PyString_FromString("player");
-	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
+	PyObject* player = PyObject_CallMethodObjArgs(m_BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
@@ -560,12 +560,12 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		return 1;
 	} traceLog();
 
-	if (g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog();
+	if (m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog();
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
 		PyObject* __register = PyString_FromString("register");
-		PyObject* result = PyObject_CallMethodObjArgs(g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
+		PyObject* result = PyObject_CallMethodObjArgs(m_g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
 
 		Py_XDECREF(result);
 		Py_DECREF(__register);
@@ -573,7 +573,7 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		Py_DECREF(template_);
 	} traceLog();
 
-	if (!g_gui && PyCallable_Check(byteify)) { traceLog();
+	if (!m_g_gui && PyCallable_Check(byteify)) { traceLog();
 		Py_INCREF(byteify);
 
 		PyObject* args1 = PyTuple_New(1);
@@ -625,10 +625,10 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted_Space = NULL;
 
-	if (g_gui) { //traceLog();
+	if (m_g_gui) { //traceLog();
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		isKeyGetted_Space = PyObject_CallMethodObjArgs(g_gui, __get_key, spaceKey, NULL);
+		isKeyGetted_Space = PyObject_CallMethodObjArgs(m_g_gui, __get_key, spaceKey, NULL);
 
 		Py_DECREF(__get_key);
 	}
@@ -686,87 +686,26 @@ PyDoc_STRVAR(event_methods__doc__,
 
 PyMODINIT_FUNC initevent(void)
 {
-	//загрузка BigWorld
+	if (!initNative()) { traceLog();
+		debugLog("[NY_Event][ERROR]: initevent - initNative: error!\n");
 
-	BigWorld = PyImport_AddModule("BigWorld");
-
-	if (!BigWorld) { traceLog();
 		return;
-	} traceLog();
+	}
 
-	//загрузка SM_TYPE и pushMessage
+	if (!initHangarMessages()) { traceLog();
+		debugLog("[NY_Event][ERROR]: initevent - initHangarMessages: error!\n");
 
-	PyObject* SystemMessages = PyImport_ImportModule("gui.SystemMessages");
+		finiNative();
 
-	if (!SystemMessages) { traceLog();
 		return;
-	} traceLog();
-
-	PyObject* __SM_TYPE = PyString_FromString("SM_TYPE");
-
-	SM_TYPE = PyObject_GetAttr(SystemMessages, __SM_TYPE);
-
-	Py_DECREF(__SM_TYPE);
-
-	if (!SM_TYPE) { traceLog();
-		Py_DECREF(SystemMessages);
-		
-		return;
-	} traceLog();
-
-	PyObject* __pushMessage = PyString_FromString("pushMessage");
-
-	pushMessage = PyObject_GetAttr(SystemMessages, __pushMessage);
-
-	Py_DECREF(__pushMessage);
-	Py_DECREF(SystemMessages);
-
-	if (!pushMessage) { traceLog();
-		Py_DECREF(SM_TYPE);
-		return;
-	} traceLog();
-
-	//загрузка g_appLoader
-
-	PyObject* appLoader = PyImport_ImportModule("gui.app_loader");
-
-	if (!appLoader) { traceLog();
-		return;
-	} traceLog();
-
-	PyObject* __g_appLoader = PyString_FromString("g_appLoader");
-
-	g_appLoader = PyObject_GetAttr(appLoader, __g_appLoader);
-
-	Py_DECREF(__g_appLoader);
-	Py_DECREF(appLoader);
-
-	if (!g_appLoader) { traceLog();
-		return;
-	} traceLog();
-
-	//загрузка functools
-
-	functools = PyImport_ImportModule("functools");
-
-	if (!functools) { traceLog();
-		Py_DECREF(g_appLoader);
-		return;
-	} traceLog();
-
-	//загрузка json
-
-	json = PyImport_ImportModule("json");
-
-	if (!json) { traceLog();
-		Py_DECREF(g_appLoader);
-		return;
-	} traceLog();
+	}
 
 	debugLog("[NY_Event]: Config init...\n");
 
 	if (PyType_Ready(&Config_p)) { traceLog();
-		Py_DECREF(g_appLoader);
+		finiNative();
+		finiHangarMessages();
+		
 		return;
 	} traceLog();
 
@@ -780,8 +719,10 @@ PyMODINIT_FUNC initevent(void)
 
 	Py_DECREF(&Config_p);
 
-	if (!g_config) { traceLog();
-		Py_DECREF(g_appLoader);
+	if (!g_config || !g_self) { traceLog();
+		finiHangarMessages();
+		finiNative();
+
 		return;
 	} traceLog();
 
@@ -792,12 +733,16 @@ PyMODINIT_FUNC initevent(void)
 		event_methods__doc__);
 
 	if (!event_module) { traceLog();
-		Py_DECREF(g_appLoader);
+		finiHangarMessages();
+		finiNative();
+		
 		return;
 	} traceLog();
 
 	if (PyModule_AddObject(event_module, "l", g_config)) { traceLog();
-		Py_DECREF(g_appLoader);
+		finiHangarMessages();
+		finiNative();
+		
 		return;
 	} traceLog();
 
@@ -810,7 +755,9 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(__omc);
 
 	if (!onModelCreatedPyMeth) { traceLog();
-		Py_DECREF(g_appLoader);
+		finiHangarMessages();
+		finiNative();
+
 		return;
 	} traceLog();
 
@@ -824,14 +771,14 @@ PyMODINIT_FUNC initevent(void)
 
 	//загрузка modGUI
 
-#if debug_log
-	OutputDebugString(_T("Mod_GUI module loading...\n"));
-#endif
+	debugLog("Mod_GUI module loading...\n");
 
 	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
 
 	if (!mGUI_module) { traceLog();
-		Py_DECREF(g_appLoader);
+		finiHangarMessages();
+		finiNative();
+
 		return;
 	} traceLog();
 
@@ -845,7 +792,9 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(mGUI_module);
 
 	if (!modGUI) { traceLog();
-		Py_DECREF(g_appLoader);
+		finiHangarMessages();
+		finiNative();
+
 		return;
 	} traceLog();
 
@@ -859,20 +808,22 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!mod_mods_gui) { traceLog();
 		PyErr_Clear();
-		g_gui = NULL;
+		m_g_gui = NULL;
 
 		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
 	}
 	else {
 		PyObject* __g_gui = PyString_FromString("g_gui");
 
-		g_gui = PyObject_GetAttr(mod_mods_gui, __g_gui);
+		m_g_gui = PyObject_GetAttr(mod_mods_gui, __g_gui);
 
 		Py_DECREF(__g_gui);
 		Py_DECREF(mod_mods_gui);
 
-		if (!g_gui) { traceLog();
-			Py_DECREF(g_appLoader);
+		if (!m_g_gui) { traceLog();
+			finiHangarMessages();
+			finiNative();
+
 			Py_DECREF(modGUI);
 			return;
 		} traceLog();
@@ -880,14 +831,16 @@ PyMODINIT_FUNC initevent(void)
 		debugLog("[NY_Event]: mod_mods_gui loaded OK!\n");
 	} traceLog();
 
-	if (!g_gui) { traceLog();
+	if (!m_g_gui) { traceLog();
 		_mkdir("mods/configs");
 		_mkdir("mods/configs/pavel3333");
 		_mkdir("mods/configs/pavel3333/NY_Event");
 		_mkdir("mods/configs/pavel3333/NY_Event/i18n");
 
 		if (!read_data(true) || !read_data(false)) { traceLog();
-			Py_DECREF(g_appLoader);
+			finiHangarMessages();
+			finiNative();
+
 			Py_DECREF(modGUI);
 			return;
 		} traceLog();
@@ -896,25 +849,26 @@ PyMODINIT_FUNC initevent(void)
 		PyObject* ids = PyString_FromString(g_self->ids);
 
 		if (!ids) { traceLog();
-			Py_DECREF(g_appLoader);
+			finiHangarMessages();
+			finiNative();
+
 			Py_DECREF(modGUI);
-			Py_DECREF(g_gui);
 			return;
 		} traceLog();
 
 		PyObject* __register_data = PyString_FromString("register_data");
 		PyObject* __pavel3333 = PyString_FromString("pavel3333");
-		PyObject* data_i18n = PyObject_CallMethodObjArgs(g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
+		PyObject* data_i18n = PyObject_CallMethodObjArgs(m_g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
 
 		Py_DECREF(__pavel3333);
 		Py_DECREF(__register_data);
 		Py_DECREF(ids);
 
 		if (!data_i18n) { traceLog();
-			Py_DECREF(g_appLoader);
+			finiHangarMessages();
+			finiNative();
+
 			Py_DECREF(modGUI);
-			Py_DECREF(g_gui);
-			Py_DECREF(ids);
 			return;
 		} traceLog();
 
@@ -941,6 +895,9 @@ PyMODINIT_FUNC initevent(void)
 	uint32_t curl_init_result = curl_init();
 
 	if (curl_init_result) { traceLog();
+		finiHangarMessages();
+		finiNative();
+
 		INIT_LOCAL_MSG_BUFFER;
 
 		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);

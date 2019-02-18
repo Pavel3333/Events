@@ -94,35 +94,44 @@ static PyObject * Config_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 	g_self = (ConfigObject*)type->tp_alloc(type, 0);
 
-	if (g_self != NULL) {
-
+	if (g_self) {
 		g_self->ids = config.ids;
-		if (g_self->ids == NULL) {
+
+		if (!g_self->ids) {
 			Py_DECREF(g_self);
+
 			return NULL;
 		}
 
 		g_self->patch = config.patch;
-		if (g_self->patch == NULL) {
+
+		if (!g_self->patch) {
 			Py_DECREF(g_self);
+
 			return NULL;
 		}
 
 		g_self->author = config.author;
-		if (g_self->author == NULL) {
+
+		if (!g_self->author) {
 			Py_DECREF(g_self);
+
 			return NULL;
 		}
 
 		g_self->version = config.version;
-		if (g_self->version == NULL) {
+
+		if (!g_self->version) {
 			Py_DECREF(g_self);
+
 			return NULL;
 		}
 
 		g_self->version_id = config.version_id;
+
 		if (g_self->version_id == NULL) {
 			Py_DECREF(g_self);
+
 			return NULL;
 		}
 
@@ -130,11 +139,17 @@ static PyObject * Config_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 		if (!g_self->data) {
 			Py_DECREF(g_self);
+
 			return NULL;
 		}
 
 		g_self->i18n = init_i18n();
 
+		if (!g_self->i18n) {
+			Py_DECREF(g_self);
+
+			return NULL;
+		}
 	}
 
 	return (PyObject *)g_self;

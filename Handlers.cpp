@@ -4,7 +4,7 @@
 
 uint8_t handleBattleEvent(EVENT_ID eventID) {
 	traceLog();
-	if (!isInited || first_check || battleEnded || !g_self || eventID == EVENT_ID::IN_HANGAR || !M_MODELS_NOT_USING) { traceLog();
+	if (!isInited || first_check || battleEnded || eventID == EVENT_ID::IN_HANGAR || !M_MODELS_NOT_USING) { traceLog();
 		return 1;
 	} traceLog();
 

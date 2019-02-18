@@ -67,7 +67,7 @@ bool write_data(char* data_path, PyObject* data_p) {
 
 	PyObject* __dumps = PyString_FromString("dumps");
 
-	PyObject* data_json_s = PyObject_CallMethodObjArgs(json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
+	PyObject* data_json_s = PyObject_CallMethodObjArgs(m_json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
 
 	Py_DECREF(__dumps);
 	Py_DECREF(arg2);
@@ -95,8 +95,7 @@ bool write_data(char* data_path, PyObject* data_p) {
 	return true;
 }
 
-bool read_data(bool isData) {
-	traceLog();
+bool read_data(bool isData) { traceLog();
 	char* data_path;
 	PyObject* data_src;
 	if (isData) {
@@ -138,7 +137,7 @@ bool read_data(bool isData) {
 
 		PyObject* __loads = PyString_FromString("loads");
 
-		PyObject* data_json_s = PyObject_CallMethodObjArgs(json, __loads, data_p, NULL);
+		PyObject* data_json_s = PyObject_CallMethodObjArgs(m_json, __loads, data_p, NULL);
 
 		Py_DECREF(__loads);
 		Py_DECREF(data_p);
@@ -239,7 +238,7 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 	traceLog();
 	PyObject* __player = PyString_FromString("player");
 
-	PyObject* player = PyObject_CallMethodObjArgs(BigWorld, __player, NULL);
+	PyObject* player = PyObject_CallMethodObjArgs(m_BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
@@ -523,7 +522,7 @@ PyObject* event_light(float coords[3]) { //traceLog();
 
 	PyObject* __PyOmniLight = PyString_FromString("PyOmniLight");
 
-	PyObject* Light = PyObject_CallMethodObjArgs(BigWorld, __PyOmniLight, NULL);
+	PyObject* Light = PyObject_CallMethodObjArgs(m_BigWorld, __PyOmniLight, NULL);
 
 	Py_DECREF(__PyOmniLight);
 
@@ -712,13 +711,9 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) { //traceLog();
 			return NULL;
 		} //traceLog();
 
-		PyObject* __partial = PyString_FromString("partial");
-
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
-		PyObject* partialized = PyObject_CallMethodObjArgs(functools, __partial, onModelCreatedPyMeth, coords_p, NULL);
-
-		Py_DECREF(__partial);
+		PyObject* partialized = PyObject_CallFunctionObjArgs(m_partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		if (!partialized) {
 			traceLog();
@@ -727,21 +722,14 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) { //traceLog();
 			return NULL;
 		} //traceLog();
 
-		PyObject* __fetchModel = PyString_FromString("fetchModel");
-
-		Model = PyObject_CallMethodObjArgs(BigWorld, __fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+		Model = PyObject_CallFunctionObjArgs(m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
 
 		Py_XDECREF(Model);
-		Py_DECREF(__fetchModel);
 
 		return NULL;
 	} //traceLog();
 
-	PyObject* __Model = PyString_FromString("Model");
-
-	Model = PyObject_CallMethodObjArgs(BigWorld, __Model, PyString_FromString(path), NULL);
-
-	Py_DECREF(__Model);
+	Model = PyObject_CallMethodObjArgs(m_Model, PyString_FromString(path), NULL);
 
 	if (!Model) {
 		traceLog();
@@ -957,7 +945,7 @@ uint8_t init_models() {
 
 		PyObject* __addModel = PyString_FromString("addModel");
 
-		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __addModel, models[i]->model, NULL);
+		PyObject* result = PyObject_CallMethodObjArgs(m_BigWorld, __addModel, models[i]->model, NULL);
 
 		Py_DECREF(__addModel);
 
@@ -1065,7 +1053,7 @@ uint8_t del_models() {
 
 		PyObject* __delModel = PyString_FromString("delModel");
 
-		PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __delModel, (*it_model)->model, NULL);
+		PyObject* result = PyObject_CallMethodObjArgs(m_BigWorld, __delModel, (*it_model)->model, NULL);
 
 		Py_DECREF(__delModel);
 

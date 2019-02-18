@@ -1,7 +1,50 @@
 #include "HangarMessages.h"
 
-PyObject* SM_TYPE     = NULL;
-PyObject* pushMessage = NULL;
+PyObject* m_SM_TYPE     = NULL;
+PyObject* m_pushMessage = NULL;
+
+//initialization
+
+bool initHangarMessages() {
+	//загрузка SM_TYPE и pushMessage
+
+	PyObject* SystemMessages = PyImport_ImportModule("gui.SystemMessages");
+
+	if (!SystemMessages) { traceLog();
+		return false;
+	} traceLog();
+
+	PyObject* __SM_TYPE = PyString_FromString("SM_TYPE");
+
+	m_SM_TYPE = PyObject_GetAttr(SystemMessages, __SM_TYPE);
+
+	Py_DECREF(__SM_TYPE);
+
+	if (!m_SM_TYPE) { traceLog();
+		Py_DECREF(SystemMessages);
+
+		return false;
+	} traceLog();
+
+	PyObject* __pushMessage = PyString_FromString("pushMessage");
+
+	m_pushMessage = PyObject_GetAttr(SystemMessages, __pushMessage);
+
+	Py_DECREF(__pushMessage);
+	Py_DECREF(SystemMessages);
+
+	if (!m_pushMessage) { traceLog();
+		Py_DECREF(m_SM_TYPE);
+		return false;
+	} traceLog();
+
+	return true;
+}
+
+void finiHangarMessages() {
+	Py_XDECREF(m_pushMessage);
+	Py_XDECREF(m_SM_TYPE);
+}
 
 uint8_t showed = false;
 
@@ -10,7 +53,7 @@ uint8_t showMessage(PyObject* i18n) {
 
 	PyObject* __GameGreeting = PyString_FromString("GameGreeting");
 
-	PyObject* GameGreeting = PyObject_GetAttr(SM_TYPE, __GameGreeting);
+	PyObject* GameGreeting = PyObject_GetAttr(m_SM_TYPE, __GameGreeting);
 
 	Py_DECREF(__GameGreeting);
 
@@ -141,7 +184,7 @@ uint8_t showMessage(PyObject* i18n) {
 		return 6;
 	}
 
-	PyObject* res = PyObject_CallFunctionObjArgs(pushMessage, text, GameGreeting, NULL);
+	PyObject* res = PyObject_CallFunctionObjArgs(m_pushMessage, text, GameGreeting, NULL);
 
 	Py_DECREF(text);
 
