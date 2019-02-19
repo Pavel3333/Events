@@ -10,7 +10,7 @@
 #define extended_debug_log       true
 #define super_extended_debug_log false
 
-#define trace_log true
+#define trace_log false
 
 #define INIT_LOCAL_MSG_BUFFER \
 	char log_buf_c[1024];     \

@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <direct.h>
 
+#pragma warning disable C5033
+
 std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
 //threads functions
