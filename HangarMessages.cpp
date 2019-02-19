@@ -94,15 +94,7 @@ uint8_t showMessage(PyObject* i18n) {
 			return 3;
 		}
 
-		//Костыль, пока в XFW не завезли PyUnicode_FromFormat
-
-		char text_c[512];
-
-		sprintf_s(text_c, 512, "<font size=\"14\" color=\"#228b22\">%s<br><a href=\"event:https://pavel3333.ru/\">%s</a></font>", thx_1_c, thx_2_c);
-
-		text = PyUnicode_FromString(text_c);
-
-		//text = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\">%s<br><a href=\"event:https://pavel3333.ru/\">%s</a></font>", thx_1_c, thx_2_c);
+		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\">%s<br><a href=\"event:https://pavel3333.ru/\">%s</a></font>", thx_1_c, thx_2_c);
 
 		Py_DECREF(thx_2);
 		Py_DECREF(thx_1);
@@ -130,15 +122,7 @@ uint8_t showMessage(PyObject* i18n) {
 			return 5;
 		}
 
-		//Костыль, пока в XFW не завезли PyUnicode_FromFormat
-
-		char text_c[512];
-
-		sprintf_s(text_c, 512, "<font size=\"14\" color=\"#ffcc00\">%s</font>", UI_err_c);
-
-		text = PyUnicode_FromString(text_c);
-
-		//text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s</font>", UI_err_c);
+		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s</font>", UI_err_c);
 
 		Py_DECREF(UI_err);
 	}
@@ -165,15 +149,7 @@ uint8_t showMessage(PyObject* i18n) {
 			return 5;
 		}
 
-		//Костыль, пока в XFW не завезли PyUnicode_FromFormat
-
-		char text_c[512];
-
-		sprintf_s(text_c, 512, "<font size=\"14\" color=\"#ffcc00\">%s: Error %d</font>", UI_description_c, (uint32_t)first_check);
-
-		text = PyUnicode_FromString(text_c);
-
-		//text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s: Error %d</font>", UI_description_c, (uint32_t)first_check);
+		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s: Error %d</font>", UI_description_c, (uint32_t)first_check);
 
 		Py_DECREF(UI_description);
 	}
@@ -193,7 +169,7 @@ uint8_t showMessage(PyObject* i18n) {
 	Py_DECREF(GameGreeting);
 
 	if (!first_check) showed = true;
-	else showed = false;
+	else              showed = false;
 
 	return NULL;
 }

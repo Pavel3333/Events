@@ -879,8 +879,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 //заставить событие сигнализировать
 
-uint8_t makeEventInThread(EVENT_ID eventID) {
-	traceLog //переводим ивенты в сигнальные состояния
+uint8_t makeEventInThread(EVENT_ID eventID) { traceLog //переводим ивенты в сигнальные состояния
 	if (!isInited || !databaseID || battleEnded) { traceLog
 		return 1;
 	} traceLog
@@ -895,8 +894,7 @@ uint8_t makeEventInThread(EVENT_ID eventID) {
 
 			EVENT_IN_HANGAR->eventID = eventID;
 
-			if (!SetEvent(EVENT_IN_HANGAR->hEvent))
-			{
+			if (!SetEvent(EVENT_IN_HANGAR->hEvent)) { traceLog
 				debugLogFmt("[NY_Event][ERROR]: EVENT_IN_HANGAR not setted!\n");
 
 				return 5;
