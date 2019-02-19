@@ -691,8 +691,12 @@ PyDoc_STRVAR(event_methods__doc__,
 
 PyMODINIT_FUNC initevent(void)
 {
-	if (!initNative()) { traceLog
-		debugLog("[NY_Event][ERROR]: initevent - initNative: error!\n");
+	INIT_LOCAL_MSG_BUFFER;
+
+	request = initNative();
+
+	if (request) { traceLog
+		debugLogFmt("[NY_Event][ERROR]: initevent - initNative: error %d!\n", request);
 
 		return;
 	}
@@ -902,8 +906,6 @@ PyMODINIT_FUNC initevent(void)
 	if (curl_init_result) { traceLog
 		finiHangarMessages();
 		finiNative();
-
-		INIT_LOCAL_MSG_BUFFER;
 
 		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
 

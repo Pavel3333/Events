@@ -13,8 +13,8 @@ extern PyObject* m_g_appLoader;
 extern PyObject* m_partial;
 extern PyObject* m_json;
 
-bool initNative();
-void finiNative();
+uint8_t initNative();
+void    finiNative();
 
 void callback(long*, PyObject*, float time_f = 1.0);
 void cancelCallback(long*);

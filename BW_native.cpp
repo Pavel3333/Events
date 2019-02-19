@@ -12,13 +12,13 @@ PyObject* m_json           = NULL;
 
 //initialization
 
-bool initNative() { traceLog
+uint8_t initNative() { traceLog
 	//загрузка BigWorld
 
 	m_BigWorld = PyImport_AddModule("BigWorld");
 
 	if (!m_BigWorld) { traceLog
-		return false;
+		return 1;
 	} traceLog
 
 	//загрузка Model
@@ -30,7 +30,7 @@ bool initNative() { traceLog
 	Py_DECREF(__Model);
 
 	if (!m_Model) { traceLog
-		return false;
+		return 2;
 	} traceLog
 
 	//загрузка fetchModel
@@ -44,7 +44,7 @@ bool initNative() { traceLog
 	if (!m_fetchModel) { traceLog
 		Py_DECREF(m_Model);
 
-		return false;
+		return 3;
 	} traceLog
 
 	//загрузка callback
@@ -59,7 +59,7 @@ bool initNative() { traceLog
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 		
-		return false;
+		return 4;
 	} traceLog
 
 	//загрузка cancelCallback
@@ -75,7 +75,7 @@ bool initNative() { traceLog
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 
-		return false;
+		return 5;
 	} traceLog
 
 	//загрузка g_appLoader
@@ -88,7 +88,7 @@ bool initNative() { traceLog
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 		
-		return false;
+		return 6;
 	} traceLog
 
 	PyObject* __g_appLoader = PyString_FromString("g_appLoader");
@@ -104,12 +104,29 @@ bool initNative() { traceLog
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 
-		return false;
+		return 7;
 	} traceLog
 
 	//загрузка partial
 
-	m_partial = PyImport_ImportModule("functools.partial");
+	PyObject* functools = PyImport_ImportModule("functools");
+
+	if (!functools) {
+		Py_DECREF(m_g_appLoader);
+		Py_DECREF(m_cancelCallback);
+		Py_DECREF(m_callback);
+		Py_DECREF(m_fetchModel);
+		Py_DECREF(m_Model);
+
+		return 8;
+	}
+
+	PyObject* __g_partial = PyString_FromString("partial");
+
+	m_partial = PyObject_GetAttr(functools, __g_partial);
+
+	Py_DECREF(__g_partial);
+	Py_DECREF(functools);
 
 	if (!m_partial) { traceLog
 		Py_DECREF(m_g_appLoader);
@@ -118,7 +135,7 @@ bool initNative() { traceLog
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 
-		return false;
+		return 9;
 	} traceLog
 
 	//загрузка json
@@ -133,10 +150,10 @@ bool initNative() { traceLog
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 
-		return false;
+		return 10;
 	} traceLog
 
-	return true;
+	return NULL;
 }
 
 //finalization
