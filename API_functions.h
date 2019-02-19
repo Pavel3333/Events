@@ -10,11 +10,11 @@
 #define extended_debug_log       true
 #define super_extended_debug_log false
 
-#define trace_log false
+#define trace_log true
 
 #define INIT_LOCAL_MSG_BUFFER \
-	char log_buf_c[1024];      \
-	WCHAR log_buf[1024];                          
+	char log_buf_c[1024];     \
+	WCHAR  log_buf[1024];
 
 #if debug_log
 #define debugLog(X)           \
@@ -33,9 +33,9 @@
 	}
 
 #if extended_debug_log
-#define extendedDebugLog(X)                      \
-	OutputDebugString(_T(X));                    \
-	dbg_log << X;                                \
+#define extendedDebugLog(X)   \
+	OutputDebugString(_T(X)); \
+	dbg_log << X;             \
 	dbg_log.flush();
 #define extendedDebugLogFmt(fmt, ...) {          \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
@@ -47,9 +47,9 @@
 
 
 #if super_extended_debug_log
-#define superExtendedDebugLog(X)                 \
-	OutputDebugString(_T(X));                    \
-	dbg_log << X;                                \
+#define superExtendedDebugLog(X) \
+	OutputDebugString(_T(X));    \
+	dbg_log << X;                \
 	dbg_log.flush();
 #define superExtendedDebugLogFmt(fmt, ...) {     \
 	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
@@ -80,7 +80,7 @@
 
 #if trace_log
 #define traceLog {                                           \
-	dbg_log << __LINE__ << " - " << __FUNCTION__ << std::endl; \
+	dbg_log << __LINE__ << " - " __FUNCTION__ << std::endl; \
 }
 #else
 #define traceLog 0;
@@ -101,6 +101,8 @@
 	switch (M_MODELS_NOT_USING_WaitResult) {
 
 #define END_USING_NETWORK }}
+
+#define MOD_VERSION "v1.0.0.2 (" __TIMESTAMP__ ")"
 
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12
@@ -218,10 +220,10 @@ struct i18n_c {
 
 struct Config {
 	char* ids = "NY_Event";
-	char* author = "by Pavel3333 & RAINN VOD";
-	char* version = "v1.0.0.1 (17.02.2019)";
+	char* author = "by Pavel3333 & RAINN VOD (thx SkepticalFox)";
+	char* version = MOD_VERSION;
 	char* patch = "1.4.0.1";
-	uint16_t version_id = 100U;
+	uint16_t version_id = 100;
 	data_c data;
 	i18n_c i18n;
 };

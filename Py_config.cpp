@@ -52,34 +52,34 @@ static PyObject* init_i18n() {
 
 	PyObject* i18n_version = PyInt_FromSize_t(config.i18n.version);
 
-	if (PyDict_SetItem(i18n, PyString_FromStringAndSize("version", 7U), i18n_version)) {
+	if (PyDict_SetItem(i18n, PyString_FromString("version"), i18n_version)) {
 		Py_DECREF(i18n_version);
 		Py_DECREF(i18n);
 		return NULL;
 	}
 
-	PyObject* UI_description = PyString_FromStringAndSize("NY_Event Mod", 12U);
+	PyObject* UI_description = PyString_FromString("NY_Event Mod");
 
 	PyObject* empty_tooltip = PyString_FromStringAndSize("", NULL);
 
-	PyObject* UI_message_thx = PyString_FromStringAndSize("NY_Event: Successfully loaded.", 30U);
-	PyObject* UI_message_thx_2 = PyString_FromStringAndSize("Official site", 13U);
-	PyObject* UI_message_channel = PyString_FromStringAndSize("Official channel RAINN VOD of NY_Event", 38U);
+	PyObject* UI_message_thx     = PyString_FromString("NY_Event: Successfully loaded.");
+	PyObject* UI_message_thx_2   = PyString_FromString("Official site");
+	PyObject* UI_message_channel = PyString_FromString("Official channel RAINN VOD of NY_Event");
 
-	PyObject* UI_err_2 = PyString_FromStringAndSize("Error. Redownload mod ", 22U);
-	PyObject* UI_err_3 = PyString_FromStringAndSize("Error. Maybe network don't works?", 33U);
-	PyObject* UI_err_6 = PyString_FromStringAndSize("Error. You were not allowed to event.", 37U);
+	PyObject* UI_err_2 = PyString_FromString("Error. Redownload mod");
+	PyObject* UI_err_3 = PyString_FromString("Error. Maybe network don't works?");
+	PyObject* UI_err_6 = PyString_FromString("Error. You were not allowed to event. To participate in the event, please write to ArrrTes");
 
 	PyObject* UI_messages = getMessagesList();
 
-	if (PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_description", 14U), UI_description) ||
-		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_message_thx", 14U), UI_message_thx) ||
-		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_message_thx_2", 16U), UI_message_thx_2) ||
-		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_message_channel", 18U), UI_message_channel) ||
-		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_err_2", 8U), UI_err_2) ||
-		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_err_3", 8U), UI_err_3) ||
-		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_err_6", 8U), UI_err_6) ||
-		PyDict_SetItem(i18n, PyString_FromStringAndSize("UI_messages", 11U), UI_messages)
+	if (PyDict_SetItem(i18n, PyString_FromString("UI_description"), UI_description)         ||
+		PyDict_SetItem(i18n, PyString_FromString("UI_message_thx"), UI_message_thx)         ||
+		PyDict_SetItem(i18n, PyString_FromString("UI_message_thx_2"), UI_message_thx_2)     ||
+		PyDict_SetItem(i18n, PyString_FromString("UI_message_channel"), UI_message_channel) ||
+		PyDict_SetItem(i18n, PyString_FromString("UI_err_2"), UI_err_2)                     ||
+		PyDict_SetItem(i18n, PyString_FromString("UI_err_3"), UI_err_3)                     ||
+		PyDict_SetItem(i18n, PyString_FromString("UI_err_6"), UI_err_6)                     ||
+		PyDict_SetItem(i18n, PyString_FromString("UI_messages"), UI_messages)
 		) {
 		Py_DECREF(i18n);
 		return NULL;
@@ -211,7 +211,7 @@ PyTypeObject Config_p {
 
 		/* Flags to define presence of optional/expanded features */
 		Py_TPFLAGS_DEFAULT,
-		"Config for Free Positions Mod", /* Documentation string */
+		"Config for NY_Event Mod", /* Documentation string */
 
 									/* Assigned meaning in release 2.0 */
 									/* call function for all accessible objects */
