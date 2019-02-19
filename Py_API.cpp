@@ -29,8 +29,8 @@ bool isStreamer = false;
 HANDLE hHangarTimer = NULL;
 HANDLE hBattleTimer = NULL;
 
-HANDLE hTimerThread  = NULL;
-DWORD  timerThreadID = NULL;
+HANDLE hBattleTimerThread  = NULL;
+DWORD  battleTimerThreadID = NULL;
 
 HANDLE hHandlerThread  = NULL;
 DWORD  handlerThreadID = NULL;

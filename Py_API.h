@@ -38,8 +38,8 @@ extern bool isTimeVisible;
 extern HANDLE hHangarTimer;
 extern HANDLE hBattleTimer;
 
-extern HANDLE hTimerThread;
-extern DWORD  timerThreadID;
+extern HANDLE hBattleTimerThread;
+extern DWORD  battleTimerThreadID;
 
 extern HANDLE hHandlerThread;
 extern DWORD  handlerThreadID;

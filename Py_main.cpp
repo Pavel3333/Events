@@ -89,11 +89,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	if (!isInited || !M_NETWORK_NOT_USING) { traceLog();
+	if (!isInited || !M_NETWORK_NOT_USING || !EVENT_IN_HANGAR || !EVENT_START_TIMER || !EVENT_DEL_MODEL || !EVENT_BATTLE_ENDED) { traceLog();
 		return 1;
 	} traceLog();
-
-	EVENT_ID eventID;
 
 	//включаем GIL для этого потока
 
@@ -119,10 +117,10 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 		//место для рабочего кода
 
-		request = handleInHangarEvent(_save);
+		EVENT_IN_HANGAR->request = handleInHangarEvent(_save);
 
-		if (request) { traceLog();
-			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", request);
+		if (EVENT_IN_HANGAR->request) { traceLog();
+			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", EVENT_IN_HANGAR->request);
 		}
 
 		break;
@@ -140,10 +138,10 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	
 	Py_BLOCK_THREADS;
 
-	request = showMessage(g_self->i18n);
+	EVENT_IN_HANGAR->request = showMessage(g_self->i18n);
 
-	if (request) {
-		extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - showMessage: error %d\n", request);
+	if (EVENT_IN_HANGAR->request) {
+		extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - showMessage: error %d\n", EVENT_IN_HANGAR->request);
 	}
 
 	Py_UNBLOCK_THREADS;
@@ -159,21 +157,21 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	//создаем поток с таймером
 
-	if (hTimerThread) { traceLog();
-		CloseHandle(hTimerThread);
+	if (hBattleTimerThread) { traceLog();
+		CloseHandle(hBattleTimerThread);
 
-		hTimerThread = NULL;
+		hBattleTimerThread = NULL;
 	} traceLog();
 
-	hTimerThread = CreateThread(
+	hBattleTimerThread = CreateThread(
 		NULL,                                   // default security attributes
 		0,                                      // use default stack size  
 		TimerThread,                            // thread function name
 		NULL,                                   // argument to thread function 
 		0,                                      // use default creation flags 
-		&timerThreadID);                        // returns the thread identifier 
+		&battleTimerThreadID);                        // returns the thread identifier 
 
-	if (!hTimerThread)
+	if (!hBattleTimerThread)
 	{
 		extendedDebugLogFmt("[NY_Event][ERROR]: Creating timer thread: error %d\n", GetLastError());
 
@@ -202,10 +200,10 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			//место для рабочего кода
 
-			request = handleDelModelEvent(_save);
+			EVENT_DEL_MODEL->request = handleDelModelEvent(_save);
 
-			if (request) {
-				extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - handleDelModelEvent: error %d!\n", request);
+			if (EVENT_DEL_MODEL->request) {
+				extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - handleDelModelEvent: error %d!\n", EVENT_DEL_MODEL->request);
 
 				break;
 			}
@@ -216,9 +214,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			Py_BLOCK_THREADS;
 
-			request = handleBattleEndEvent(_save);
+			EVENT_BATTLE_ENDED->request = handleBattleEndEvent(_save);
 
-			if (!request) { traceLog();
+			if (!EVENT_BATTLE_ENDED->request) { traceLog();
 				battleEnded = true;
 
 				current_map.stageID = STAGE_ID::COMPETITION;
@@ -243,7 +241,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 				GUI_setVisible(false);
 				GUI_clearText();
 
-				request = NULL;
 				mapID   = NULL;
 			}
 
@@ -262,19 +259,23 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	if (lastEventError) extendedDebugLogFmt("[NY_Event][WARNING]: Error in event: %d\n", lastEventError);
 
-	if (hBattleTimer) { traceLog(); //закрываем таймер, если он был создан
+	//закрываем таймеры
+
+	if (hBattleTimer) { traceLog();
 		CancelWaitableTimer(hBattleTimer);
 		CloseHandle(hBattleTimer);
 
 		hBattleTimer = NULL;
 	} traceLog();
 
-	if (hTimerThread) {
-		TerminateThread(hTimerThread, NULL);
-		CloseHandle(hTimerThread);
+	if (hBattleTimerThread) {
+		TerminateThread(hBattleTimerThread, NULL);
+		CloseHandle(hBattleTimerThread);
 
-		hTimerThread = NULL;
+		hBattleTimerThread = NULL;
 	}
+
+	//освобождаем ивенты
 
 	closeEvent1(&EVENT_START_TIMER);
 	closeEvent1(&EVENT_IN_HANGAR);
@@ -282,6 +283,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	closeEvent2(&EVENT_ALL_MODELS_CREATED);
 	closeEvent2(&EVENT_BATTLE_ENDED);
+
+	//освобождаем мутексы
 
 	if (M_NETWORK_NOT_USING) { traceLog();
 		CloseHandle(M_NETWORK_NOT_USING);
