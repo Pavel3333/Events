@@ -79,11 +79,11 @@
 #endif
 
 #if trace_log
-#define traceLog() {                                           \
+#define traceLog {                                           \
 	dbg_log << __LINE__ << " - " << __FUNCTION__ << std::endl; \
 }
 #else
-#define traceLog() 0
+#define traceLog 0;
 #endif
 
 #define BEGIN_USING_MODELS {                                   \

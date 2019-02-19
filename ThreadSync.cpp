@@ -20,51 +20,51 @@ HANDLE M_MODELS_NOT_USING  = NULL;
 //---------------------
 
 void closeEvent1(PEVENTDATA_1* pEvent) {
-	traceLog();
+	traceLog
 	if (*pEvent) {
-		traceLog(); //если уже была инициализирована структура - удаляем
+		traceLog //если уже была инициализирована структура - удаляем
 		if ((*pEvent)->hEvent) {
-			traceLog();
+			traceLog
 			CloseHandle((*pEvent)->hEvent);
 
 			(*pEvent)->hEvent = NULL;
-		} traceLog();
+		} traceLog
 
 		HeapFree(GetProcessHeap(), NULL, *pEvent);
 
 		*pEvent = NULL;
-	} traceLog();
+	} traceLog
 }
 
 void closeEvent2(PEVENTDATA_2* pEvent) {
-	traceLog();
+	traceLog
 	if (*pEvent) {
-		traceLog(); //если уже была инициализирована структура - удаляем
+		traceLog //если уже была инициализирована структура - удаляем
 		if ((*pEvent)->hEvent) {
-			traceLog();
+			traceLog
 			CloseHandle((*pEvent)->hEvent);
 
 			(*pEvent)->hEvent = NULL;
-		} traceLog();
+		} traceLog
 
 		HeapFree(GetProcessHeap(), NULL, *pEvent);
 
 		*pEvent = NULL;
-	} traceLog();
+	} traceLog
 }
 
 bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
-	traceLog();
+	traceLog
 	closeEvent1(pEvent); //закрываем ивент, если существует
 
 	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_1));
 
 	if (!(*pEvent)) {
-		traceLog(); //нехватка памяти, завершаем работу
+		traceLog //нехватка памяти, завершаем работу
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	(*pEvent)->hEvent = CreateEvent(
 		NULL,                      // default security attributes
@@ -74,29 +74,29 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 	);
 
 	if (!((*pEvent)->hEvent)) {
-		traceLog();
+		traceLog
 		INIT_LOCAL_MSG_BUFFER;
 
 		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	return true;
 }
 
 bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
-	traceLog();
+	traceLog
 	closeEvent2(pEvent); //закрываем ивент, если существует
 
 	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_2));
 
 	if (!(*pEvent)) {
-		traceLog(); //нехватка памяти, завершаем работу
+		traceLog //нехватка памяти, завершаем работу
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	(*pEvent)->hEvent = CreateEvent(
 		NULL,                      // default security attributes
@@ -106,13 +106,13 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 	);
 
 	if (!((*pEvent)->hEvent)) {
-		traceLog();
+		traceLog
 		INIT_LOCAL_MSG_BUFFER;
 
 		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	return true;
 }

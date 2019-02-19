@@ -23,9 +23,9 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	if (!isInited || !M_NETWORK_NOT_USING ||!EVENT_START_TIMER) { traceLog();
+	if (!isInited || !M_NETWORK_NOT_USING ||!EVENT_START_TIMER) { traceLog
 		return 1;
-	} traceLog();
+	} traceLog
 
 	PyGILState_STATE gstate;
 
@@ -40,7 +40,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		INFINITE);               // indefinite wait
 
 	switch (EVENT_START_TIMER_WaitResult) {
-	case WAIT_OBJECT_0:  traceLog();
+	case WAIT_OBJECT_0:  traceLog
 		superExtendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
 
 		//включаем GIL для этого потока
@@ -55,7 +55,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 
 		request = handleStartTimerEvent(_save);
 
-		if (request) { traceLog();
+		if (request) { traceLog
 			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
 		}
 
@@ -70,11 +70,11 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		break;
 
 		// An error occurred
-	default: traceLog();
+	default: traceLog
 		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
 
 		return 3;
-	} traceLog();
+	} traceLog
 
 	//закрываем поток
 
@@ -89,9 +89,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	if (!isInited || !M_NETWORK_NOT_USING || !EVENT_IN_HANGAR || !EVENT_START_TIMER || !EVENT_DEL_MODEL || !EVENT_BATTLE_ENDED) { traceLog();
+	if (!isInited || !M_NETWORK_NOT_USING || !EVENT_IN_HANGAR || !EVENT_START_TIMER || !EVENT_DEL_MODEL || !EVENT_BATTLE_ENDED) { traceLog
 		return 1;
-	} traceLog();
+	} traceLog
 
 	//включаем GIL для этого потока
 
@@ -112,25 +112,25 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		INFINITE);               // indefinite wait
 
 	switch (EVENT_IN_HANGAR_WaitResult) {
-	case WAIT_OBJECT_0: traceLog();
+	case WAIT_OBJECT_0: traceLog
 		superExtendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!\n");
 
 		//место для рабочего кода
 
 		EVENT_IN_HANGAR->request = handleInHangarEvent(_save);
 
-		if (EVENT_IN_HANGAR->request) { traceLog();
+		if (EVENT_IN_HANGAR->request) { traceLog
 			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_IN_HANGAR - handleInHangarEvent: error %d\n", EVENT_IN_HANGAR->request);
 		}
 
 		break;
 		// An error occurred
-	default: traceLog();
+	default: traceLog
 		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
 
 		return 3;
-	} traceLog();
-	if (first_check) { traceLog();
+	} traceLog
+	if (first_check) { traceLog
 		extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n", (uint32_t)first_check);
 
 		return 4;
@@ -146,22 +146,22 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	Py_UNBLOCK_THREADS;
 
-	if (hHangarTimer) { traceLog(); //закрываем таймер, если он был создан
+	if (hHangarTimer) { traceLog //закрываем таймер, если он был создан
 		CancelWaitableTimer(hHangarTimer);
 		CloseHandle(hHangarTimer);
 
 		hHangarTimer = NULL;
-	} traceLog();
+	} traceLog
 
 	//вывод сообщения в центр уведомлений
 
 	//создаем поток с таймером
 
-	if (hBattleTimerThread) { traceLog();
+	if (hBattleTimerThread) { traceLog
 		CloseHandle(hBattleTimerThread);
 
 		hBattleTimerThread = NULL;
-	} traceLog();
+	} traceLog
 
 	hBattleTimerThread = CreateThread(
 		NULL,                                   // default security attributes
@@ -176,7 +176,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		extendedDebugLogFmt("[NY_Event][ERROR]: Creating timer thread: error %d\n", GetLastError());
 
 		return 5;
-	} traceLog();
+	} traceLog
 
 	HANDLE hEvents[HEVENTS_COUNT] = {
 		EVENT_DEL_MODEL->hEvent,  //событие удаления модели
@@ -185,7 +185,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	uint8_t lastEventError = NULL;
 
-	while (!first_check && !battleEnded && !lastEventError) { traceLog();
+	while (!first_check && !battleEnded && !lastEventError) { traceLog
 	superExtendedDebugLog("[NY_Event]: waiting EVENTS\n");
 
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
@@ -195,7 +195,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			INFINITE);
 
 		switch (EVENTS_WaitResult) {
-		case WAIT_OBJECT_0 + 0:  traceLog(); //сработало событие удаления модели
+		case WAIT_OBJECT_0 + 0:  traceLog //сработало событие удаления модели
 			superExtendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!\n");
 
 			//место для рабочего кода
@@ -209,30 +209,30 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 			}
 
 			break;
-		case WAIT_OBJECT_0 + 1: traceLog(); //сработало событие окончания боя
+		case WAIT_OBJECT_0 + 1: traceLog //сработало событие окончания боя
 			isTimerStarted = false;
 
 			Py_BLOCK_THREADS;
 
 			EVENT_BATTLE_ENDED->request = handleBattleEndEvent(_save);
 
-			if (!EVENT_BATTLE_ENDED->request) { traceLog();
+			if (!EVENT_BATTLE_ENDED->request) { traceLog
 				battleEnded = true;
 
 				current_map.stageID = STAGE_ID::COMPETITION;
 
 				PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
-				if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog();
+				if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog
 					delLabelCBID = NULL;
 
 					Py_XDECREF(delLabelCBID_p);
 				}
-				else { traceLog();
+				else { traceLog
 					delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
 
 					Py_DECREF(delLabelCBID_p);
-				} traceLog();
+				} traceLog
 
 				cancelCallback(&delLabelCBID);
 
@@ -248,25 +248,25 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 			break;
 			// An error occurred
-		default: traceLog();
+		default: traceLog
 			extendedDebugLog("[NY_Event][WARNING]: EVENTS - something wrong with WaitResult!\n");
 
 			lastEventError = 1;
 
 			break;
-		} traceLog();
-	} traceLog();
+		} traceLog
+	} traceLog
 
 	if (lastEventError) extendedDebugLogFmt("[NY_Event][WARNING]: Error in event: %d\n", lastEventError);
 
 	//закрываем таймеры
 
-	if (hBattleTimer) { traceLog();
+	if (hBattleTimer) { traceLog
 		CancelWaitableTimer(hBattleTimer);
 		CloseHandle(hBattleTimer);
 
 		hBattleTimer = NULL;
-	} traceLog();
+	} traceLog
 
 	if (hBattleTimerThread) {
 		TerminateThread(hBattleTimerThread, NULL);
@@ -286,17 +286,17 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	//освобождаем мутексы
 
-	if (M_NETWORK_NOT_USING) { traceLog();
+	if (M_NETWORK_NOT_USING) { traceLog
 		CloseHandle(M_NETWORK_NOT_USING);
 
 		M_NETWORK_NOT_USING = NULL;
-	} traceLog();
+	} traceLog
 
-	if (M_MODELS_NOT_USING) { traceLog();
+	if (M_MODELS_NOT_USING) { traceLog
 		CloseHandle(M_MODELS_NOT_USING);
 
 		M_MODELS_NOT_USING = NULL;
-	} traceLog();
+	} traceLog
 
 	//закрываем поток
 
@@ -317,10 +317,10 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 //-----------------
 
-static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
-	if (!isInited || first_check) { traceLog();
+static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
+	if (!isInited || first_check) { traceLog
 		return PyInt_FromSize_t(1);
-	} traceLog();
+	} traceLog
 
 	INIT_LOCAL_MSG_BUFFER;
 
@@ -332,9 +332,9 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 
 	isModelsAlreadyCreated = false;
 
-	if (!player) { traceLog();
+	if (!player) { traceLog
 		return PyInt_FromSize_t(2);
-	} traceLog();
+	} traceLog
 
 	PyObject* __arena = PyString_FromString("arena");
 	PyObject* arena = PyObject_GetAttr(player, __arena);
@@ -343,9 +343,9 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 
 	Py_DECREF(player);
 
-	if (!arena) { traceLog();
+	if (!arena) { traceLog
 		return PyInt_FromSize_t(3);
-	} traceLog();
+	} traceLog
 
 	PyObject* __arenaType = PyString_FromString("arenaType");
 	PyObject* arenaType = PyObject_GetAttr(arena, __arenaType);
@@ -353,9 +353,9 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 	Py_DECREF(__arenaType);
 	Py_DECREF(arena);
 
-	if (!arenaType) { traceLog();
+	if (!arenaType) { traceLog
 		return PyInt_FromSize_t(4);
-	} traceLog();
+	} traceLog
 
 	PyObject* __geometryName = PyString_FromString("geometryName");
 	PyObject* map_PS = PyObject_GetAttr(arenaType, __geometryName);
@@ -363,9 +363,9 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 	Py_DECREF(__geometryName);
 	Py_DECREF(arenaType);
 
-	if (!map_PS) { traceLog();
+	if (!map_PS) { traceLog
 		return PyInt_FromSize_t(5);
-	} traceLog();
+	} traceLog
 
 	char* map_s = PyString_AS_STRING(map_PS);
 
@@ -389,54 +389,54 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog();
 
 	request = makeEventInThread(EVENT_ID::IN_BATTLE_GET_FULL);
 
-	if (request) { traceLog();
+	if (request) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
 
 		return PyInt_FromSize_t(6);
-	} traceLog();
+	} traceLog
 
 	Py_RETURN_NONE;
 };
 
-static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog();
-	if (!EVENT_BATTLE_ENDED) { traceLog();
+static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
+	if (!EVENT_BATTLE_ENDED) { traceLog
 		return PyInt_FromSize_t(1);
-	} traceLog();
+	} traceLog
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog();
+	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: EVENT_BATTLE_ENDED not setted!\n");
 
 		return PyInt_FromSize_t(2);
-	} traceLog();
+	} traceLog
 
 	Py_RETURN_NONE;
 };
 
-static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog();
+static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog
 	return PyInt_FromSize_t(first_check);
 };
 
-bool createEventsAndSecondThread() { traceLog();
+bool createEventsAndSecondThread() { traceLog
 	INIT_LOCAL_MSG_BUFFER;
 	
-	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog();
+	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog
 		return false;
-	} traceLog();
-	if (!createEvent1(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) { traceLog();
+	} traceLog
+	if (!createEvent1(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) { traceLog
 		return false;
-	} traceLog();
-	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog();
+	} traceLog
+	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog
 		return false;
-	} traceLog();
+	} traceLog
 
 	M_NETWORK_NOT_USING = CreateMutex(
 		NULL,              // default security attributes
 		FALSE,             // initially not owned
 		NULL);             // unnamed mutex
 
-	if (!M_NETWORK_NOT_USING) { traceLog();
+	if (!M_NETWORK_NOT_USING) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: NETWORK_NOT_USING creating: error %d\n", GetLastError());
 
 		return false;
@@ -447,26 +447,26 @@ bool createEventsAndSecondThread() { traceLog();
 		FALSE,             // initially not owned
 		NULL);             // unnamed mutex
 
-	if (!M_MODELS_NOT_USING) { traceLog();
+	if (!M_MODELS_NOT_USING) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
 
 		return false;
 	}
 
-	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog();
+	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog
 		return false;
-	} traceLog();
-	if (!createEvent2(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog();
+	} traceLog
+	if (!createEvent2(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog
 		return false;
-	} traceLog();
+	} traceLog
 
 	//Handler thread creating
 
-	if (hHandlerThread) { traceLog();
+	if (hHandlerThread) { traceLog
 		CloseHandle(hHandlerThread);
 
 		hHandlerThread = NULL;
-	} traceLog();
+	} traceLog
 
 	hHandlerThread = CreateThread( //создаем второй поток
 		NULL,                                   // default security attributes
@@ -476,25 +476,25 @@ bool createEventsAndSecondThread() { traceLog();
 		0,                                      // use default creation flags 
 		&handlerThreadID);                      // returns the thread identifier 
 
-	if (!hHandlerThread) { traceLog();
+	if (!hHandlerThread) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	return true;
 }
 
-uint8_t event_сheck() { traceLog();
-	if (!isInited) { traceLog();
+uint8_t event_сheck() { traceLog
+	if (!isInited) { traceLog
 		return 1;
-	} traceLog();
+	} traceLog
 
 	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
 
-	if (!createEventsAndSecondThread()) { traceLog();
+	if (!createEventsAndSecondThread()) { traceLog
 		return 2;
-	} traceLog();
+	} traceLog
 
 	//------------------------------------------------------------------------------------------------
 
@@ -507,9 +507,9 @@ uint8_t event_сheck() { traceLog();
 
 	Py_DECREF(__player);
 
-	if (!player) { traceLog();
+	if (!player) { traceLog
 		return 3;
-	} traceLog();
+	} traceLog
 
 	PyObject* __databaseID = PyString_FromString("databaseID");
 	PyObject* DBID_string = PyObject_GetAttr(player, __databaseID);
@@ -517,17 +517,17 @@ uint8_t event_сheck() { traceLog();
 	Py_DECREF(__databaseID);
 	Py_DECREF(player);
 
-	if (!DBID_string) { traceLog();
+	if (!DBID_string) { traceLog
 		return 4;
-	} traceLog();
+	} traceLog
 
 	PyObject* DBID_int = PyNumber_Int(DBID_string);
 
 	Py_DECREF(DBID_string);
 
-	if (!DBID_int) { traceLog();
+	if (!DBID_int) { traceLog
 		return 5;
-	} traceLog();
+	} traceLog
 
 	databaseID = PyInt_AS_LONG(DBID_int);
 
@@ -541,29 +541,29 @@ uint8_t event_сheck() { traceLog();
 
 	request = makeEventInThread(EVENT_ID::IN_HANGAR);
 
-	if (request) { traceLog();
+	if (request) { traceLog
 		return 6;
 	}
 	else {
 		return NULL;
-	} traceLog();
+	} traceLog
 }
 
-static PyObject* event_сheck_py(PyObject *self, PyObject *args) { traceLog();
+static PyObject* event_сheck_py(PyObject *self, PyObject *args) { traceLog
 	uint8_t res = event_сheck();
 
-	if (res) { traceLog();
+	if (res) { traceLog
 		return PyInt_FromSize_t(res);
 	}
 	else Py_RETURN_NONE;
 };
 
-uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { traceLog();
-	if (!template_ || !apply || !byteify) { traceLog();
+uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { traceLog
+	if (!template_ || !apply || !byteify) { traceLog
 		return 1;
-	} traceLog();
+	} traceLog
 
-	if (m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog();
+	if (m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
@@ -574,9 +574,9 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		Py_DECREF(__register);
 		Py_DECREF(apply);
 		Py_DECREF(template_);
-	} traceLog();
+	} traceLog
 
-	if (!m_g_gui && PyCallable_Check(byteify)) { traceLog();
+	if (!m_g_gui && PyCallable_Check(byteify)) { traceLog
 		Py_INCREF(byteify);
 
 		PyObject* args1 = PyTuple_New(1);
@@ -584,51 +584,51 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 
 		PyObject* result = PyObject_CallObject(byteify, args1);
 
-		if (result) { traceLog();
+		if (result) { traceLog
 			PyObject* old = g_self->i18n;
 
 			g_self->i18n = result;
 
 			PyDict_Clear(old);
 			Py_DECREF(old);
-		} traceLog();
+		} traceLog
 
 		Py_DECREF(byteify);
-	} traceLog();
+	} traceLog
 
 	return NULL;
 }
 
-static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog();
-	if (!isInited) { traceLog();
+static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
+	if (!isInited) { traceLog
 		return PyInt_FromSize_t(1);
-	} traceLog();
+	} traceLog
 
 	PyObject* template_ = NULL;
 	PyObject* apply     = NULL;
 	PyObject* byteify   = NULL;
 
-	if (!PyArg_ParseTuple(args, "OOO", &template_, &apply, &byteify)) { traceLog();
+	if (!PyArg_ParseTuple(args, "OOO", &template_, &apply, &byteify)) { traceLog
 		return PyInt_FromSize_t(2);
-	} traceLog();
+	} traceLog
 
 	uint8_t res = event_init(template_, apply, byteify);
 
-	if (res) { traceLog();
+	if (res) { traceLog
 		return PyInt_FromSize_t(res);
 	}
 	else Py_RETURN_NONE;
 };
 
-static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) { //traceLog();
-	if (!isInited || first_check || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog();
+static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) { //traceLog
+	if (!isInited || first_check || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog
 		Py_RETURN_NONE;
-	} //traceLog();
+	} //traceLog
 
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted_Space = NULL;
 
-	if (m_g_gui) { //traceLog();
+	if (m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
 		isKeyGetted_Space = PyObject_CallMethodObjArgs(m_g_gui, __get_key, spaceKey, NULL);
@@ -641,28 +641,28 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 		Py_DECREF(__key);
 
-		if (!key) { traceLog();
+		if (!key) { traceLog
 			Py_RETURN_NONE;
-		} //traceLog();
+		} //traceLog
 
 		PyObject* ____contains__ = PyString_FromString("__contains__");
 
 		isKeyGetted_Space = PyObject_CallMethodObjArgs(spaceKey, ____contains__, key, NULL);
 
 		Py_DECREF(____contains__);
-	} traceLog();
+	} traceLog
 
-	if (isKeyGetted_Space == Py_True) { traceLog();
+	if (isKeyGetted_Space == Py_True) { traceLog
 		request = makeEventInThread(EVENT_ID::DEL_LAST_MODEL);
 
-		if (request) { traceLog();
+		if (request) { traceLog
 			INIT_LOCAL_MSG_BUFFER;
 
 			debugLogFmt("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n", request);
 
 			Py_RETURN_NONE;
-		} traceLog();
-	} //traceLog();
+		} traceLog
+	} //traceLog
 
 	Py_XDECREF(isKeyGetted_Space);
 
@@ -689,13 +689,13 @@ PyDoc_STRVAR(event_methods__doc__,
 
 PyMODINIT_FUNC initevent(void)
 {
-	if (!initNative()) { traceLog();
+	if (!initNative()) { traceLog
 		debugLog("[NY_Event][ERROR]: initevent - initNative: error!\n");
 
 		return;
 	}
 
-	if (!initHangarMessages()) { traceLog();
+	if (!initHangarMessages()) { traceLog
 		debugLog("[NY_Event][ERROR]: initevent - initHangarMessages: error!\n");
 
 		finiNative();
@@ -705,12 +705,12 @@ PyMODINIT_FUNC initevent(void)
 
 	debugLog("[NY_Event]: Config init...\n");
 
-	if (PyType_Ready(&Config_p)) { traceLog();
+	if (PyType_Ready(&Config_p)) { traceLog
 		finiNative();
 		finiHangarMessages();
 		
 		return;
-	} traceLog();
+	} traceLog
 
 	Py_INCREF(&Config_p);
 
@@ -722,12 +722,12 @@ PyMODINIT_FUNC initevent(void)
 
 	Py_DECREF(&Config_p);
 
-	if (!g_config || !g_self) { traceLog();
+	if (!g_config || !g_self) { traceLog
 		finiHangarMessages();
 		finiNative();
 
 		return;
-	} traceLog();
+	} traceLog
 
 	//инициализация модуля
 
@@ -735,19 +735,19 @@ PyMODINIT_FUNC initevent(void)
 		event_methods,
 		event_methods__doc__);
 
-	if (!event_module) { traceLog();
+	if (!event_module) { traceLog
 		finiHangarMessages();
 		finiNative();
 		
 		return;
-	} traceLog();
+	} traceLog
 
-	if (PyModule_AddObject(event_module, "l", g_config)) { traceLog();
+	if (PyModule_AddObject(event_module, "l", g_config)) { traceLog
 		finiHangarMessages();
 		finiNative();
 		
 		return;
-	} traceLog();
+	} traceLog
 
 	//получение указателя на метод модуля onModelCreated
 
@@ -757,20 +757,20 @@ PyMODINIT_FUNC initevent(void)
 
 	Py_DECREF(__omc);
 
-	if (!onModelCreatedPyMeth) { traceLog();
+	if (!onModelCreatedPyMeth) { traceLog
 		finiHangarMessages();
 		finiNative();
 
 		return;
-	} traceLog();
+	} traceLog
 
 	//Space key
 
 	spaceKey = PyList_New(1);
 
-	if (spaceKey) { traceLog();
+	if (spaceKey) { traceLog
 		PyList_SET_ITEM(spaceKey, 0U, PyInt_FromSize_t(57));
-	} traceLog();
+	} traceLog
 
 	//загрузка modGUI
 
@@ -778,12 +778,12 @@ PyMODINIT_FUNC initevent(void)
 
 	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
 
-	if (!mGUI_module) { traceLog();
+	if (!mGUI_module) { traceLog
 		finiHangarMessages();
 		finiNative();
 
 		return;
-	} traceLog();
+	} traceLog
 
 	debugLog("[NY_Event]: Mod_GUI class loading...\n");
 
@@ -794,12 +794,12 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(__Mod_GUI);
 	Py_DECREF(mGUI_module);
 
-	if (!modGUI) { traceLog();
+	if (!modGUI) { traceLog
 		finiHangarMessages();
 		finiNative();
 
 		return;
-	} traceLog();
+	} traceLog
 
 	debugLog("[NY_Event]: Mod_GUI class loaded OK!\n");
 
@@ -809,7 +809,7 @@ PyMODINIT_FUNC initevent(void)
 
 	PyObject* mod_mods_gui = PyImport_ImportModule("gui.mods.mod_mods_gui");
 
-	if (!mod_mods_gui) { traceLog();
+	if (!mod_mods_gui) { traceLog
 		PyErr_Clear();
 		m_g_gui = NULL;
 
@@ -823,41 +823,41 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(__g_gui);
 		Py_DECREF(mod_mods_gui);
 
-		if (!m_g_gui) { traceLog();
+		if (!m_g_gui) { traceLog
 			finiHangarMessages();
 			finiNative();
 
 			Py_DECREF(modGUI);
 			return;
-		} traceLog();
+		} traceLog
 
 		debugLog("[NY_Event]: mod_mods_gui loaded OK!\n");
-	} traceLog();
+	} traceLog
 
-	if (!m_g_gui) { traceLog();
+	if (!m_g_gui) { traceLog
 		_mkdir("mods/configs");
 		_mkdir("mods/configs/pavel3333");
 		_mkdir("mods/configs/pavel3333/NY_Event");
 		_mkdir("mods/configs/pavel3333/NY_Event/i18n");
 
-		if (!read_data(true) || !read_data(false)) { traceLog();
+		if (!read_data(true) || !read_data(false)) { traceLog
 			finiHangarMessages();
 			finiNative();
 
 			Py_DECREF(modGUI);
 			return;
-		} traceLog();
+		} traceLog
 	}
 	else {
 		PyObject* ids = PyString_FromString(g_self->ids);
 
-		if (!ids) { traceLog();
+		if (!ids) { traceLog
 			finiHangarMessages();
 			finiNative();
 
 			Py_DECREF(modGUI);
 			return;
-		} traceLog();
+		} traceLog
 
 		PyObject* __register_data = PyString_FromString("register_data");
 		PyObject* __pavel3333 = PyString_FromString("pavel3333");
@@ -867,13 +867,13 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(__register_data);
 		Py_DECREF(ids);
 
-		if (!data_i18n) { traceLog();
+		if (!data_i18n) { traceLog
 			finiHangarMessages();
 			finiNative();
 
 			Py_DECREF(modGUI);
 			return;
-		} traceLog();
+		} traceLog
 
 		PyObject* old = g_self->data;
 
@@ -891,13 +891,13 @@ PyMODINIT_FUNC initevent(void)
 
 		Py_DECREF(old);
 		Py_DECREF(data_i18n);
-	} traceLog();
+	} traceLog
 	
 	//инициализация curl
 
 	uint32_t curl_init_result = curl_init();
 
-	if (curl_init_result) { traceLog();
+	if (curl_init_result) { traceLog
 		finiHangarMessages();
 		finiNative();
 
@@ -906,7 +906,7 @@ PyMODINIT_FUNC initevent(void)
 		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
 
 		return;
-	} traceLog();
+	} traceLog
 
 	isInited = true;
 };

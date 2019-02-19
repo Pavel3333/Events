@@ -12,14 +12,14 @@ PyObject* m_json           = NULL;
 
 //initialization
 
-bool initNative() { traceLog();
+bool initNative() { traceLog
 	//загрузка BigWorld
 
 	m_BigWorld = PyImport_AddModule("BigWorld");
 
-	if (!m_BigWorld) { traceLog();
+	if (!m_BigWorld) { traceLog
 		return false;
-	} traceLog();
+	} traceLog
 
 	//загрузка Model
 
@@ -29,9 +29,9 @@ bool initNative() { traceLog();
 
 	Py_DECREF(__Model);
 
-	if (!m_Model) { traceLog();
+	if (!m_Model) { traceLog
 		return false;
-	} traceLog();
+	} traceLog
 
 	//загрузка fetchModel
 
@@ -41,11 +41,11 @@ bool initNative() { traceLog();
 
 	Py_DECREF(__fetchModel);
 
-	if (!m_fetchModel) { traceLog();
+	if (!m_fetchModel) { traceLog
 		Py_DECREF(m_Model);
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	//загрузка callback
 
@@ -55,12 +55,12 @@ bool initNative() { traceLog();
 
 	Py_DECREF(__callback_s);
 
-	if (!m_callback) { traceLog();
+	if (!m_callback) { traceLog
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 		
 		return false;
-	} traceLog();
+	} traceLog
 
 	//загрузка cancelCallback
 
@@ -70,26 +70,26 @@ bool initNative() { traceLog();
 
 	Py_DECREF(__cancelCallback);
 
-	if (!m_cancelCallback) { traceLog();
+	if (!m_cancelCallback) { traceLog
 		Py_DECREF(m_callback);
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	//загрузка g_appLoader
 
 	PyObject* appLoader = PyImport_ImportModule("gui.app_loader");
 
-	if (!appLoader) { traceLog();
+	if (!appLoader) { traceLog
 		Py_DECREF(m_cancelCallback);
 		Py_DECREF(m_callback);
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 		
 		return false;
-	} traceLog();
+	} traceLog
 
 	PyObject* __g_appLoader = PyString_FromString("g_appLoader");
 
@@ -98,20 +98,20 @@ bool initNative() { traceLog();
 	Py_DECREF(__g_appLoader);
 	Py_DECREF(appLoader);
 
-	if (!m_g_appLoader) { traceLog();
+	if (!m_g_appLoader) { traceLog
 		Py_DECREF(m_cancelCallback);
 		Py_DECREF(m_callback);
 		Py_DECREF(m_fetchModel);
 		Py_DECREF(m_Model);
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	//загрузка partial
 
 	m_partial = PyImport_ImportModule("functools.partial");
 
-	if (!m_partial) { traceLog();
+	if (!m_partial) { traceLog
 		Py_DECREF(m_g_appLoader);
 		Py_DECREF(m_cancelCallback);
 		Py_DECREF(m_callback);
@@ -119,13 +119,13 @@ bool initNative() { traceLog();
 		Py_DECREF(m_Model);
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	//загрузка json
 
 	m_json = PyImport_ImportModule("json");
 
-	if (!m_json) { traceLog();
+	if (!m_json) { traceLog
 		Py_DECREF(m_partial);
 		Py_DECREF(m_g_appLoader);
 		Py_DECREF(m_cancelCallback);
@@ -134,7 +134,7 @@ bool initNative() { traceLog();
 		Py_DECREF(m_Model);
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	return true;
 }
@@ -164,24 +164,24 @@ void finiNative() {
 //native functions
 
 void callback(long* CBID, PyObject* func, float time_f) {
-	if (!func) { traceLog();
+	if (!func) { traceLog
 		return;
-	} traceLog();
+	} traceLog
 
 	PyObject* time_p;
 
 	if (!time_f) time_p = PyFloat_FromDouble(0.0);
 	else         time_p = PyFloat_FromDouble(time_f);
 
-	if (!time_p) { traceLog();
+	if (!time_p) { traceLog
 		return;
-	} traceLog();
+	} traceLog
 
 	PyObject* res = PyObject_CallMethodObjArgs(m_callback, time_p, func, NULL);
 
-	if (!res) { traceLog();
+	if (!res) { traceLog
 		return;
-	} traceLog();
+	} traceLog
 
 	*CBID = PyInt_AS_LONG(res);
 
@@ -191,9 +191,9 @@ void callback(long* CBID, PyObject* func, float time_f) {
 }
 
 void cancelCallback(long* CBID) {
-	if (!*CBID) { traceLog();
+	if (!*CBID) { traceLog
 		return;
-	} traceLog();
+	} traceLog
 
 	PyObject* res = PyObject_CallMethodObjArgs(m_cancelCallback, PyInt_FromLong(*CBID), NULL);
 

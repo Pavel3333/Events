@@ -10,9 +10,9 @@ bool initHangarMessages() {
 
 	PyObject* SystemMessages = PyImport_ImportModule("gui.SystemMessages");
 
-	if (!SystemMessages) { traceLog();
+	if (!SystemMessages) { traceLog
 		return false;
-	} traceLog();
+	} traceLog
 
 	PyObject* __SM_TYPE = PyString_FromString("SM_TYPE");
 
@@ -20,11 +20,11 @@ bool initHangarMessages() {
 
 	Py_DECREF(__SM_TYPE);
 
-	if (!m_SM_TYPE) { traceLog();
+	if (!m_SM_TYPE) { traceLog
 		Py_DECREF(SystemMessages);
 
 		return false;
-	} traceLog();
+	} traceLog
 
 	PyObject* __pushMessage = PyString_FromString("pushMessage");
 
@@ -33,10 +33,10 @@ bool initHangarMessages() {
 	Py_DECREF(__pushMessage);
 	Py_DECREF(SystemMessages);
 
-	if (!m_pushMessage) { traceLog();
+	if (!m_pushMessage) { traceLog
 		Py_DECREF(m_SM_TYPE);
 		return false;
-	} traceLog();
+	} traceLog
 
 	return true;
 }
