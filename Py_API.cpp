@@ -322,16 +322,9 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 				}
 			} traceLog
 
-			//освобождаем мутекс для этого потока
+			INIT_LOCAL_MSG_BUFFER;
 
-			if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog
-
-				INIT_LOCAL_MSG_BUFFER;
-
-				extendedDebugLogFmt("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-
-				return 14;
-			}
+			RELEASE_MODELS("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 14);
 
 			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
 
@@ -359,7 +352,11 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 }
 
 uint8_t delModelPy(float* coords) { traceLog
+	INIT_LOCAL_MSG_BUFFER;
+	
 	if (coords == nullptr) { traceLog
+		superExtendedDebugLog("SYNC: coords is nullptr!\n");
+
 		return 1;
 	} traceLog
 
@@ -368,12 +365,14 @@ uint8_t delModelPy(float* coords) { traceLog
 	while (it_model != models.end()) {
 		if (*it_model == nullptr) { traceLog
 			it_model = models.erase(it_model);
-
+			
+			superExtendedDebugLog("SYNC: model is nullptr!\n");
+			
 			continue;
 		}
 
 		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) {
-			superExtendedDebugLog("NULL\n");
+			superExtendedDebugLog("SYNC: PyModel is NULL or None or processed is None!\n");
 
 			Py_XDECREF((*it_model)->model);
 
@@ -394,6 +393,7 @@ uint8_t delModelPy(float* coords) { traceLog
 		if ((*it_model)->coords[0] == coords[0] &&
 			(*it_model)->coords[1] == coords[1] &&
 			(*it_model)->coords[2] == coords[2]) {
+			superExtendedDebugLog("SYNC: model found!\n");
 
 			PyObject* py_visible = PyBool_FromLong(false);
 
@@ -841,13 +841,7 @@ uint8_t create_models() { traceLog
 
 			superExtendedDebugLog("], \n");
 
-			//освобождаем мутекс для этого потока
-
-			if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog
-				extendedDebugLogFmt("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", GetLastError());
-
-				return 4;
-			}
+			RELEASE_MODELS("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 4)
 
 			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
 

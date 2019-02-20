@@ -106,7 +106,7 @@ void generate_random_bytes(unsigned char* out, size_t length) {
 
 //writing response from server into array ptr and return size of response
 static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data){
-	if (data == NULL || wr_index + size * nmemb > NET_BUFFER_SIZE) return 0U; // Error if out of buffer
+	if (data == NULL || wr_index + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
 
 	memcpy(&data[wr_index], ptr, size*nmemb);// appending data into the end
 	wr_index += size * nmemb;  // changing position
@@ -120,9 +120,9 @@ std::string urlencode(unsigned char* s, size_t size)
 	for (size_t i = NULL; i < size; i++)
 	{
 		const char& c = s[i];
-		if ((c > 47U && c < 58U) ||//0-9
-			(c > 64U && c < 91U) ||//abc...xyz
-			(c > 96U && c < 123U) || //ABC...XYZ
+		if ((c > 47 && c < 58) ||//0-9
+			(c > 64 && c < 91) ||//abc...xyz
+			(c > 96 && c < 123) || //ABC...XYZ
 			(c == '-' || c == '_' || c == '.' || c == '~')
 			)
 		{
@@ -167,10 +167,10 @@ void curl_clean() {
 //getting token in pre-auth step
 static uint8_t get_token(std::string input) {
 	if (!curl_handle) {
-		return 1U;
+		return 1;
 	}
 
-	memset(wr_buf, NULL, NET_BUFFER_SIZE + 1U); // filling buffer by NULL
+	memset(wr_buf, NULL, NET_BUFFER_SIZE + 1); // filling buffer by NULL
 	wr_index = NULL;
 
 	char user_agent[] = "NY_Event";
@@ -181,7 +181,7 @@ static uint8_t get_token(std::string input) {
 
 	char url_[48] = "http://api.pavel3333.ru/events/index.php?token=";
 
-	memcpy(url, url_, 47U);
+	memcpy(url, url_, 47);
 	memcpy(&url[47], input.c_str(), length);
 	url[47 + length] = NULL;
 
@@ -202,389 +202,418 @@ static uint8_t get_token(std::string input) {
 	//setting buffer
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, wr_buf);
 	//setting max buffer size
-	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, 32768U);
+	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, 32768);
 	// requesting
 	CURLcode res = curl_easy_perform(curl_handle);
 
-	memset(url, NULL, 47U + length);
+	memset(url, NULL, 47 + length);
 	delete[] url;
 
 	return res;
 }
 
-uint8_t parse_config() { // при входе в бой
-	if (!wr_index) {
-		return 21U;
-	}
+uint8_t parse_event(EVENT_ID eventID) {
+	//инициализация переменных для каждого события
 
-	uint32_t offset = NULL;
+	//EVENT_ID::IN_HANGAR
 
 	uint16_t length = NULL;
+	uint32_t offset = NULL;
 
-	memcpy(&length, wr_buf, 2U);
+	//EVENT_ID::IN_BATTLE_GET_FULL
 
-	if (length != wr_index) {
-		return 22U;
-	}
+	uint8_t error_code;
 
-	offset += 2U;
+	uint8_t sections_count;
+	uint8_t model_type         = NULL;
+	uint16_t models_count_sect = NULL;
 
-	if (wr_index == 3U) { //код ошибки
-		uint8_t error_code = wr_buf[offset];
+	//EVENT_ID::IN_BATTLE_GET_SYNC
 
-		if (error_code < 10U) {
-			if (error_code == 7U) {
-				current_map.stageID = STAGE_ID::WAITING;
+	std::vector<ModelsSection>* sect = nullptr;
 
-				return NULL;
-			}
-			else if (error_code == 8U) {
-				current_map.stageID = STAGE_ID::END_BY_TIME;
+	//парсинг пакета с сервера
 
-				return NULL;
-			}
-			else if (error_code == 9U) {
-				current_map.stageID = STAGE_ID::END_BY_COUNT;
+	switch (eventID) {
+		case EVENT_ID::IN_HANGAR:          //запрос из ангара       
+			if (wr_index == 3) {
+				memcpy(&length, wr_buf, 2); //смотрим длину данных
 
-				return NULL;
-			}
-
-			return (uint32_t)wr_buf[offset];
-		}
-
-		return (uint32_t)wr_buf[offset];
-	}
-	else if (wr_index >= 8U) {
-		/*
-		Всё прошло успешно.
-		Первый байт - ноль для проверки,
-		второй байт - 0/1 (СТАРТ / соревнование идет),
-		остальные четыре байта - оставшееся время
-		*/
-
-		if (wr_buf[offset] != 0) {
-			return 23U;
-		}
-
-		current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
-
-		if (current_map.stageID == STAGE_ID::COMPETITION)
-			isStreamer = false;
-		else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
-			isStreamer = true;
-
-		memcpy(&(current_map.time_preparing), wr_buf + offset + 2U, 4U);
-
-		offset += 6U;
-
-		if (wr_index > 8U) { //парсинг координат
-			uint8_t sections_count = wr_buf[offset];
-
-			offset++;
-
-			if (sections_count > SECTIONS_COUNT) {
-				return 24U; //проверяем валидность числа секций
-			}
-
-			memcpy(&(current_map.minimap_count), wr_buf + offset, 2U);
-
-			offset += 2U;
-
-			uint8_t model_type = NULL;
-			uint16_t models_count_sect = NULL;
-
-			for (uint16_t i = NULL; i < sections_count; i++) {
-				model_type = wr_buf[offset];
-
-				offset++;
-
-				if (model_type >= SECTIONS_COUNT) {
-					return 25U;  //проверяем валидность типа модели
+				if (length == wr_index) {
+					return wr_buf[2];
 				}
 
-				memcpy(&models_count_sect, wr_buf + offset, 2U);
+				return 1;
+			}
 
-				offset += 2U;
+			return 2;
 
-				if (!models_count_sect) {
-					continue; //нет моделей, идем далее
-				}
+			break;
+		case EVENT_ID::IN_BATTLE_GET_FULL: // при входе в бой
+			if (!wr_index) {
+				return 3;
+			}
 
-				char *path_buffer = new char[80];
+			memcpy(&length, wr_buf, 2);
 
-				sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //форматируем путь к модели
-				//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //форматируем путь к модели
+			if (length != wr_index) {
+				return 4;
+			}
 
-				//инициализация новой секции моделей
+			offset += 2;
 
-				ModelsSection model_sect{
-					false,
-					model_type,
-					path_buffer
-				};
+			if (wr_index == 3) { //код ошибки
+				error_code = wr_buf[offset];
 
-				//----------------------------------
+				if (error_code < 10) {
+					if (error_code == 7) {
+						current_map.stageID = STAGE_ID::WAITING;
 
-				model_sect.models.resize(models_count_sect);
+						return NULL;
+					}
+					else if (error_code == 8) {
+						current_map.stageID = STAGE_ID::END_BY_TIME;
 
-				for (uint16_t i = NULL; i < models_count_sect; i++) {
-					float* coords = new float[3];
+						return NULL;
+					}
+					else if (error_code == 9) {
+						current_map.stageID = STAGE_ID::END_BY_COUNT;
 
-					for (uint8_t j = NULL; j < 3U; j++) {
-						memcpy(&coords[j], wr_buf + offset, 4U);
-
-						offset += 4U;
+						return NULL;
 					}
 
-					model_sect.models[i] = coords;
+					return wr_buf[offset];
 				}
 
-				model_sect.isInitialised = true;
-
-				//добавление секции
-
-				current_map.modelsSects.push_back(model_sect);
-
-				//-----------------
+				return wr_buf[offset];
 			}
+			else if (wr_index >= 8) {
+				/*
+				Всё прошло успешно.
+				Первый байт - ноль для проверки,
+				второй байт - 0/1 (СТАРТ / соревнование идет),
+				остальные четыре байта - оставшееся время
+				*/
 
-			isModelsAlreadyCreated = true; //если парсинг пакета был удачен и это было событие полного создания моделей, то мы получили полный пакет моделей
-		}
-
-		return NULL;
-	}
-
-	return 26U;
-}
-
-uint8_t parse_sync() { // синхронизация
-	if (!wr_index) {
-		return 21U;
-	}
-
-	uint32_t offset = NULL;
-
-	uint16_t length = NULL;
-
-	memcpy(&length, wr_buf, 2U);
-
-	if (length != wr_index) {
-		return 22U;
-	}
-
-	offset += 2U;
-
-	if (wr_index == 3U) { //код ошибки
-		uint8_t error_code = wr_buf[offset];
-
-		if (error_code < 10U) {
-			if (error_code == 7U) {
-				current_map.stageID = STAGE_ID::WAITING;
-
-				return NULL;
-			}
-			else if (error_code == 8U) {
-				current_map.stageID = STAGE_ID::END_BY_TIME;
-
-				return NULL;
-			}
-			else if (error_code == 9U) {
-				current_map.stageID = STAGE_ID::END_BY_COUNT;
-
-				return NULL;
-			}
-
-			return (uint32_t)wr_buf[offset];
-		}
-
-		return (uint32_t)wr_buf[offset];
-	}
-	else if (wr_index >= 8U) {
-		/*
-		Всё прошло успешно.
-		Первый байт - ноль для проверки,
-		второй байт - 0/1 (СТАРТ / соревнование идет),
-		остальные четыре байта - оставшееся время
-
-		0 - код создания моделей
-		  1б - число секций для создания
-		  2б - число создаваемых моделей
-		       координаты создаваемых моделей
-		1 - код удаления моделей
-		  1б - число секций для удаления
-		  2б - число удаляемых моделей
-		       координаты удаляемых моделей
-		*/
-
-		if (wr_buf[offset] != 0) {
-			return 23U;
-		}
-
-		current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
-
-		if (current_map.stageID == STAGE_ID::COMPETITION)
-			isStreamer = false;
-		else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
-			isStreamer = true;
-
-		memcpy(&(current_map.time_preparing), wr_buf + offset + 2U, 4U);
-
-		offset += 6U;
-
-		if (wr_index > 8U) { //парсинг координат
-			std::vector<ModelsSection>* sect = nullptr;
-
-			for (uint8_t modelSectionID = NULL; modelSectionID < 2U; modelSectionID++) {
-				if      (modelSectionID == 0U && wr_buf[offset] == 0U) sect = &(sync_map.modelsSects_creating);
-				else if (modelSectionID == 1U && wr_buf[offset] == 1U) sect = &(sync_map.modelsSects_deleting);
-				else {
-					OutputDebugString(_T("[NY_Event]: Found unexpected section while synchronizing!\n"));
-
-					break;
+				if (wr_buf[offset] != 0) {
+					return 5;
 				}
 
-				offset++;
+				current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
 
-				uint8_t sections_count = wr_buf[offset];
+				if (current_map.stageID == STAGE_ID::COMPETITION)
+					isStreamer = false;
+				else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
+					isStreamer = true;
 
-				offset++;
+				memcpy(&(current_map.time_preparing), wr_buf + offset + 2, 4);
 
-				if (sections_count > SECTIONS_COUNT) {
-					return 24U; //проверяем валидность числа секций
-				}
+				offset += 6;
 
-				memcpy(&(sync_map.all_models_count), wr_buf + offset, 2U);
-
-				offset += 2U;
-
-				uint8_t model_type = NULL;
-				uint16_t models_count_sect = NULL;
-
-				for (uint16_t i = NULL; i < sections_count; i++) {
-					model_type = wr_buf[offset];
+				if (wr_index > 8) { //парсинг координат
+					sections_count = wr_buf[offset];
 
 					offset++;
 
-					if (model_type >= SECTIONS_COUNT) {
-						return 25U;  //проверяем валидность типа модели
+					if (sections_count > SECTIONS_COUNT) {
+						return 6; //проверяем валидность числа секций
 					}
 
-					memcpy(&models_count_sect, wr_buf + offset, 2U);
+					memcpy(&(current_map.minimap_count), wr_buf + offset, 2);
 
-					offset += 2U;
+					offset += 2;
 
-					if (!models_count_sect) {
-						continue; //нет моделей, идем далее
-					}
+					for (uint16_t i = NULL; i < sections_count; i++) {
+						model_type = wr_buf[offset];
 
-					char *path_buffer = new char[80];
+						offset++;
 
-					sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //форматируем путь к модели
-					//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //форматируем путь к модели
-
-					//инициализация новой секции моделей
-
-					ModelsSection model_sect {
-						false,
-						model_type,
-						path_buffer
-					};
-
-					//----------------------------------
-
-					model_sect.models.resize(models_count_sect);
-
-					for (uint16_t i = NULL; i < models_count_sect; i++) {
-						float* coords = new float[3];
-
-						for (uint8_t j = NULL; j < 3U; j++) {
-							memcpy(&coords[j], wr_buf + offset, 4U);
-
-							offset += 4U;
+						if (model_type >= SECTIONS_COUNT) {
+							return 7;  //проверяем валидность типа модели
 						}
 
-						model_sect.models[i] = coords;
+						memcpy(&models_count_sect, wr_buf + offset, 2);
+
+						offset += 2;
+
+						if (!models_count_sect) {
+							continue; //нет моделей, идем далее
+						}
+
+						char *path_buffer = new char[80];
+
+						sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //форматируем путь к модели
+						//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //форматируем путь к модели
+
+						//инициализация новой секции моделей
+
+						ModelsSection model_sect{
+							false,
+							model_type,
+							path_buffer
+						};
+
+						//----------------------------------
+
+						model_sect.models.resize(models_count_sect);
+
+						for (uint16_t i = NULL; i < models_count_sect; i++) {
+							float* coords = new float[3];
+
+							for (uint8_t j = NULL; j < 3; j++) {
+								memcpy(&coords[j], wr_buf + offset, 4);
+
+								offset += 4;
+							}
+
+							model_sect.models[i] = coords;
+						}
+
+						model_sect.isInitialised = true;
+
+						//добавление секции
+
+						current_map.modelsSects.push_back(model_sect);
+
+						//-----------------
 					}
 
-					model_sect.isInitialised = true;
-
-					//добавление секции
-
-					sect->push_back(model_sect);
-
-					//-----------------
+					isModelsAlreadyCreated = true; //если парсинг пакета был удачен и это было событие полного создания моделей, то мы получили полный пакет моделей
 				}
+
+				return NULL;
 			}
 
-			return NULL;
-		}
+			return 8;
 
-		return NULL;
-	}
-
-	return 25U;
-}
-
-uint8_t parse_del_model() {
-	if (!wr_index) {
-		return 21U;
-	}
-
-	uint32_t offset = NULL;
-
-	uint16_t length = NULL;
-
-	memcpy(&length, wr_buf, 2U);
-
-	if (length != wr_index) {
-		return 22U;
-	}
-
-	offset += 2U;
-
-	if (wr_index == 3U) { //код ошибки
-		uint8_t error_code = wr_buf[offset];
-
-		if (error_code < 10U) {
-			if (error_code == 7U) {
-				current_map.stageID = STAGE_ID::WAITING;
-			}
-			else if (error_code == 8U) {
-				current_map.stageID = STAGE_ID::END_BY_TIME;
-			}
-			else if (error_code == 9U) {
-				current_map.stageID = STAGE_ID::END_BY_COUNT;
+			break;
+		case EVENT_ID::IN_BATTLE_GET_SYNC: // синхронизация
+			if (!wr_index) {
+				return 9;
 			}
 
-			return error_code;
-		}
+			memcpy(&length, wr_buf, 2);
 
-		return error_code;
+			if (length != wr_index) {
+				return 10;
+			}
+
+			offset += 2;
+
+			if (wr_index == 3) { //код ошибки
+				error_code = wr_buf[offset];
+
+				if (error_code < 10) {
+					if (error_code == 7) {
+						current_map.stageID = STAGE_ID::WAITING;
+
+						return NULL;
+					}
+					else if (error_code == 8) {
+						current_map.stageID = STAGE_ID::END_BY_TIME;
+
+						return NULL;
+					}
+					else if (error_code == 9) {
+						current_map.stageID = STAGE_ID::END_BY_COUNT;
+
+						return NULL;
+					}
+
+					return wr_buf[offset];
+				}
+
+				return wr_buf[offset];
+			}
+			else if (wr_index >= 8) {
+				/*
+				Всё прошло успешно.
+				Первый байт - ноль для проверки,
+				второй байт - 0/1 (СТАРТ / соревнование идет),
+				остальные четыре байта - оставшееся время
+
+				0 - код создания моделей
+				  1б - число секций для создания
+				  2б - число создаваемых моделей
+					   координаты создаваемых моделей
+				1 - код удаления моделей
+				  1б - число секций для удаления
+				  2б - число удаляемых моделей
+					   координаты удаляемых моделей
+				*/
+
+				if (wr_buf[offset] != 0) {
+					return 11;
+				}
+
+				current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
+
+				if (current_map.stageID == STAGE_ID::COMPETITION)
+					isStreamer = false;
+				else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
+					isStreamer = true;
+
+				memcpy(&(current_map.time_preparing), wr_buf + offset + 2, 4);
+
+				offset += 6;
+
+				if (wr_index > 8) { //парсинг координат
+					for (uint8_t modelSectionID = NULL; modelSectionID < 2; modelSectionID++) {
+						if (modelSectionID == 0 && wr_buf[offset] == 0) sect = &(sync_map.modelsSects_creating);
+						else if (modelSectionID == 1 && wr_buf[offset] == 1) sect = &(sync_map.modelsSects_deleting);
+						else {
+							extendedDebugLog("[NY_Event]: Found unexpected section while synchronizing!\n");
+
+							break;
+						}
+
+						offset++;
+
+						uint8_t sections_count = wr_buf[offset];
+
+						offset++;
+
+						if (sections_count > SECTIONS_COUNT) {
+							return 12; //проверяем валидность числа секций
+						}
+
+						memcpy(&(sync_map.all_models_count), wr_buf + offset, 2);
+
+						offset += 2;
+
+						uint8_t model_type = NULL;
+						uint16_t models_count_sect = NULL;
+
+						for (uint16_t i = NULL; i < sections_count; i++) {
+							model_type = wr_buf[offset];
+
+							offset++;
+
+							if (model_type >= SECTIONS_COUNT) {
+								return 13;  //проверяем валидность типа модели
+							}
+
+							memcpy(&models_count_sect, wr_buf + offset, 2);
+
+							offset += 2;
+
+							if (!models_count_sect) {
+								continue; //нет моделей, идем далее
+							}
+
+							char *path_buffer = new char[80];
+
+							sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //форматируем путь к модели
+							//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //форматируем путь к модели
+
+							//инициализация новой секции моделей
+
+							ModelsSection model_sect {
+								false,
+								model_type,
+								path_buffer
+							};
+
+							//----------------------------------
+
+							model_sect.models.resize(models_count_sect);
+
+							for (uint16_t i = NULL; i < models_count_sect; i++) {
+								float* coords = new float[3];
+
+								for (uint8_t j = NULL; j < 3; j++) {
+									memcpy(&coords[j], wr_buf + offset, 4);
+
+									offset += 4;
+								}
+
+								model_sect.models[i] = coords;
+							}
+
+							model_sect.isInitialised = true;
+
+							//добавление секции
+
+							sect->push_back(model_sect);
+
+							//-----------------
+						}
+					}
+
+					return NULL;
+				}
+
+				return NULL;
+			}
+
+			return 14;
+
+			break;
+		case EVENT_ID::DEL_LAST_MODEL:     // удаление ближайшей модели
+			if (!wr_index) {
+				return 15;
+			}
+
+			memcpy(&length, wr_buf, 2);
+
+			if (length != wr_index) {
+				return 16;
+			}
+
+			offset += 2;
+
+			if (wr_index == 3) { //код ошибки
+				uint8_t error_code = wr_buf[offset];
+
+				if (error_code < 10) {
+					if (error_code == 7) {
+						current_map.stageID = STAGE_ID::WAITING;
+					}
+					else if (error_code == 8) {
+						current_map.stageID = STAGE_ID::END_BY_TIME;
+					}
+					else if (error_code == 9) {
+						current_map.stageID = STAGE_ID::END_BY_COUNT;
+					}
+
+					return error_code;
+				}
+
+				return error_code;
+			}
+			else if (wr_index >= 9) {
+				/*
+				Всё прошло успешно.
+				Первый байт - ноль для проверки,
+				второй байт - 0/1 (СТАРТ / соревнование идет),
+				остальные четыре байта - оставшееся время
+				*/
+
+				if (wr_buf[offset] != 0) {
+					return 17;
+				}
+
+				current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
+
+				memcpy(&(current_map.time_preparing), wr_buf + offset + 2, 4);
+
+				offset += 6;
+
+				if (wr_buf[offset] == NULL) return NULL;
+
+				return 18;
+			}
+
+			return 19;
+
+			break;
+		default:
+			return 20;
+
+			break;
 	}
-	else if (wr_index >= 9U) {
-		/*
-		Всё прошло успешно.
-		Первый байт - ноль для проверки,
-		второй байт - 0/1 (СТАРТ / соревнование идет),
-		остальные четыре байта - оставшееся время
-		*/
 
-		if (wr_buf[offset] != 0) {
-			return 23U;
-		}
-
-		current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
-
-		memcpy(&(current_map.time_preparing), wr_buf + offset + 2U, 4U);
-
-		offset += 6U;
-
-		if (wr_buf[offset] == 0U) return NULL;
-
-		return 27U;
-	}
-
-	return 26U;
+	return 21;
 }
 
 uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID, float* coords_del) {
@@ -595,43 +624,43 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 	//Код наполнения токена по типу события
 
 	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
-		size = 7U;
+		size = 7;
 
 		token = new unsigned char[size + 1];
 
 		token[0] = MODS_ID::NY_EVENT;    //mod
 		token[1] = map_id;             //map ID
 
-		memcpy(&token[2], &id, 4U);
+		memcpy(&token[2], &id, 4);
 
 		token[6] = eventID; //код события
 	}
 	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
 		if (coords_del == nullptr) {
-			return 24U;
+			return 24;
 		}
 
-		size = 20U;
+		size = 20;
 
 		token = new unsigned char[size + 1];
 
 		token[0] = MODS_ID::NY_EVENT;    //mod
 		token[1] = map_id;             //map ID
 
-		memcpy(&token[2], &id, 4U);
+		memcpy(&token[2], &id, 4);
 
 		token[6] = eventID; //код события
 		token[7] = modelID; //код модели
 
-		memcpy(&token[8],  &coords_del[0], 4U);
-		memcpy(&token[12], &coords_del[1], 4U);
-		memcpy(&token[16], &coords_del[2], 4U);
+		memcpy(&token[8],  &coords_del[0], 4);
+		memcpy(&token[12], &coords_del[1], 4);
+		memcpy(&token[16], &coords_del[2], 4);
 	}
 
 	//-------------------------------------
 
 	if (token == nullptr) {
-		return 21U;
+		return 1;
 	}
 
 	token[size] = NULL;
@@ -653,7 +682,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 	new_token.~basic_string();
 
 	if (code || !wr_index) { //get token
-		return 22U;
+		return 2;
 	}
 
 #if debug_log
@@ -664,44 +693,5 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 	resp.close();
 #endif
 
-	uint16_t len;
-	uint16_t offset = NULL;
-
-	if (eventID == EVENT_ID::IN_HANGAR) { //запрос из ангара: 3 байта - 2 байта длина; 1 байт либо 0, либо 6, либо ошибка (больше 9);
-		//проверяем ответ от сервера
-
-		if (wr_index == 3U) {
-			memcpy(&len, wr_buf, 2U); //смотрим длину данных
-
-			if (len == wr_index) {
-				return (uint32_t)(wr_buf[2]);
-			}
-
-			return 25U;
-		}
-
-		return 24U;
-	}
-	else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) { 
-		return NULL;
-	}
-	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
-		return NULL;
-	}
-
-	return 23U; //неизвестный ивент
-
-	/*if (!map_id) {
-		//if (wr_index < 3U) {
-			return (uint32_t)(wr_buf[0]);
-		//}
-		//else return 10U;
-	}
-	else {
-		if (wr_index < 3U) {
-			return 9U;
-		}
-		else return NULL;
-	}*/
-	
+	return NULL;
 }

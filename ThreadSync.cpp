@@ -14,8 +14,12 @@ PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 
 //Мутексы
 
-HANDLE M_NETWORK_NOT_USING = NULL;
 HANDLE M_MODELS_NOT_USING  = NULL;
+
+//Критические секции
+
+CRITICAL_SECTION CS_NETWORK_NOT_USING;
+CRITICAL_SECTION CS_PARSING_NOT_USING;
 
 //---------------------
 
@@ -115,4 +119,28 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 	} traceLog
 
 	return true;
+}
+
+uint32_t parse_event_threadsafe(EVENT_ID eventID) {
+	uint32_t result = NULL;
+
+	EnterCriticalSection(&CS_PARSING_NOT_USING);
+
+	result = parse_event(eventID);
+
+	LeaveCriticalSection(&CS_PARSING_NOT_USING);
+
+	return result;
+}
+
+uint32_t send_token_threadsafe(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID, float* coords_del) {
+	uint32_t result = NULL;
+
+	EnterCriticalSection(&CS_NETWORK_NOT_USING);
+
+	result = send_token(id, map_id, eventID, modelID, coords_del);
+
+	LeaveCriticalSection(&CS_NETWORK_NOT_USING);
+
+	return result;
 }

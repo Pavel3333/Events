@@ -21,11 +21,8 @@ std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 -программа ушла в вечное ожидание
 */
 
-DWORD WINAPI TimerThread(LPVOID lpParam)
-{
-	UNREFERENCED_PARAMETER(lpParam);
-
-	if (!isInited || !M_NETWORK_NOT_USING ||!EVENT_START_TIMER) { traceLog
+uint32_t timerThread() {
+	if (!isInited ||!EVENT_START_TIMER) { traceLog
 		return 1;
 	} traceLog
 
@@ -42,56 +39,62 @@ DWORD WINAPI TimerThread(LPVOID lpParam)
 		INFINITE);               // indefinite wait
 
 	switch (EVENT_START_TIMER_WaitResult) {
-	case WAIT_OBJECT_0:  traceLog
-		superExtendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
+		case WAIT_OBJECT_0:  traceLog
+			superExtendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
 
-		//включаем GIL для этого потока
+			//включаем GIL для этого потока
 
-		gstate = PyGILState_Ensure();
+			gstate = PyGILState_Ensure();
 
-		//-----------------------------
+			//-----------------------------
 
-		Py_UNBLOCK_THREADS;
+			Py_UNBLOCK_THREADS;
 
-		//рабочая часть
+			//рабочая часть
 
-		request = handleStartTimerEvent(_save);
+			request = handleStartTimerEvent(_save);
 
-		if (request) { traceLog
-			extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
-		}
+			if (request) { traceLog
+				extendedDebugLogFmt("[NY_Event][WARNING]: EVENT_START_TIMER - handleStartTimerEvent: error %d\n", request);
+			}
 
-		Py_BLOCK_THREADS;
+			Py_BLOCK_THREADS;
 
-		//выключаем GIL для этого потока
+			//выключаем GIL для этого потока
 
-		PyGILState_Release(gstate);
+			PyGILState_Release(gstate);
 
-		//------------------------------
+			//------------------------------
 
-		break;
+			break;
 
-		// An error occurred
-	default: traceLog
-		extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
+			// An error occurred
+		default: traceLog
+			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
 
-		return 3;
+			return 3;
 	} traceLog
 
 	//закрываем поток
 
 	extendedDebugLogFmt("[NY_Event]: Closing timer thread %d\n", handlerThreadID);
 
-	ExitThread(NULL); //завершаем поток
-
 	return NULL;
 }
 
-DWORD WINAPI HandlerThread(LPVOID lpParam)
-{
+DWORD WINAPI TimerThread(LPVOID lpParam) {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	if (!isInited || !M_NETWORK_NOT_USING || !EVENT_IN_HANGAR || !EVENT_START_TIMER || !EVENT_DEL_MODEL || !EVENT_BATTLE_ENDED) { traceLog
+	uint32_t result = timerThread();
+
+	hBattleTimerThread  = NULL;
+	battleTimerThreadID = NULL;
+
+	return result;
+}
+
+uint32_t handlerThread() {
+	if (!isInited || !EVENT_IN_HANGAR || !EVENT_START_TIMER || !EVENT_DEL_MODEL || !EVENT_BATTLE_ENDED) { traceLog
 		return 1;
 	} traceLog
 
@@ -160,9 +163,10 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	//создаем поток с таймером
 
 	if (hBattleTimerThread) { traceLog
-		CloseHandle(hBattleTimerThread);
-
-		hBattleTimerThread = NULL;
+		WaitForSingleObject(hBattleTimerThread, INFINITE);
+		
+		hBattleTimerThread  = NULL;
+		battleTimerThreadID = NULL;
 	} traceLog
 
 	hBattleTimerThread = CreateThread(
@@ -171,10 +175,9 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 		TimerThread,                            // thread function name
 		NULL,                                   // argument to thread function 
 		0,                                      // use default creation flags 
-		&battleTimerThreadID);                        // returns the thread identifier 
+		&battleTimerThreadID);                  // returns the thread identifier 
 
-	if (!hBattleTimerThread)
-	{
+	if (!hBattleTimerThread) {
 		extendedDebugLogFmt("[NY_Event][ERROR]: Creating timer thread: error %d\n", GetLastError());
 
 		return 5;
@@ -261,21 +264,12 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	if (lastEventError) extendedDebugLogFmt("[NY_Event][WARNING]: Error in event: %d\n", lastEventError);
 
-	//закрываем таймеры
-
-	if (hBattleTimer) { traceLog
-		CancelWaitableTimer(hBattleTimer);
-		CloseHandle(hBattleTimer);
-
-		hBattleTimer = NULL;
+	if (hBattleTimerThread) { traceLog
+		WaitForSingleObject(hBattleTimerThread, INFINITE);
+		
+		hBattleTimerThread  = NULL;
+		battleTimerThreadID = NULL;
 	} traceLog
-
-	if (hBattleTimerThread) {
-		TerminateThread(hBattleTimerThread, NULL);
-		CloseHandle(hBattleTimerThread);
-
-		hBattleTimerThread = NULL;
-	}
 
 	//освобождаем ивенты
 
@@ -287,12 +281,6 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 	closeEvent2(&EVENT_BATTLE_ENDED);
 
 	//освобождаем мутексы
-
-	if (M_NETWORK_NOT_USING) { traceLog
-		CloseHandle(M_NETWORK_NOT_USING);
-
-		M_NETWORK_NOT_USING = NULL;
-	} traceLog
 
 	if (M_MODELS_NOT_USING) { traceLog
 		CloseHandle(M_MODELS_NOT_USING);
@@ -312,9 +300,18 @@ DWORD WINAPI HandlerThread(LPVOID lpParam)
 
 	//------------------------------
 
-	ExitThread(NULL); //завершаем поток
-
 	return NULL;
+}
+
+DWORD WINAPI HandlerThread(LPVOID lpParam) {
+	UNREFERENCED_PARAMETER(lpParam);
+
+	uint32_t result = handlerThread();
+
+	hHandlerThread  = NULL;
+	handlerThreadID = NULL;
+
+	return result;
 }
 
 //-----------------
@@ -432,17 +429,6 @@ bool createEventsAndSecondThread() { traceLog
 	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog
 		return false;
 	} traceLog
-
-	M_NETWORK_NOT_USING = CreateMutex(
-		NULL,              // default security attributes
-		FALSE,             // initially not owned
-		NULL);             // unnamed mutex
-
-	if (!M_NETWORK_NOT_USING) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: NETWORK_NOT_USING creating: error %d\n", GetLastError());
-
-		return false;
-	}
 
 	M_MODELS_NOT_USING  = CreateMutex(
 		NULL,              // default security attributes
@@ -693,6 +679,9 @@ PyMODINIT_FUNC initevent(void)
 {
 	INIT_LOCAL_MSG_BUFFER;
 
+	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
+	InitializeCriticalSection(&CS_PARSING_NOT_USING);
+
 	request = initNative();
 
 	if (request) { traceLog
@@ -775,7 +764,7 @@ PyMODINIT_FUNC initevent(void)
 	spaceKey = PyList_New(1);
 
 	if (spaceKey) { traceLog
-		PyList_SET_ITEM(spaceKey, 0U, PyInt_FromSize_t(57));
+		PyList_SET_ITEM(spaceKey, 0, PyInt_FromSize_t(57));
 	} traceLog
 
 	//загрузка modGUI

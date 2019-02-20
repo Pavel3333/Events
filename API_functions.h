@@ -94,13 +94,11 @@
 
 #define END_USING_MODELS }}
 
-#define BEGIN_USING_NETWORK {                                  \
-	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
-	M_NETWORK_NOT_USING,    				                   \
-	INFINITE);                                                 \
-	switch (M_MODELS_NOT_USING_WaitResult) {
-
-#define END_USING_NETWORK }}
+#define RELEASE_MODELS(msg, code)                     \
+    if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog \
+		extendedDebugLogFmt(msg, GetLastError());      \
+		return code;                                   \
+	} traceLog
 
 #define MOD_VERSION "v1.0.0.2 (" __TIMESTAMP__ ")"
 
@@ -237,9 +235,7 @@ void     curl_clean();
 
 const std::vector<float*>* findModelsByID(std::vector<ModelsSection>&, uint8_t);
 
-uint8_t parse_config();
-uint8_t parse_sync();
-uint8_t parse_del_model();
+uint8_t parse_event(EVENT_ID);
 
 bool file_exists(const char*);
 
