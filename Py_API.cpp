@@ -167,6 +167,8 @@ void clearModelsSections() { traceLog
 
 			while (it_model != it_sect->models.end()) {
 				if (*it_model == nullptr) { traceLog
+					extendedDebugLog("[NY_Event][WARNING]: clearModelsSections - *it_model is NULL!\n");
+
 					it_model = it_sect->models.erase(it_model);
 
 					continue;
@@ -227,6 +229,8 @@ void clearModelsSections() { traceLog
 }
 
 uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) { traceLog
+	INIT_LOCAL_MSG_BUFFER;
+	
 	PyObject* __player = PyString_FromString("player");
 
 	PyObject* player = PyObject_CallMethodObjArgs(m_BigWorld, __player, NULL);
@@ -302,27 +306,31 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 			for (auto it = current_map.modelsSects.cbegin();
 				it != current_map.modelsSects.cend();
 				it++) {
-				if (it->isInitialised) {
-					for (auto it2 = it->models.cbegin();
-						it2 != it->models.cend();
-						it2++) {
-						if (*it2 == nullptr) { traceLog
-							continue;
-						}
+				if (!it->isInitialised) {
+					extendedDebugLogFmt("[NY_Event][WARNING]: sect %d is not initialized!\n", it->ID);
 
-						distTemp = getDist2Points(coords_pos, *it2);
+					continue;
+				}
 
-						if (dist == -1.0 || distTemp < dist) {
-							dist = distTemp;
-							modelTypeLast = it->ID;
+				for (auto it2 = it->models.cbegin();
+					it2 != it->models.cend();
+					it2++) {
+					if (*it2 == nullptr) { traceLog
+						extendedDebugLog("[NY_Event][WARNING]: findLastModelCoords - *it2 is NULL!\n");
 
-							coords_res = *it2;
-						}
+						continue;
+					}
+
+					distTemp = getDist2Points(coords_pos, *it2);
+
+					if (dist == -1.0 || distTemp < dist) {
+						dist = distTemp;
+						modelTypeLast = it->ID;
+
+						coords_res = *it2;
 					}
 				}
 			} traceLog
-
-			INIT_LOCAL_MSG_BUFFER;
 
 			RELEASE_MODELS("[NY_Event][ERROR]: findLastModelCoords - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 14);
 
@@ -337,7 +345,9 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 
 	delete[] coords_pos;
 
-	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { traceLog
+	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
+		extendedDebugLog("[NY_Event][WARNING]: findLastModelCoords - model not found!\n");
+
 		return 8;
 	} traceLog
 
@@ -355,7 +365,7 @@ uint8_t delModelPy(float* coords) { traceLog
 	INIT_LOCAL_MSG_BUFFER;
 	
 	if (coords == nullptr) { traceLog
-		superExtendedDebugLog("SYNC: coords is nullptr!\n");
+		extendedDebugLog("[NY_Event][WARNING]: delModelPy - coords is NULL!\n");
 
 		return 1;
 	} traceLog
@@ -364,9 +374,9 @@ uint8_t delModelPy(float* coords) { traceLog
 
 	while (it_model != models.end()) {
 		if (*it_model == nullptr) { traceLog
+			extendedDebugLog("[NY_Event][WARNING]: delModelPy - *it_model is NULL!\n");
+
 			it_model = models.erase(it_model);
-			
-			superExtendedDebugLog("SYNC: model is nullptr!\n");
 			
 			continue;
 		}
@@ -443,6 +453,8 @@ uint8_t delModelPy(float* coords) { traceLog
 
 uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog
 	if (coords == nullptr) { traceLog
+		extendedDebugLog("[NY_Event][WARNING]: delModelCoords - coords is NULL!\n");
+
 		return 1;
 	}
 
@@ -455,6 +467,8 @@ uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog
 
 				while (it_model != it_sect->models.end()) {
 					if ((*it_model) == nullptr) { traceLog
+						extendedDebugLog("[NY_Event][WARNING]: delModelCoords - *it_model is NULL!\n");
+
 						it_model = it_sect->models.erase(it_model); traceLog
 
 						continue;
@@ -674,6 +688,8 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) {
 
 	if (isAsync) { //traceLog
 		if (coords == nullptr) { traceLog
+			extendedDebugLog("[NY_Event][WARNING]: event_model - coords is NULL!\n");
+
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
 			return NULL;
@@ -812,6 +828,8 @@ uint8_t create_models() { traceLog
 
 				while (it2 != it->models.end()) {
 					if (*it2 == nullptr) { traceLog
+						extendedDebugLog("[NY_Event][WARNING]: create_models - *it2 is NULL!\n");
+
 						it2 = it->models.erase(it2);
 
 						continue;
@@ -864,6 +882,8 @@ uint8_t init_models() { traceLog
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
+			extendedDebugLog("[NY_Event][WARNING]: init_models - models[i] is NULL!\n");
+
 			continue;
 		}
 
@@ -917,6 +937,8 @@ uint8_t set_visible(bool isVisible) { traceLog
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
+			extendedDebugLog("[NY_Event][WARNING]: set_visible - models[i] is NULL!\n");
+
 			continue;
 		}
 
@@ -958,6 +980,8 @@ uint8_t del_models() { traceLog
 
 	while (it_model != models.end()) {
 		if (*it_model == nullptr) { traceLog
+			extendedDebugLog("[NY_Event][WARNING]: del_models - *it_model is NULL!\n");
+
 			it_model = models.erase(it_model);
 
 			continue;
@@ -1014,6 +1038,8 @@ uint8_t del_models() { traceLog
 
 	while (it_light != lights.end()) {
 		if (*it_light == nullptr) { traceLog
+			extendedDebugLog("[NY_Event][WARNING]: del_models - *it_light is NULL!\n");
+			
 			it_light = lights.erase(it_light);
 
 			continue;

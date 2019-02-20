@@ -222,16 +222,20 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog
 
 						it_sect_sync = sync_map.modelsSects_deleting.begin();
 
-						extendedDebugLog("[NY_Event]: SYNC - %d models to delete\n", sync_map.modelsSects_deleting.size());
+						superExtendedDebugLog("[NY_Event]: SYNC - %d models sections to delete\n", sync_map.modelsSects_deleting.size());
 
-						while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
+						while (it_sect_sync != sync_map.modelsSects_deleting.end()) { traceLog
 							if (it_sect_sync->isInitialised) {
+								superExtendedDebugLog("[NY_Event]: SYNC - %d models to delete in section %d\n", it_sect_sync->models.size(), it_sect_sync->ID);
+
 								it_model = it_sect_sync->models.begin();
 
-								while (it_model != it_sect_sync->models.end()) {
+								while (it_model != it_sect_sync->models.end()) { traceLog
 									if (*it_model == nullptr) { traceLog
-										it_model = it_sect_sync->models.erase(it_model);
+										extendedDebugLog("[NY_Event][WARNING]: handleBattleEvent - *it_model is NULL!%d\n");
 
+										it_model = it_sect_sync->models.erase(it_model);
+										
 										continue;
 									}
 
@@ -269,6 +273,8 @@ uint8_t handleBattleEvent(EVENT_ID eventID) { traceLog
 									*/
 								}
 							}
+							
+							superExtendedDebugLog("[NY_Event]: SYNC - %d models after deleting\n", sync_map.modelsSects_deleting.size());
 
 							if (it_sect_sync->path != nullptr) {
 								delete[] it_sect_sync->path;
@@ -554,6 +560,8 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog
 
 				while (it_model != models.end()) {
 					if (*it_model == nullptr) { traceLog
+						extendedDebugLog("[NY_Event][WARNING]: handleBattleEndEvent - *it_model is NULL!%d\n");
+
 						it_model = models.erase(it_model);
 
 						continue;
@@ -581,6 +589,8 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog
 
 				while (it_light != lights.end()) {
 					if (*it_light == nullptr) { traceLog
+						extendedDebugLog("[NY_Event][WARNING]: handleBattleEndEvent - *it_light is NULL!%d\n");
+						
 						it_light = lights.erase(it_light);
 
 						continue;
@@ -736,7 +746,9 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 				return 7;
 		END_USING_MODELS;
 	}
-	else if (EVENT_DEL_MODEL->request == 7) { traceLog
+	else if (EVENT_DEL_MODEL->request == 7 || EVENT_DEL_MODEL->request == 8) { traceLog
+		extendedDebugLogFmt("[NY_Event]: DEL_LAST_MODEL - Model not found!\n");
+
 		current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
 	}
 	else { traceLog
