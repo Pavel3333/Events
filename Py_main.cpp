@@ -335,10 +335,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(2);
 	} traceLog
 
-	PyObject* __arena = PyString_FromString("arena");
-	PyObject* arena = PyObject_GetAttr(player, __arena);
-
-	Py_DECREF(__arena);
+	PyObject* arena = PyObject_GetAttrString(player, "arena");
 
 	Py_DECREF(player);
 
@@ -346,20 +343,16 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(3);
 	} traceLog
 
-	PyObject* __arenaType = PyString_FromString("arenaType");
-	PyObject* arenaType = PyObject_GetAttr(arena, __arenaType);
+	PyObject* arenaType = PyObject_GetAttrString(arena, "arenaType");
 
-	Py_DECREF(__arenaType);
 	Py_DECREF(arena);
 
 	if (!arenaType) { traceLog
 		return PyInt_FromSize_t(4);
 	} traceLog
 
-	PyObject* __geometryName = PyString_FromString("geometryName");
-	PyObject* map_PS = PyObject_GetAttr(arenaType, __geometryName);
+	PyObject* map_PS = PyObject_GetAttrString(arenaType, "geometryName");
 
-	Py_DECREF(__geometryName);
 	Py_DECREF(arenaType);
 
 	if (!map_PS) { traceLog
@@ -505,10 +498,8 @@ uint8_t event_сheck() { traceLog
 		return 3;
 	} traceLog
 
-	PyObject* __databaseID = PyString_FromString("databaseID");
-	PyObject* DBID_string = PyObject_GetAttr(player, __databaseID);
+	PyObject* DBID_string = PyObject_GetAttrString(player, "databaseID");
 
-	Py_DECREF(__databaseID);
 	Py_DECREF(player);
 
 	if (!DBID_string) { traceLog
@@ -630,10 +621,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 		Py_DECREF(__get_key);
 	}
 	else {
-		PyObject* __key = PyString_FromString("key");
-		PyObject* key = PyObject_GetAttr(event_, __key);
-
-		Py_DECREF(__key);
+		PyObject* key = PyObject_GetAttrString(event_, "key");
 
 		if (!key) { traceLog
 			Py_RETURN_NONE;
@@ -752,11 +740,7 @@ PyMODINIT_FUNC initevent(void)
 
 	//получение указателя на метод модуля onModelCreated
 
-	PyObject* __omc = PyString_FromString("omc");
-
-	onModelCreatedPyMeth = PyObject_GetAttr(event_module, __omc);
-
-	Py_DECREF(__omc);
+	onModelCreatedPyMeth = PyObject_GetAttrString(event_module, "omc");
 
 	if (!onModelCreatedPyMeth) { traceLog
 		finiHangarMessages();
@@ -817,11 +801,7 @@ PyMODINIT_FUNC initevent(void)
 		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
 	}
 	else {
-		PyObject* __g_gui = PyString_FromString("g_gui");
-
-		m_g_gui = PyObject_GetAttr(mod_mods_gui, __g_gui);
-
-		Py_DECREF(__g_gui);
+		m_g_gui = PyObject_GetAttrString(mod_mods_gui, "g_gui");
 		Py_DECREF(mod_mods_gui);
 
 		if (!m_g_gui) { traceLog

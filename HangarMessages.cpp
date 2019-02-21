@@ -14,11 +14,7 @@ bool initHangarMessages() {
 		return false;
 	} traceLog
 
-	PyObject* __SM_TYPE = PyString_FromString("SM_TYPE");
-
-	m_SM_TYPE = PyObject_GetAttr(SystemMessages, __SM_TYPE);
-
-	Py_DECREF(__SM_TYPE);
+	m_SM_TYPE = PyObject_GetAttrString(SystemMessages, "SM_TYPE");
 
 	if (!m_SM_TYPE) { traceLog
 		Py_DECREF(SystemMessages);
@@ -26,11 +22,8 @@ bool initHangarMessages() {
 		return false;
 	} traceLog
 
-	PyObject* __pushMessage = PyString_FromString("pushMessage");
+	m_pushMessage = PyObject_GetAttrString(SystemMessages, "pushMessage");
 
-	m_pushMessage = PyObject_GetAttr(SystemMessages, __pushMessage);
-
-	Py_DECREF(__pushMessage);
 	Py_DECREF(SystemMessages);
 
 	if (!m_pushMessage) { traceLog
@@ -51,11 +44,7 @@ uint8_t showed = false;
 uint8_t showMessage(PyObject* i18n) {
 	if (!first_check && showed) return NULL;
 
-	PyObject* __GameGreeting = PyString_FromString("GameGreeting");
-
-	PyObject* GameGreeting = PyObject_GetAttr(m_SM_TYPE, __GameGreeting);
-
-	Py_DECREF(__GameGreeting);
+	PyObject* GameGreeting = PyObject_GetAttrString(m_SM_TYPE, "GameGreeting");
 
 	if (!GameGreeting) {
 		return 1;

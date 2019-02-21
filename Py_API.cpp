@@ -241,10 +241,7 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 		return 1;
 	} traceLog
 
-	PyObject* __vehicle = PyString_FromString("vehicle");
-	PyObject* vehicle = PyObject_GetAttr(player, __vehicle);
-
-	Py_DECREF(__vehicle);
+	PyObject* vehicle = PyObject_GetAttrString(player, "vehicle");
 
 	Py_DECREF(player);
 
@@ -252,20 +249,16 @@ uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) 
 		return 2;
 	} traceLog
 
-	PyObject* __model = PyString_FromString("model");
-	PyObject* model_p = PyObject_GetAttr(vehicle, __model);
+	PyObject* model_p = PyObject_GetAttrString(vehicle, "model");
 
-	Py_DECREF(__model);
 	Py_DECREF(vehicle);
 
 	if (!model_p) { traceLog
 		return 3;
 	} traceLog
 
-	PyObject* __position = PyString_FromString("position");
-	PyObject* position_Vec3 = PyObject_GetAttr(model_p, __position);
+	PyObject* position_Vec3 = PyObject_GetAttrString(model_p, "position");
 
-	Py_DECREF(__position);
 	Py_DECREF(model_p);
 
 	if (!position_Vec3) { traceLog

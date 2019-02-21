@@ -23,11 +23,7 @@ uint8_t initNative() { traceLog
 
 	//загрузка Model
 
-	PyObject* __Model = PyString_FromString("Model");
-
-	m_Model = PyObject_GetAttr(m_BigWorld, __Model);
-
-	Py_DECREF(__Model);
+	m_Model = PyObject_GetAttrString(m_BigWorld, "Model");
 
 	if (!m_Model) { traceLog
 		return 2;
@@ -35,11 +31,7 @@ uint8_t initNative() { traceLog
 
 	//загрузка fetchModel
 
-	PyObject* __fetchModel = PyString_FromString("fetchModel");
-
-	m_fetchModel = PyObject_GetAttr(m_BigWorld, __fetchModel);
-
-	Py_DECREF(__fetchModel);
+	m_fetchModel = PyObject_GetAttrString(m_BigWorld, "fetchModel");
 
 	if (!m_fetchModel) { traceLog
 		Py_DECREF(m_Model);
@@ -49,11 +41,7 @@ uint8_t initNative() { traceLog
 
 	//загрузка callback
 
-	PyObject* __callback_s = PyString_FromString("callback");
-
-	m_callback = PyObject_GetAttr(m_BigWorld, __callback_s);
-
-	Py_DECREF(__callback_s);
+	m_callback = PyObject_GetAttrString(m_BigWorld, "callback");
 
 	if (!m_callback) { traceLog
 		Py_DECREF(m_fetchModel);
@@ -64,11 +52,7 @@ uint8_t initNative() { traceLog
 
 	//загрузка cancelCallback
 
-	PyObject* __cancelCallback = PyString_FromString("cancelCallback");
-
-	m_cancelCallback = PyObject_GetAttr(m_BigWorld, __cancelCallback);
-
-	Py_DECREF(__cancelCallback);
+	m_cancelCallback = PyObject_GetAttrString(m_BigWorld, "cancelCallback");
 
 	if (!m_cancelCallback) { traceLog
 		Py_DECREF(m_callback);
@@ -91,11 +75,8 @@ uint8_t initNative() { traceLog
 		return 6;
 	} traceLog
 
-	PyObject* __g_appLoader = PyString_FromString("g_appLoader");
+	m_g_appLoader = PyObject_GetAttrString(appLoader, "g_appLoader");
 
-	m_g_appLoader = PyObject_GetAttr(appLoader, __g_appLoader);
-
-	Py_DECREF(__g_appLoader);
 	Py_DECREF(appLoader);
 
 	if (!m_g_appLoader) { traceLog
@@ -121,11 +102,8 @@ uint8_t initNative() { traceLog
 		return 8;
 	}
 
-	PyObject* __g_partial = PyString_FromString("partial");
+	m_partial = PyObject_GetAttrString(functools, "partial");
 
-	m_partial = PyObject_GetAttr(functools, __g_partial);
-
-	Py_DECREF(__g_partial);
 	Py_DECREF(functools);
 
 	if (!m_partial) { traceLog
