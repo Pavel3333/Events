@@ -10,7 +10,7 @@
 #define extended_debug_log       true
 #define super_extended_debug_log true
 
-#define trace_log false
+#define trace_log true
 
 #define INIT_LOCAL_MSG_BUFFER \
 	char log_buf_c[1024];     \
@@ -79,8 +79,9 @@
 #endif
 
 #if trace_log
-#define traceLog {                                           \
+#define traceLog {                                          \
 	dbg_log << __LINE__ << " - " __FUNCTION__ << std::endl; \
+	dbg_log.flush();                                        \
 }
 #else
 #define traceLog 0;
