@@ -379,6 +379,12 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 
 	extendedDebugLogFmt("[NY_Event]: mapID = %d\n", (uint32_t)mapID);
 
+	if (mapID != MAIN_COMPETITION_MAP && mapID != FUN_COMPETITION_MAP) {
+		extendedDebugLogFmt("[NY_Event][ERROR]: incorrect map! (%d)\n", (uint32_t)mapID);
+
+		return PyInt_FromSize_t(7);
+	}
+
 	battleEnded = false;
 
 	GUI_setTimerVisible(true);

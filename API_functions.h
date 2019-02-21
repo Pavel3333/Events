@@ -126,6 +126,9 @@
 #define MANDARINE   8
 #define WOOD_TOILET 9
 
+#define MAIN_COMPETITION_MAP 217
+
+#define FUN_COMPETITION_MAP 4
 
 enum STAGE_ID {
 	WAITING = 0,
