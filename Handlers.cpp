@@ -660,7 +660,11 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 		case WAIT_OBJECT_0: traceLog
 			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
+			Py_BLOCK_THREADS;
+
 			BW_Native->getLastModelCoords(5.0, &modelID, &coords);
+
+			Py_UNBLOCK_THREADS;
 
 			RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 2);
 
@@ -711,7 +715,11 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 			case WAIT_OBJECT_0: traceLog
 				superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
+				Py_BLOCK_THREADS;
+
 				EVENT_DEL_MODEL->request = delModelPy(coords);
+
+				Py_UNBLOCK_THREADS;
 
 				if (EVENT_DEL_MODEL->request) { traceLog
 					extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - delModelPy - Error code %d\n", EVENT_DEL_MODEL->request);

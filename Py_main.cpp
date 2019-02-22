@@ -191,7 +191,7 @@ uint32_t handlerThread() {
 	uint8_t lastEventError = NULL;
 
 	while (!first_check && !battleEnded && !lastEventError) { traceLog
-	superExtendedDebugLog("[NY_Event]: waiting EVENTS\n");
+		superExtendedDebugLog("[NY_Event]: waiting EVENTS\n");
 
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
 			HEVENTS_COUNT,
