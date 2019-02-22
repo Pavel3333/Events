@@ -671,7 +671,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 			Py_BLOCK_THREADS;
 
-			BW_Native->getLastModelCoords(5.0, &modelID, &coords);
+			gBigWorldUtils->getLastModelCoords(5.0, &modelID, &coords);
 
 			Py_UNBLOCK_THREADS;
 
@@ -686,7 +686,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 			return 3;
 	END_USING_MODELS;
 
-	if      (!BW_Native->lastError) { traceLog
+	if      (!gBigWorldUtils->lastError) { traceLog
 		EVENT_DEL_MODEL->request = send_token_threadsafe(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
 		
 		if (EVENT_DEL_MODEL->request) { traceLog
@@ -771,13 +771,13 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 				return 12;
 		END_USING_MODELS;
 	}
-	else if (BW_Native->lastError == 7 || BW_Native->lastError == 8) { traceLog
+	else if (gBigWorldUtils->lastError == 7 || gBigWorldUtils->lastError == 8) { traceLog
 		extendedDebugLogFmt("[NY_Event]: DEL_LAST_MODEL - Model not found!\n");
 
 		current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
 	}
 	else { traceLog
-		extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - getLastModelCoords - error %d!\n", BW_Native->lastError);
+		extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - getLastModelCoords - error %d!\n", gBigWorldUtils->lastError);
 
 		return 13;
 	}

@@ -125,7 +125,7 @@ void GUI_setText(char* msg, float time_f) {
 	}
 
 	if (delLabelCBID) {
-		BW_Native->cancelCallback(&delLabelCBID);
+		gBigWorldUtils->cancelCallback(&delLabelCBID);
 
 		PyObject* none = Py_None;
 

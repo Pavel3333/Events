@@ -241,7 +241,7 @@ DWORD handlerThread() {
 					Py_DECREF(delLabelCBID_p);
 				} traceLog
 
-				BW_Native->cancelCallback(&delLabelCBID);
+				gBigWorldUtils->cancelCallback(&delLabelCBID);
 
 				allModelsCreated = NULL;
 
@@ -327,10 +327,10 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	BW_Native->getMapID(&mapID);
+	gBigWorldUtils->getMapID(&mapID);
 
-	if (BW_Native->lastError) {
-		extendedDebugLogFmt("[NY_Event][ERROR]: getMapID: error %d!\n", BW_Native->lastError);
+	if (gBigWorldUtils->lastError) {
+		extendedDebugLogFmt("[NY_Event][ERROR]: getMapID: error %d!\n", gBigWorldUtils->lastError);
 
 		return PyInt_FromSize_t(2);
 	}
@@ -454,10 +454,10 @@ uint8_t event_сheck() { traceLog
 
 	debugLogFmt("[NY_Event]: checking...\n");
 
-	BW_Native->getDBID(&databaseID);
+	gBigWorldUtils->getDBID(&databaseID);
 
-	if (BW_Native->lastError) {
-		debugLogFmt("[NY_Event][ERROR]: getDBID: error %d!\n", BW_Native->lastError);
+	if (gBigWorldUtils->lastError) {
+		debugLogFmt("[NY_Event][ERROR]: getDBID: error %d!\n", gBigWorldUtils->lastError);
 
 		return 3;
 	}
@@ -625,37 +625,22 @@ PyMODINIT_FUNC initevent(void)
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	InitializeCriticalSection(&CS_PARSING_NOT_USING);
 
-	BW_Native      = new BW_NativeC();
-	HangarMessages = new HangarMessagesC();
-
-	if (!BW_Native->inited) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: initevent - initNative: error %d!\n", BW_Native->lastError);
-		
-		BW_Native->lastError = NULL;
-
-		return;
+	gBigWorldUtils = new BigWorldUtils();
+	if (!gBigWorldUtils->inited) {
+		goto freeBigWorldUtils;
 	}
 
-	if (!HangarMessages->inited) { traceLog
+	HangarMessages = new HangarMessagesC();
+	if (!HangarMessages->inited) {
 		debugLogFmt("[NY_Event][ERROR]: initevent - initHangarMessages: error %d!\n", HangarMessages->lastError);
-
-		delete BW_Native;
-		BW_Native = nullptr;
-
-		return;
+		goto freeHangarMessages;
 	}
 
 	debugLog("[NY_Event]: Config init...\n");
 
-	if (PyType_Ready(&Config_p)) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-
-		return;
-	} traceLog
+	if (PyType_Ready(&Config_p)) {
+		goto freeHangarMessages;
+	}
 
 	Py_INCREF(&Config_p);
 
@@ -667,15 +652,9 @@ PyMODINIT_FUNC initevent(void)
 
 	Py_DECREF(&Config_p);
 
-	if (!g_config || !g_self) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-
-		return;
-	} traceLog
+	if (!g_config || !g_self) {
+		goto freeHangarMessages;
+	}
 
 	//инициализация модуля
 
@@ -683,47 +662,29 @@ PyMODINIT_FUNC initevent(void)
 		event_methods,
 		event_methods__doc__);
 
-	if (!event_module) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-		
-		return;
-	} traceLog
+	if (!event_module) {
+		goto freeHangarMessages;
+	}
 
-	if (PyModule_AddObject(event_module, "l", g_config)) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-		
-		return;
-	} traceLog
+	if (PyModule_AddObject(event_module, "l", g_config)) {
+		goto freeHangarMessages;
+	}
 
 	//получение указателя на метод модуля onModelCreated
 
 	onModelCreatedPyMeth = PyObject_GetAttrString(event_module, "omc");
 
-	if (!onModelCreatedPyMeth) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-
-		return;
-	} traceLog
+	if (!onModelCreatedPyMeth) {
+		goto freeHangarMessages;
+	}
 
 	//Space key
 
 	spaceKey = PyList_New(1);
 
-	if (spaceKey) { traceLog
+	if (spaceKey) {
 		PyList_SET_ITEM(spaceKey, 0, PyInt_FromSize_t(57));
-	} traceLog
+	}
 
 	//загрузка modGUI
 
@@ -731,15 +692,9 @@ PyMODINIT_FUNC initevent(void)
 
 	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
 
-	if (!mGUI_module) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-
-		return;
-	} traceLog
+	if (!mGUI_module) {
+		goto freeHangarMessages;
+	}
 
 	debugLog("[NY_Event]: Mod_GUI class loading...\n");
 
@@ -750,15 +705,9 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(__Mod_GUI);
 	Py_DECREF(mGUI_module);
 
-	if (!modGUI) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-
-		return;
-	} traceLog
+	if (!modGUI) {
+		goto freeHangarMessages;
+	}
 
 	debugLog("[NY_Event]: Mod_GUI class loaded OK!\n");
 
@@ -771,8 +720,8 @@ PyMODINIT_FUNC initevent(void)
 	if (!mod_mods_gui) { traceLog
 		PyErr_Clear();
 
-		delete BW_Native;
-		BW_Native = nullptr;
+		delete gBigWorldUtils;
+		gBigWorldUtils = nullptr;
 
 		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
 	}
@@ -782,14 +731,7 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(mod_mods_gui);
 
 		if (!m_g_gui) { traceLog
-			delete HangarMessages;
-			HangarMessages = nullptr;;
-		
-			delete BW_Native;
-			BW_Native = nullptr;
-
-			Py_DECREF(modGUI);
-			return;
+			goto freeHangarMessages;
 		} traceLog
 
 		debugLog("[NY_Event]: mod_mods_gui loaded OK!\n");
@@ -802,28 +744,15 @@ PyMODINIT_FUNC initevent(void)
 		_mkdir("mods/configs/pavel3333/NY_Event/i18n");
 
 		if (!read_data(true) || !read_data(false)) { traceLog
-			delete HangarMessages;
-			HangarMessages = nullptr;;
-		
-			delete BW_Native;
-			BW_Native = nullptr;
-
-			Py_DECREF(modGUI);
-			return;
+			goto freeHangarMessages;
 		} traceLog
 	}
 	else {
 		PyObject* ids = PyString_FromString(g_self->ids);
 
 		if (!ids) { traceLog
-			delete HangarMessages;
-			HangarMessages = nullptr;;
-		
-			delete BW_Native;
-			BW_Native = nullptr;
-
 			Py_DECREF(modGUI);
-			return;
+			goto freeHangarMessages;
 		} traceLog
 
 		PyObject* __register_data = PyString_FromString("register_data");
@@ -836,14 +765,8 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(ids);
 
 		if (!data_i18n) { traceLog
-			delete HangarMessages;
-			HangarMessages = nullptr;;
-		
-			delete BW_Native;
-			BW_Native = nullptr;
-
 			Py_DECREF(modGUI);
-			return;
+			goto freeHangarMessages;
 		} traceLog
 
 		PyObject* old = g_self->data;
@@ -869,16 +792,19 @@ PyMODINIT_FUNC initevent(void)
 	uint32_t curl_init_result = curl_init();
 
 	if (curl_init_result) { traceLog
-		delete HangarMessages;
-		HangarMessages = nullptr;;
-		
-		delete BW_Native;
-		BW_Native = nullptr;
-
 		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
 
-		return;
+		goto freeHangarMessages;
 	} traceLog
 
 	isInited = true;
-};
+	return;
+
+freeHangarMessages:
+	delete HangarMessages;
+	HangarMessages = nullptr;;
+
+freeBigWorldUtils:
+	delete gBigWorldUtils;
+	gBigWorldUtils = nullptr;
+}

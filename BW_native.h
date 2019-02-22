@@ -1,24 +1,26 @@
 ﻿#pragma once
 
+#include <atomic>
 #include "Py_common.h"
 
-class BW_NativeC {
-public:
-	bool inited;
 
-	PyObject* m_BigWorld;
-	PyObject* m_Model;
-	PyObject* m_fetchModel;
-	PyObject* m_callback;
-	PyObject* m_cancelCallback;
-	PyObject* m_g_appLoader;
-	PyObject* m_partial;
-	PyObject* m_json;
+class BigWorldUtils {
+public:
+	std::atomic_bool inited = false;
+
+	PyObject* m_BigWorld = nullptr;
+	PyObject* m_Model = nullptr;
+	PyObject* m_fetchModel = nullptr;
+	PyObject* m_callback = nullptr;
+	PyObject* m_cancelCallback = nullptr;
+	PyObject* m_g_appLoader = nullptr;
+	PyObject* m_partial = nullptr;
+	PyObject* m_json = nullptr;
 
 	uint8_t lastError;
-public:
-	BW_NativeC();
-	~BW_NativeC();
+
+	BigWorldUtils();
+	~BigWorldUtils();
 
 	void callback(long*, PyObject*, float time_f = 1.0);
 	void cancelCallback(long*);
@@ -27,7 +29,7 @@ public:
 	void getDBID(uint32_t*);
 	void getLastModelCoords(float, uint8_t*, float**);
 private:
-	uint8_t init_p();
+	void init();
 
 	PyObject* getPlayer_p();
 
@@ -38,4 +40,4 @@ private:
 	uint8_t getLastModelCoords_p(float, uint8_t*, float**);
 };
 
-extern BW_NativeC* BW_Native;
+extern BigWorldUtils* gBigWorldUtils;

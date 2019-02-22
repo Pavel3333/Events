@@ -1,185 +1,78 @@
 ﻿#include "BW_native.h"
 
+
 //constructor
 
-BW_NativeC::BW_NativeC() {
-	this->inited = false;
-
-	this->m_BigWorld = NULL;
-	this->m_Model = NULL;
-	this->m_fetchModel = NULL;
-	this->m_callback = NULL;
-	this->m_cancelCallback = NULL;
-	this->m_g_appLoader = NULL;
-	this->m_partial = NULL;
-	this->m_json = NULL;
-
-	this->lastError = init_p();
+BigWorldUtils::BigWorldUtils()
+{
+	init();
 }
 
 //destructor
 
-BW_NativeC::~BW_NativeC() {
-	if (!this->inited) return;
+BigWorldUtils::~BigWorldUtils()
+{
+	if (!inited) return;
 
-	Py_XDECREF(this->m_json);
-	Py_XDECREF(this->m_partial);
-	Py_XDECREF(this->m_g_appLoader);
-	Py_XDECREF(this->m_cancelCallback);
-	Py_XDECREF(this->m_callback);
-	Py_XDECREF(this->m_fetchModel);
-	Py_XDECREF(this->m_Model);
-
-	this->m_Model = NULL;
-	this->m_fetchModel = NULL;
-	this->m_callback = NULL;
-	this->m_cancelCallback = NULL;
-	this->m_g_appLoader = NULL;
-	this->m_partial = NULL;
-	this->m_json = NULL;
+	Py_XDECREF(m_json);
+	Py_XDECREF(m_partial);
+	Py_XDECREF(m_g_appLoader);
+	Py_XDECREF(m_cancelCallback);
+	Py_XDECREF(m_callback);
+	Py_XDECREF(m_fetchModel);
+	Py_XDECREF(m_Model);
 }
 
 
-//private methods
+// private methods
 
-uint8_t BW_NativeC::init_p() {
-	//загрузка BigWorld
-
+void BigWorldUtils::init()
+{
+	// получение BigWorld
 	m_BigWorld = PyImport_AddModule("BigWorld");
 
-	if (!m_BigWorld) { traceLog
-		return 1;
-	} traceLog
-
-	//загрузка Model
-
+	// получение Model
 	m_Model = PyObject_GetAttrString(m_BigWorld, "Model");
 
-	if (!m_Model) { traceLog
-		return 2;
-	} traceLog
-
-	//загрузка fetchModel
-
+	// получение fetchModel
 	m_fetchModel = PyObject_GetAttrString(m_BigWorld, "fetchModel");
 
-	if (!m_fetchModel) { traceLog
-		Py_DECREF(m_Model);
-
-		return 3;
-	} traceLog
-
-	//загрузка callback
-
+	// получение callback
 	m_callback = PyObject_GetAttrString(m_BigWorld, "callback");
 
-	if (!m_callback) { traceLog
-		Py_DECREF(m_fetchModel);
-		Py_DECREF(m_Model);
-		
-		return 4;
-	} traceLog
-
-	//загрузка cancelCallback
-
+	// получение cancelCallback
 	m_cancelCallback = PyObject_GetAttrString(m_BigWorld, "cancelCallback");
 
-	if (!m_cancelCallback) { traceLog
-		Py_DECREF(m_callback);
-		Py_DECREF(m_fetchModel);
-		Py_DECREF(m_Model);
-
-		return 5;
-	} traceLog
-
-	//загрузка g_appLoader
-
+	// получение g_appLoader
 	PyObject* appLoader = PyImport_ImportModule("gui.app_loader");
-
-	if (!appLoader) { traceLog
-		Py_DECREF(m_cancelCallback);
-		Py_DECREF(m_callback);
-		Py_DECREF(m_fetchModel);
-		Py_DECREF(m_Model);
-		
-		return 6;
-	} traceLog
-
 	m_g_appLoader = PyObject_GetAttrString(appLoader, "g_appLoader");
-
 	Py_DECREF(appLoader);
 
-	if (!m_g_appLoader) { traceLog
-		Py_DECREF(m_cancelCallback);
-		Py_DECREF(m_callback);
-		Py_DECREF(m_fetchModel);
-		Py_DECREF(m_Model);
-
-		return 7;
-	} traceLog
-
-	//загрузка partial
-
+	// получение partial
 	PyObject* functools = PyImport_ImportModule("functools");
-
-	if (!functools) {
-		Py_DECREF(m_g_appLoader);
-		Py_DECREF(m_cancelCallback);
-		Py_DECREF(m_callback);
-		Py_DECREF(m_fetchModel);
-		Py_DECREF(m_Model);
-
-		return 8;
-	}
-
 	m_partial = PyObject_GetAttrString(functools, "partial");
-
 	Py_DECREF(functools);
 
-	if (!m_partial) { traceLog
-		Py_DECREF(m_g_appLoader);
-		Py_DECREF(m_cancelCallback);
-		Py_DECREF(m_callback);
-		Py_DECREF(m_fetchModel);
-		Py_DECREF(m_Model);
-
-		return 9;
-	} traceLog
-
 	//загрузка json
-
 	m_json = PyImport_ImportModule("json");
 
-	if (!m_json) { traceLog
-		Py_DECREF(m_partial);
-		Py_DECREF(m_g_appLoader);
-		Py_DECREF(m_cancelCallback);
-		Py_DECREF(m_callback);
-		Py_DECREF(m_fetchModel);
-		Py_DECREF(m_Model);
-
-		return 10;
-	} traceLog
-
 	inited = true;
-
-	return NULL;
 } 
 
-PyObject* BW_NativeC::getPlayer_p() {
+PyObject* BigWorldUtils::getPlayer_p()
+{
 	PyObject* __player = PyString_FromString("player");
 
-	PyObject_CallMethodObjArgs_increfed(player, BW_Native->m_BigWorld, __player, NULL);
+	PyObject_CallMethodObjArgs_increfed(player, m_BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
 	return player;
 }
 
-uint8_t BW_NativeC::callback_p(long* CBID, PyObject* func, float time_f) {
-	if (!func) { traceLog
-		return 1;
-	} traceLog
+uint8_t BigWorldUtils::callback_p(long* CBID, PyObject* func, float time_f)
+{
+	if (!func) return 1;
 
 	PyObject* time_p = NULL;
 
@@ -207,7 +100,8 @@ uint8_t BW_NativeC::callback_p(long* CBID, PyObject* func, float time_f) {
 	return NULL;
 }
 
-uint8_t BW_NativeC::cancelCallback_p(long* CBID) {
+uint8_t BigWorldUtils::cancelCallback_p(long* CBID)
+{
 	if (!*CBID) { traceLog
 		return 1;
 	} traceLog
@@ -221,12 +115,9 @@ uint8_t BW_NativeC::cancelCallback_p(long* CBID) {
 	return NULL;
 }
 
-uint8_t BW_NativeC::getMapID_p(uint8_t* mapID) {
+uint8_t BigWorldUtils::getMapID_p(uint8_t* mapID)
+{
 	PyObject* player = getPlayer_p();
-
-	if (!player) { traceLog
-		return 1;
-	} traceLog
 
 	PyObject* arena = PyObject_GetAttrString(player, "arena");
 
@@ -266,7 +157,8 @@ uint8_t BW_NativeC::getMapID_p(uint8_t* mapID) {
 	return NULL;
 }
 
-uint8_t BW_NativeC::getDBID_p(uint32_t* DBID) {
+uint8_t BigWorldUtils::getDBID_p(uint32_t* DBID)
+{
 	PyObject* player = getPlayer_p();
 
 	if (!player) { traceLog
@@ -296,7 +188,8 @@ uint8_t BW_NativeC::getDBID_p(uint32_t* DBID) {
 	return NULL;
 }
 
-uint8_t BW_NativeC::getLastModelCoords_p(float dist_equal, uint8_t* modelID, float** coords) { traceLog
+uint8_t BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, float** coords)
+{
 	INIT_LOCAL_MSG_BUFFER;
 
 	PyObject* player = getPlayer_p();
@@ -358,31 +251,27 @@ uint8_t BW_NativeC::getLastModelCoords_p(float dist_equal, uint8_t* modelID, flo
 	int8_t modelTypeLast = -1;
 	float* coords_res = nullptr;
 
-	for (auto it = current_map.modelsSects.cbegin();
-		it != current_map.modelsSects.cend();
-		it++) {
-		if (!it->isInitialised) {
-			extendedDebugLogFmt("[NY_Event][WARNING]: sect %d is not initialized!\n", it->ID);
+	for (const auto& it : current_map.modelsSects) {
+		if (!it.isInitialised) {
+			extendedDebugLogFmt("[NY_Event][WARNING]: sect %d is not initialized!\n", it.ID);
 
 			continue;
 		}
 
-		for (auto it2 = it->models.cbegin();
-			it2 != it->models.cend();
-			it2++) {
-			if (*it2 == nullptr) { traceLog
+		for (float* it2 : it.models) {
+			if (it2 == nullptr) { traceLog
 				extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - *it2 is NULL!\n");
 
 				continue;
 			}
 
-			distTemp = getDist2Points(coords_pos, *it2);
+			distTemp = getDist2Points(coords_pos, it2);
 
 			if (dist == -1.0 || distTemp < dist) {
 				dist = distTemp;
-				modelTypeLast = it->ID;
+				modelTypeLast = it.ID;
 
-				coords_res = *it2;
+				coords_res = it2;
 			}
 		}
 	} traceLog
@@ -407,34 +296,40 @@ uint8_t BW_NativeC::getLastModelCoords_p(float dist_equal, uint8_t* modelID, flo
 
 //public methods
 
-void BW_NativeC::callback(long* CBID, PyObject* func, float time_f) {
+void BigWorldUtils::callback(long* CBID, PyObject* func, float time_f)
+{
 	if (!inited) return;
 
 	lastError = callback_p(CBID, func, time_f);
 }
 
-void BW_NativeC::cancelCallback(long* CBID) {
+void BigWorldUtils::cancelCallback(long* CBID)
+{
 	if (!inited) return;
 
 	lastError = cancelCallback_p(CBID);
 }
 
-void BW_NativeC::getMapID(uint8_t* mapID) {
+void BigWorldUtils::getMapID(uint8_t* mapID)
+{
 	if (!inited) return;
 
 	lastError = getMapID_p(mapID);
 }
 
-void BW_NativeC::getDBID(uint32_t* DBID) {
+void BigWorldUtils::getDBID(uint32_t* DBID)
+{
 	if (!inited) return;
 
 	lastError = getDBID_p(DBID);
 }
 
-void BW_NativeC::getLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
+void BigWorldUtils::getLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
 	if (!inited) return;
 
 	lastError = getLastModelCoords_p(dist_equal, modelID, coords);
 }
 
-BW_NativeC* BW_Native = nullptr;
+
+// instance
+BigWorldUtils* gBigWorldUtils = nullptr;
