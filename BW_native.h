@@ -11,7 +11,6 @@ public:
 	PyObject* m_fetchModel;
 	PyObject* m_callback;
 	PyObject* m_cancelCallback;
-	PyObject* m_g_gui;
 	PyObject* m_g_appLoader;
 	PyObject* m_partial;
 	PyObject* m_json;

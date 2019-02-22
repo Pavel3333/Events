@@ -549,13 +549,13 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		return 1;
 	} traceLog
 
-	if (BW_Native->m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog
+	if (m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
 		PyObject* __register = PyString_FromString("register");
 
-		PyObject_CallMethodObjArgs_increfed(result, BW_Native->m_g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
+		PyObject_CallMethodObjArgs_increfed(result, m_g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
 
 		Py_XDECREF(result);
 		Py_DECREF(__register);
@@ -563,7 +563,7 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		Py_DECREF(template_);
 	} traceLog
 
-	if (!BW_Native->m_g_gui && PyCallable_Check(byteify)) { traceLog
+	if (!m_g_gui && PyCallable_Check(byteify)) { traceLog
 		Py_INCREF(byteify);
 
 		PyObject* args1 = PyTuple_New(1);
@@ -615,10 +615,10 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted_Space = NULL;
 
-	if (BW_Native->m_g_gui) { //traceLog
+	if (m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		PyObject_CallMethodObjArgs_increfed(isKeyGetted_Space_tmp, BW_Native->m_g_gui, __get_key, spaceKey, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_Space_tmp, m_g_gui, __get_key, spaceKey, NULL);
 
 		Py_DECREF(__get_key);
 
@@ -833,6 +833,7 @@ PyMODINIT_FUNC initevent(void)
 	}
 	else {
 		m_g_gui = PyObject_GetAttrString(mod_mods_gui, "g_gui");
+
 		Py_DECREF(mod_mods_gui);
 
 		if (!m_g_gui) { traceLog
