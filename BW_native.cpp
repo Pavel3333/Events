@@ -331,14 +331,16 @@ uint8_t BW_NativeC::getLastModelCoords_p(float dist_equal, uint8_t* modelID, flo
 
 	PyObject* __tuple = PyString_FromString("tuple");
 
-	PyObject_CallMethodObjArgs_increfed(position, position_Vec3, __tuple, NULL);
+	PyObject* position = PyObject_CallMethodObjArgs(position_Vec3, __tuple, NULL);
 
 	Py_DECREF(__tuple);
+
+	Py_DECREF(position_Vec3);
 
 	if (!position) { traceLog
 		return 5;
 	} traceLog
-	
+
 	double* coords_pos = new double[3];
 
 	for (uint8_t i = NULL; i < 3; i++) {
@@ -355,8 +357,6 @@ uint8_t BW_NativeC::getLastModelCoords_p(float dist_equal, uint8_t* modelID, flo
 	double dist = -1.0;
 	int8_t modelTypeLast = -1;
 	float* coords_res = nullptr;
-
-	superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
 	for (auto it = current_map.modelsSects.cbegin();
 		it != current_map.modelsSects.cend();

@@ -40,6 +40,8 @@ uint8_t handleBattleEvent(PyThreadState *_save) { traceLog
 
 	extendedDebugLog("[NY_Event]: parsing OK!\n");
 
+	Py_BLOCK_THREADS;
+
 	if (current_map.time_preparing)  //выводим время
 		GUI_setTime(current_map.time_preparing);
 
@@ -92,6 +94,8 @@ uint8_t handleBattleEvent(PyThreadState *_save) { traceLog
 
 						extendedDebugLog("[NY_Event]: creating...\n");
 
+						Py_UNBLOCK_THREADS;
+
 						BEGIN_USING_MODELS;
 							case WAIT_OBJECT_0: traceLog
 								superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
@@ -109,6 +113,8 @@ uint8_t handleBattleEvent(PyThreadState *_save) { traceLog
 
 								return 5;
 						END_USING_MODELS;
+						
+						Py_BLOCK_THREADS;
 
 						/*
 						Первый способ - нативный вызов в main-потоке добавлением в очередь. Ненадёжно!
@@ -306,6 +312,8 @@ uint8_t handleBattleEvent(PyThreadState *_save) { traceLog
 	}
 	else extendedDebugLog("[NY_Event]: Warning - StageID is not correct\n");
 
+	Py_UNBLOCK_THREADS;
+
 	return NULL;
 }
 
@@ -387,11 +395,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save) {
 
 				superExtendedDebugLog("[NY_Event]: generating token OK!\n");
 
-				Py_BLOCK_THREADS;
-
 				EVENT_START_TIMER->request = handleBattleEvent(_save);
-
-				Py_UNBLOCK_THREADS;
 
 				if (EVENT_START_TIMER->request) { traceLog
 					extendedDebugLogFmt("[NY_Event][ERROR]: handleStartTimerEvent - create_models - Error code %d\n", EVENT_START_TIMER->request);
@@ -818,8 +822,7 @@ uint8_t makeEventInThread(EVENT_ID eventID) { traceLog //переводим ивенты в сигн
 
 		EVENT_START_TIMER->eventID = eventID;
 
-		if (!SetEvent(EVENT_START_TIMER->hEvent))
-		{
+		if (!SetEvent(EVENT_START_TIMER->hEvent)) { traceLog
 			debugLogFmt("[NY_Event][ERROR]: EVENT_START_TIMER not setted!\n");
 
 			return 5;
@@ -832,14 +835,13 @@ uint8_t makeEventInThread(EVENT_ID eventID) { traceLog //переводим ивенты в сигн
 
 		EVENT_DEL_MODEL->eventID = eventID;
 
-		if (!SetEvent(EVENT_DEL_MODEL->hEvent))
-		{
+		if (!SetEvent(EVENT_DEL_MODEL->hEvent)) { traceLog
 			debugLogFmt("[NY_Event][ERROR]: EVENT_DEL_MODEL not setted!\n");
 
 			return 7;
 		} traceLog
 	} 
-	else {
+	else { traceLog
 		return 8;
 	} traceLog
 
