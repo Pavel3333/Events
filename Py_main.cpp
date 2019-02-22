@@ -21,7 +21,7 @@ PyObject* m_g_gui = NULL;
 -программа ушла в вечное ожидание
 */
 
-uint32_t timerThread() {
+DWORD timerThread() {
 	if (!isInited ||!EVENT_START_TIMER) { traceLog
 		return 1;
 	} traceLog
@@ -75,25 +75,27 @@ uint32_t timerThread() {
 			return 3;
 	} traceLog
 
-	//закрываем поток
-
-	extendedDebugLogFmt("[NY_Event]: Closing timer thread %d\n", handlerThreadID);
-
 	return NULL;
 }
 
 DWORD WINAPI TimerThread(LPVOID lpParam) {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	uint32_t result = timerThread();
+	INIT_LOCAL_MSG_BUFFER;
+
+	DWORD result = timerThread();
 
 	hBattleTimerThread  = NULL;
 	battleTimerThreadID = NULL;
 
+	//закрываем поток
+
+	extendedDebugLogFmt("[NY_Event]: Closing timer thread %d, result: %d\n", battleTimerThreadID, result);
+
 	return result;
 }
 
-uint32_t handlerThread() {
+DWORD handlerThread() {
 	if (!isInited || !EVENT_IN_HANGAR || !EVENT_START_TIMER || !EVENT_DEL_MODEL || !EVENT_BATTLE_ENDED) { traceLog
 		return 1;
 	} traceLog
@@ -288,17 +290,11 @@ uint32_t handlerThread() {
 		M_MODELS_NOT_USING = NULL;
 	} traceLog
 
-	//закрываем поток
-
-	extendedDebugLogFmt("Closing handler thread %d\n", handlerThreadID);
-
 	Py_BLOCK_THREADS;
 
 	//выключаем GIL для этого потока
 
 	PyGILState_Release(gstate);
-
-	//------------------------------
 
 	return NULL;
 }
@@ -306,10 +302,16 @@ uint32_t handlerThread() {
 DWORD WINAPI HandlerThread(LPVOID lpParam) {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	uint32_t result = handlerThread();
+	INIT_LOCAL_MSG_BUFFER;
+
+	DWORD result = handlerThread();
 
 	hHandlerThread  = NULL;
 	handlerThreadID = NULL;
+
+	//закрываем поток
+
+	extendedDebugLogFmt("Closing handler thread %d\n", handlerThreadID);
 
 	return result;
 }

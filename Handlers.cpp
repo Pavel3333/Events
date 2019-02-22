@@ -630,6 +630,8 @@ uint8_t handleBattleEndEvent(PyThreadState* _save) { traceLog
 		case WAIT_ABANDONED: traceLog
 			extendedDebugLog("[NY_Event][ERROR]: handleBattleEndEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
+			Py_BLOCK_THREADS;
+
 			return 2;
 	END_USING_MODELS;
 
