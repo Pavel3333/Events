@@ -166,6 +166,16 @@ uint8_t BW_NativeC::init_p() {
 	return NULL;
 } 
 
+PyObject* BW_NativeC::getPlayer_p() {
+	PyObject* __player = PyString_FromString("player");
+
+	PyObject_CallMethodObjArgs_increfed(player, BW_Native->m_BigWorld, __player, NULL);
+
+	Py_DECREF(__player);
+
+	return player;
+}
+
 uint8_t BW_NativeC::callback_p(long* CBID, PyObject* func, float time_f) {
 	if (!func) { traceLog
 		return 1;
@@ -211,6 +221,81 @@ uint8_t BW_NativeC::cancelCallback_p(long* CBID) {
 	return NULL;
 }
 
+uint8_t BW_NativeC::getMapID_p(uint8_t* mapID) {
+	PyObject* player = getPlayer_p();
+
+	if (!player) { traceLog
+		return 1;
+	} traceLog
+
+	PyObject* arena = PyObject_GetAttrString(player, "arena");
+
+	Py_DECREF(player);
+
+	if (!arena) { traceLog
+		return 2;
+	} traceLog
+
+	PyObject* arenaType = PyObject_GetAttrString(arena, "arenaType");
+
+	Py_DECREF(arena);
+
+	if (!arenaType) { traceLog
+		return 3;
+	} traceLog
+
+	PyObject* map_PS = PyObject_GetAttrString(arenaType, "geometryName");
+
+	Py_DECREF(arenaType);
+
+	if (!map_PS) { traceLog
+		return 4;
+	} traceLog
+
+	char* map_s = PyString_AS_STRING(map_PS);
+
+	Py_DECREF(map_PS);
+
+	char map_ID_s[4];
+	memcpy(map_ID_s, map_s, 3);
+	if (map_ID_s[2] == '_') map_ID_s[2] = NULL;
+	map_ID_s[3] = NULL;
+
+	*mapID = atoi(map_ID_s);
+
+	return NULL;
+}
+
+uint8_t BW_NativeC::getDBID_p(uint32_t* DBID) {
+	PyObject* player = getPlayer_p();
+
+	if (!player) { traceLog
+		return 1;
+	} traceLog
+
+	PyObject* DBID_string = PyObject_GetAttrString(player, "databaseID");
+
+	Py_DECREF(player);
+
+	if (!DBID_string) { traceLog
+		return 2;
+	} traceLog
+
+	PyObject* DBID_int = PyNumber_Int(DBID_string);
+
+	Py_DECREF(DBID_string);
+
+	if (!DBID_int) { traceLog
+		return 3;
+	} traceLog
+
+	*DBID = PyInt_AS_LONG(DBID_int);
+
+	Py_DECREF(DBID_int);
+
+	return NULL;
+}
+
 
 //public methods
 
@@ -224,6 +309,18 @@ void BW_NativeC::cancelCallback(long* CBID) {
 	if (!inited) return;
 
 	lastError = cancelCallback_p(CBID);
+}
+
+void BW_NativeC::getMapID(uint8_t* mapID) {
+	if (!inited) return;
+
+	lastError = getMapID_p(mapID);
+}
+
+void BW_NativeC::getDBID(uint32_t* DBID) {
+	if (!inited) return;
+
+	lastError = getDBID_p(DBID);
 }
 
 BW_NativeC* BW_Native = nullptr;

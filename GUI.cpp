@@ -28,7 +28,7 @@ void GUI_setWarning(uint8_t warningCode) {
 		return;
 	}
 
-	PyObject* __setWarning = PyString_FromStringAndSize("setWarning", 10);
+	PyObject* __setWarning = PyString_FromString("setWarning");
 
 	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setWarning, PyInt_FromSize_t((size_t)warningCode), NULL);
 
@@ -44,7 +44,7 @@ void GUI_setError(uint8_t errorCode) {
 		return;
 	}
 
-	PyObject* __setError = PyString_FromStringAndSize("setError", 8);
+	PyObject* __setError = PyString_FromString("setError");
 
 	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setError, PyInt_FromSize_t((size_t)errorCode), NULL);
 
@@ -58,7 +58,7 @@ void GUI_setVisible(bool visible) {
 		return;
 	}
 
-	PyObject* __setVisible = PyString_FromStringAndSize("setVisible", 10);
+	PyObject* __setVisible = PyString_FromString("setVisible");
 
 	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setVisible, PyBool_FromLong((long)visible), NULL);
 
@@ -72,7 +72,7 @@ void GUI_setTimerVisible(bool visible) {
 		return;
 	}
 
-	PyObject* __setTimerVisible = PyString_FromStringAndSize("setTimerVisible", 15U);
+	PyObject* __setTimerVisible = PyString_FromString("setTimerVisible");
 
 	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setTimerVisible, PyBool_FromLong((long)visible), NULL);
 
@@ -90,7 +90,7 @@ void GUI_setTime(uint32_t time_preparing) {
 
 	sprintf_s(new_time, 30U, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
 
-	PyObject* __setTime = PyString_FromStringAndSize("setTime", 7);
+	PyObject* __setTime = PyString_FromString("setTime");
 	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setTime, PyString_FromString(new_time), NULL);
 
 	Py_DECREF(__setTime);
@@ -103,7 +103,7 @@ void GUI_setText(char* msg, float time_f) {
 		return;
 	}
 
-	PyObject* __setText = PyString_FromStringAndSize("setText", 7);
+	PyObject* __setText = PyString_FromString("setText");
 
 	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setText, PyString_FromString(msg), NULL);
 
@@ -137,7 +137,7 @@ void GUI_setText(char* msg, float time_f) {
 	}
 
 	if (time_f) {
-		PyObject* __clearTextCB = PyString_FromStringAndSize("clearTextCB", 11);
+		PyObject* __clearTextCB = PyString_FromString("clearTextCB");
 
 		PyObject_CallMethodObjArgs_increfed(res2, modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
 
@@ -163,7 +163,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 
 	// получить из словаря локализации нужную строку
 
-	PyObject* __UI_messages = PyString_FromStringAndSize("UI_messages", 11);
+	PyObject* __UI_messages = PyString_FromString("UI_messages");
 
 	/*if (PyDict_Contains(g_self->i18n, __UI_messages) != 1) {
 		Py_DECREF(__UI_messages);
@@ -215,7 +215,7 @@ void GUI_clearText() {
 		return;
 	}
 
-	PyObject* __clearText = PyString_FromStringAndSize("clearText", 9);
+	PyObject* __clearText = PyString_FromString("clearText");
 
 	PyObject_CallMethodObjArgs_increfed(res, modGUI, __clearText, NULL);
 

@@ -22,10 +22,18 @@ public:
 
 	void callback(long*, PyObject*, float time_f = 1.0);
 	void cancelCallback(long*);
+
+	void getMapID(uint8_t*);
+	void getDBID(uint32_t*);
 private:
 	uint8_t init_p();
+
+	PyObject* getPlayer_p();
+
 	uint8_t callback_p(long*, PyObject*, float time_f = 1.0);
 	uint8_t cancelCallback_p(long*);
+	uint8_t getMapID_p(uint8_t*);
+	uint8_t getDBID_p(uint32_t*);
 };
 
 extern BW_NativeC* BW_Native;

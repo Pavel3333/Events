@@ -27,7 +27,7 @@ static PyObject* init_data() {
 
 	PyObject* data_version = PyInt_FromSize_t(config.data.version);
 
-	if (PyDict_SetItem(data, PyString_FromStringAndSize("version", 7), data_version)) {
+	if (PyDict_SetItem(data, PyString_FromString("version"), data_version)) {
 		Py_DECREF(data_version);
 		Py_DECREF(data);
 		return NULL;
@@ -35,7 +35,7 @@ static PyObject* init_data() {
 
 	PyObject* data_enabled = PyBool_FromLong(config.data.enabled);
 
-	if (PyDict_SetItem(data, PyString_FromStringAndSize("enabled", 7), data_enabled)) {
+	if (PyDict_SetItem(data, PyString_FromString("enabled"), data_enabled)) {
 		Py_DECREF(data_enabled);
 		Py_DECREF(data);
 		return NULL;

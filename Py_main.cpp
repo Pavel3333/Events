@@ -321,61 +321,24 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(1);
 	} traceLog
 
-	INIT_LOCAL_MSG_BUFFER;
-
-	PyObject* __player = PyString_FromString("player");
-
-	PyObject_CallMethodObjArgs_increfed(player, BW_Native->m_BigWorld, __player, NULL);
-
-	Py_DECREF(__player);
-
 	isModelsAlreadyCreated = false;
 
-	if (!player) { traceLog
+	INIT_LOCAL_MSG_BUFFER;
+
+	BW_Native->getMapID(&mapID);
+
+	if (BW_Native->lastError) {
+		extendedDebugLogFmt("[NY_Event][ERROR]: getMapID: error %d!\n", BW_Native->lastError);
+
 		return PyInt_FromSize_t(2);
-	} traceLog
-
-	PyObject* arena = PyObject_GetAttrString(player, "arena");
-
-	Py_DECREF(player);
-
-	if (!arena) { traceLog
-		return PyInt_FromSize_t(3);
-	} traceLog
-
-	PyObject* arenaType = PyObject_GetAttrString(arena, "arenaType");
-
-	Py_DECREF(arena);
-
-	if (!arenaType) { traceLog
-		return PyInt_FromSize_t(4);
-	} traceLog
-
-	PyObject* map_PS = PyObject_GetAttrString(arenaType, "geometryName");
-
-	Py_DECREF(arenaType);
-
-	if (!map_PS) { traceLog
-		return PyInt_FromSize_t(5);
-	} traceLog
-
-	char* map_s = PyString_AS_STRING(map_PS);
-
-	Py_DECREF(map_PS);
-
-	char map_ID_s[4];
-	memcpy(map_ID_s, map_s, 3);
-	if (map_ID_s[2] == '_') map_ID_s[2] = NULL;
-	map_ID_s[3] = NULL;
-
-	mapID = atoi(map_ID_s);
+	}
 
 	extendedDebugLogFmt("[NY_Event]: mapID = %d\n", (uint32_t)mapID);
 
 	if (mapID != MAIN_COMPETITION_MAP && mapID != FUN_COMPETITION_MAP) {
 		extendedDebugLogFmt("[NY_Event][ERROR]: incorrect map! (%d)\n", (uint32_t)mapID);
 
-		return PyInt_FromSize_t(7);
+		return PyInt_FromSize_t(3);
 	}
 
 	battleEnded = false;
@@ -390,7 +353,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 	if (request) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
 
-		return PyInt_FromSize_t(6);
+		return PyInt_FromSize_t(4);
 	} traceLog
 
 	Py_RETURN_NONE;
@@ -489,35 +452,13 @@ uint8_t event_сheck() { traceLog
 
 	debugLogFmt("[NY_Event]: checking...\n");
 
-	PyObject* __player = PyString_FromString("player");
+	BW_Native->getDBID(&databaseID);
 
-	PyObject_CallMethodObjArgs_increfed(player, BW_Native->m_BigWorld, __player, NULL);
+	if (BW_Native->lastError) {
+		debugLogFmt("[NY_Event][ERROR]: getDBID: error %d!\n", BW_Native->lastError);
 
-	Py_DECREF(__player);
-
-	if (!player) { traceLog
 		return 3;
-	} traceLog
-
-	PyObject* DBID_string = PyObject_GetAttrString(player, "databaseID");
-
-	Py_DECREF(player);
-
-	if (!DBID_string) { traceLog
-		return 4;
-	} traceLog
-
-	PyObject* DBID_int = PyNumber_Int(DBID_string);
-
-	Py_DECREF(DBID_string);
-
-	if (!DBID_int) { traceLog
-		return 5;
-	} traceLog
-
-	databaseID = PyInt_AS_LONG(DBID_int);
-
-	Py_DECREF(DBID_int);
+	}
 
 	debugLogFmt("[NY_Event]: DBID created\n");
 
@@ -528,7 +469,7 @@ uint8_t event_сheck() { traceLog
 	request = makeEventInThread(EVENT_ID::IN_HANGAR);
 
 	if (request) { traceLog
-		return 6;
+		return 4;
 	}
 	else {
 		return NULL;
@@ -687,6 +628,8 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!BW_Native->inited) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: initevent - initNative: error %d!\n", BW_Native->lastError);
+		
+		BW_Native->lastError = NULL;
 
 		return;
 	}
