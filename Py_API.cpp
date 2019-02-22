@@ -734,15 +734,15 @@ uint8_t create_models() { traceLog
 		case WAIT_ABANDONED: traceLog
 			extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-			return 3;
-			END_USING_MODELS;
+			return 2;
+	END_USING_MODELS;
 
-			return NULL;
+	return NULL;
 }
 
 uint8_t init_models() { traceLog
 	if (!isInited || first_check || battleEnded || models.empty()) { traceLog
-		return 1;
+		return 10;
 	} traceLog
 
 	extendedDebugLog("[NY_Event]: models adding...\n");
@@ -795,7 +795,7 @@ uint8_t init_models() { traceLog
 
 uint8_t set_visible(bool isVisible) { traceLog
 	if (!isInited || first_check || battleEnded || models.empty()) { traceLog
-		return 1;
+		return 10;
 	} traceLog
 
 	PyObject* py_visible = PyBool_FromLong(isVisible);
