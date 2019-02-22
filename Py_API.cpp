@@ -14,6 +14,8 @@ uint32_t request     = 100;
 uint8_t  mapID      = NULL;
 uint32_t databaseID = NULL;
 
+BW_NativeC* BW_Native = nullptr;
+
 bool isInited = false;
 
 bool battleEnded = true;
@@ -66,7 +68,7 @@ bool write_data(char* data_path, PyObject* data_p) { traceLog
 
 	PyObject* __dumps = PyString_FromString("dumps");
 
-	PyObject* data_json_s = PyObject_CallMethodObjArgs(m_json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
+	PyObject_CallMethodObjArgs_increfed(data_json_s, BW_Native->m_json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
 
 	Py_DECREF(__dumps);
 	Py_DECREF(arg2);
@@ -132,7 +134,7 @@ bool read_data(bool isData) { traceLog
 
 		PyObject* __loads = PyString_FromString("loads");
 
-		PyObject* data_json_s = PyObject_CallMethodObjArgs(m_json, __loads, data_p, NULL);
+		PyObject_CallMethodObjArgs_increfed(data_json_s, BW_Native->m_json, __loads, data_p, NULL);
 
 		Py_DECREF(__loads);
 		Py_DECREF(data_p);
@@ -230,10 +232,10 @@ void clearModelsSections() { traceLog
 
 uint8_t findLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) { traceLog
 	INIT_LOCAL_MSG_BUFFER;
-	
+
 	PyObject* __player = PyString_FromString("player");
 
-	PyObject* player = PyObject_CallMethodObjArgs(m_BigWorld, __player, NULL);
+	PyObject_CallMethodObjArgs_increfed(player, BW_Native->m_BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
@@ -414,7 +416,7 @@ uint8_t delModelPy(float* coords) { traceLog
 
 			/*PyObject* __delModel = PyString_FromString("delModel");
 
-			PyObject* result = PyObject_CallMethodObjArgs(BigWorld, __delModel, (*it_model)->model, NULL);
+			PyObject_CallMethodObjArgs_increfed(result, BW_Native->m_BigWorld, __delModel, (*it_model)->model, NULL);
 
 			Py_DECREF(__delModel);
 
@@ -508,7 +510,7 @@ PyObject* event_light(float coords[3]) {
 
 	PyObject* __PyOmniLight = PyString_FromString("PyOmniLight");
 
-	PyObject* Light = PyObject_CallMethodObjArgs(m_BigWorld, __PyOmniLight, NULL);
+	PyObject_CallMethodObjArgs_increfed(Light, BW_Native->m_BigWorld, __PyOmniLight, NULL);
 
 	Py_DECREF(__PyOmniLight);
 
@@ -677,8 +679,6 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) {
 
 	superExtendedDebugLog("model creating...\n");
 
-	PyObject* Model = NULL;
-
 	if (isAsync) { //traceLog
 		if (coords == nullptr) { traceLog
 			extendedDebugLog("[NY_Event][WARNING]: event_model - coords is NULL!\n");
@@ -690,7 +690,7 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) {
 
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
-		PyObject* partialized = PyObject_CallFunctionObjArgs(m_partial, onModelCreatedPyMeth, coords_p, NULL);
+		PyObject_CallFunctionObjArgs_increfed(partialized, BW_Native->m_partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		if (!partialized) { traceLog
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
@@ -698,14 +698,14 @@ PyObject* event_model(char* path, float coords[3], bool isAsync) {
 			return NULL;
 		}
 
-		Model = PyObject_CallFunctionObjArgs(m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+		PyObject_CallFunctionObjArgs_increfed(Model, BW_Native->m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
 
 		Py_XDECREF(Model);
 
 		return NULL;
 	}
 
-	Model = PyObject_CallMethodObjArgs(m_Model, PyString_FromString(path), NULL);
+	PyObject_CallFunctionObjArgs_increfed(Model, BW_Native->m_Model, PyString_FromString(path), NULL);
 
 	if (!Model) { traceLog
 		return NULL;
@@ -897,7 +897,7 @@ uint8_t init_models() { traceLog
 
 		PyObject* __addModel = PyString_FromString("addModel");
 
-		PyObject* result = PyObject_CallMethodObjArgs(m_BigWorld, __addModel, models[i]->model, NULL);
+		PyObject_CallMethodObjArgs_increfed(result, BW_Native->m_BigWorld, __addModel, models[i]->model, NULL);
 
 		Py_DECREF(__addModel);
 
@@ -1001,7 +1001,7 @@ uint8_t del_models() { traceLog
 
 		PyObject* __delModel = PyString_FromString("delModel");
 
-		PyObject* result = PyObject_CallMethodObjArgs(m_BigWorld, __delModel, (*it_model)->model, NULL);
+		PyObject_CallMethodObjArgs_increfed(result, BW_Native->m_BigWorld, __delModel, (*it_model)->model, NULL);
 
 		Py_DECREF(__delModel);
 

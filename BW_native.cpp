@@ -1,21 +1,9 @@
 ﻿#include "BW_native.h"
 
-PyObject* m_BigWorld       = NULL;
-PyObject* m_Model          = NULL;
-PyObject* m_fetchModel     = NULL;
-PyObject* m_callback       = NULL;
-PyObject* m_cancelCallback = NULL;
-PyObject* m_g_gui          = NULL;
-PyObject* m_g_appLoader    = NULL;
-PyObject* m_partial        = NULL;
-PyObject* m_json           = NULL;
+//private methods
 
-//initialization
-
-uint8_t initNative() { traceLog
-	//загрузка BigWorld
-
-	m_BigWorld = PyImport_AddModule("BigWorld");
+uint8_t BW_NativeC::init_p() { //initialization
+	m_BigWorld = PyImport_AddModule("BigWorld"); //загрузка BigWorld
 
 	if (!m_BigWorld) { traceLog
 		return 1;
@@ -131,51 +119,33 @@ uint8_t initNative() { traceLog
 		return 10;
 	} traceLog
 
+	inited = true;
+
 	return NULL;
-}
+} 
 
-//finalization
+uint8_t BW_NativeC::callback_p(long* CBID, PyObject* func, float time_f) {
+	if (!inited) return 1;
 
-void finiNative() {
-	Py_XDECREF(m_json);
-	Py_XDECREF(m_partial);
-	Py_XDECREF(m_g_appLoader);
-	Py_XDECREF(m_g_gui);
-	Py_XDECREF(m_cancelCallback);
-	Py_XDECREF(m_callback);
-	Py_XDECREF(m_fetchModel);
-	Py_XDECREF(m_Model);
-
-	m_Model          = NULL;
-	m_fetchModel     = NULL;
-	m_callback       = NULL;
-	m_cancelCallback = NULL;
-	m_g_gui          = NULL;
-	m_g_appLoader    = NULL;
-	m_partial        = NULL;
-	m_json           = NULL;
-}
-
-//native functions
-
-void callback(long* CBID, PyObject* func, float time_f) {
 	if (!func) { traceLog
-		return;
+		return 2;
 	} traceLog
 
-	PyObject* time_p;
+	PyObject* time_p = NULL;
 
 	if (!time_f) time_p = PyFloat_FromDouble(0.0);
 	else         time_p = PyFloat_FromDouble(time_f);
 
 	if (!time_p) { traceLog
-		return;
+		return 3;
 	} traceLog
 
-	PyObject* res = PyObject_CallMethodObjArgs(m_callback, time_p, func, NULL);
+	PyObject_CallMethodObjArgs_increfed(res, m_callback, time_p, func, NULL);
+
+	Py_DECREF(time_p);
 
 	if (!res) { traceLog
-		return;
+		return 4;
 	} traceLog
 
 	*CBID = PyInt_AS_LONG(res);
@@ -185,14 +155,67 @@ void callback(long* CBID, PyObject* func, float time_f) {
 	Py_DECREF(res);
 }
 
-void cancelCallback(long* CBID) {
+uint8_t BW_NativeC::cancelCallback_p(long* CBID) {
+	if (!this->inited) return 1;
+
 	if (!*CBID) { traceLog
-		return;
+		return 2;
 	} traceLog
 
-	PyObject* res = PyObject_CallMethodObjArgs(m_cancelCallback, PyInt_FromLong(*CBID), NULL);
+	PyObject_CallFunctionObjArgs_increfed(res, m_cancelCallback, PyInt_FromLong(*CBID), NULL);
 
 	Py_XDECREF(res);
 
 	*CBID = NULL;
+}
+
+
+//constructor
+
+BW_NativeC::BW_NativeC() {
+	this->inited = false;
+
+	this->m_BigWorld       = NULL;
+	this->m_Model          = NULL;
+	this->m_fetchModel     = NULL;
+	this->m_callback       = NULL;
+	this->m_cancelCallback = NULL;
+	this->m_g_appLoader    = NULL;
+	this->m_partial        = NULL;
+	this->m_json           = NULL;
+
+	this->lastError = init_p();
+}
+
+//destructor
+
+BW_NativeC::~BW_NativeC() {
+	if (!this->inited) return;
+
+	Py_XDECREF(this->m_json);
+	Py_XDECREF(this->m_partial);
+	Py_XDECREF(this->m_g_appLoader);
+	Py_XDECREF(this->m_cancelCallback);
+	Py_XDECREF(this->m_callback);
+	Py_XDECREF(this->m_fetchModel);
+	Py_XDECREF(this->m_Model);
+
+	this->m_Model          = NULL;
+	this->m_fetchModel     = NULL;
+	this->m_callback       = NULL;
+	this->m_cancelCallback = NULL;
+	this->m_g_appLoader    = NULL;
+	this->m_partial        = NULL;
+	this->m_json           = NULL;
+}
+
+
+//public methods
+
+void BW_NativeC::callback(long* CBID, PyObject* func, float time_f) {
+	lastError = callback_p(CBID, func, time_f);
+}
+
+void BW_NativeC::cancelCallback(long* CBID) {
+	lastError = cancelCallback_p(CBID);
 }

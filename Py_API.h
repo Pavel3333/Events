@@ -1,6 +1,5 @@
 #pragma once
 
-#include "python2.7/Python.h"
 #include "ThreadSync.h"
 #include "BW_native.h"
 #include "GUI.h"
@@ -29,6 +28,8 @@ extern uint32_t request;
 
 extern uint8_t  mapID;
 extern uint32_t databaseID;
+
+extern BW_NativeC* BW_Native;
 
 extern bool isModelsAlreadyInited;
 

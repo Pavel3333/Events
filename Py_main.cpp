@@ -9,6 +9,8 @@
 
 std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
+PyObject* m_g_gui = NULL;
+
 //threads functions
 
 /*
@@ -239,7 +241,7 @@ uint32_t handlerThread() {
 					Py_DECREF(delLabelCBID_p);
 				} traceLog
 
-				cancelCallback(&delLabelCBID);
+				BW_Native->cancelCallback(&delLabelCBID);
 
 				allModelsCreated = NULL;
 
@@ -325,7 +327,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 
 	PyObject* __player = PyString_FromString("player");
 
-	PyObject* player = PyObject_CallMethodObjArgs(m_BigWorld, __player, NULL);
+	PyObject_CallMethodObjArgs_increfed(player, BW_Native->m_BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
@@ -490,7 +492,8 @@ uint8_t event_сheck() { traceLog
 	debugLogFmt("[NY_Event]: checking...\n");
 
 	PyObject* __player = PyString_FromString("player");
-	PyObject* player = PyObject_CallMethodObjArgs(m_BigWorld, __player, NULL);
+
+	PyObject_CallMethodObjArgs_increfed(player, BW_Native->m_BigWorld, __player, NULL);
 
 	Py_DECREF(__player);
 
@@ -548,12 +551,13 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		return 1;
 	} traceLog
 
-	if (m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog
+	if (BW_Native->m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
 		PyObject* __register = PyString_FromString("register");
-		PyObject* result = PyObject_CallMethodObjArgs(m_g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
+
+		PyObject_CallMethodObjArgs_increfed(result, BW_Native->m_g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
 
 		Py_XDECREF(result);
 		Py_DECREF(__register);
@@ -561,7 +565,7 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		Py_DECREF(template_);
 	} traceLog
 
-	if (!m_g_gui && PyCallable_Check(byteify)) { traceLog
+	if (!BW_Native->m_g_gui && PyCallable_Check(byteify)) { traceLog
 		Py_INCREF(byteify);
 
 		PyObject* args1 = PyTuple_New(1);
@@ -613,12 +617,14 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted_Space = NULL;
 
-	if (m_g_gui) { //traceLog
+	if (BW_Native->m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		isKeyGetted_Space = PyObject_CallMethodObjArgs(m_g_gui, __get_key, spaceKey, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_Space_tmp, BW_Native->m_g_gui, __get_key, spaceKey, NULL);
 
 		Py_DECREF(__get_key);
+
+		isKeyGetted_Space = isKeyGetted_Space_tmp;
 	}
 	else {
 		PyObject* key = PyObject_GetAttrString(event_, "key");
@@ -629,9 +635,11 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 		PyObject* ____contains__ = PyString_FromString("__contains__");
 
-		isKeyGetted_Space = PyObject_CallMethodObjArgs(spaceKey, ____contains__, key, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_Space_tmp, spaceKey, ____contains__, key, NULL);
 
 		Py_DECREF(____contains__);
+
+		isKeyGetted_Space = isKeyGetted_Space_tmp;
 	} traceLog
 
 	if (isKeyGetted_Space == Py_True) { traceLog
@@ -676,10 +684,10 @@ PyMODINIT_FUNC initevent(void)
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	InitializeCriticalSection(&CS_PARSING_NOT_USING);
 
-	request = initNative();
+	BW_Native = new BW_NativeC();
 
-	if (request) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: initevent - initNative: error %d!\n", request);
+	if (!BW_Native->inited) { traceLog
+		debugLogFmt("[NY_Event][ERROR]: initevent - initNative: error %d!\n", BW_Native->lastError);
 
 		return;
 	}
@@ -687,7 +695,8 @@ PyMODINIT_FUNC initevent(void)
 	if (!initHangarMessages()) { traceLog
 		debugLog("[NY_Event][ERROR]: initevent - initHangarMessages: error!\n");
 
-		finiNative();
+		delete BW_Native;
+		BW_Native = nullptr;
 
 		return;
 	}
@@ -695,9 +704,11 @@ PyMODINIT_FUNC initevent(void)
 	debugLog("[NY_Event]: Config init...\n");
 
 	if (PyType_Ready(&Config_p)) { traceLog
-		finiNative();
 		finiHangarMessages();
 		
+		delete BW_Native;
+		BW_Native = nullptr;
+
 		return;
 	} traceLog
 
@@ -713,7 +724,9 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!g_config || !g_self) { traceLog
 		finiHangarMessages();
-		finiNative();
+
+		delete BW_Native;
+		BW_Native = nullptr;
 
 		return;
 	} traceLog
@@ -726,14 +739,18 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!event_module) { traceLog
 		finiHangarMessages();
-		finiNative();
+
+		delete BW_Native;
+		BW_Native = nullptr;
 		
 		return;
 	} traceLog
 
 	if (PyModule_AddObject(event_module, "l", g_config)) { traceLog
 		finiHangarMessages();
-		finiNative();
+
+		delete BW_Native;
+		BW_Native = nullptr;
 		
 		return;
 	} traceLog
@@ -744,7 +761,9 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!onModelCreatedPyMeth) { traceLog
 		finiHangarMessages();
-		finiNative();
+
+		delete BW_Native;
+		BW_Native = nullptr;
 
 		return;
 	} traceLog
@@ -765,7 +784,9 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!mGUI_module) { traceLog
 		finiHangarMessages();
-		finiNative();
+
+		delete BW_Native;
+		BW_Native = nullptr;
 
 		return;
 	} traceLog
@@ -781,7 +802,9 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!modGUI) { traceLog
 		finiHangarMessages();
-		finiNative();
+
+		delete BW_Native;
+		BW_Native = nullptr;
 
 		return;
 	} traceLog
@@ -796,7 +819,9 @@ PyMODINIT_FUNC initevent(void)
 
 	if (!mod_mods_gui) { traceLog
 		PyErr_Clear();
-		m_g_gui = NULL;
+
+		delete BW_Native;
+		BW_Native = nullptr;
 
 		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
 	}
@@ -806,7 +831,9 @@ PyMODINIT_FUNC initevent(void)
 
 		if (!m_g_gui) { traceLog
 			finiHangarMessages();
-			finiNative();
+
+			delete BW_Native;
+			BW_Native = nullptr;
 
 			Py_DECREF(modGUI);
 			return;
@@ -823,7 +850,9 @@ PyMODINIT_FUNC initevent(void)
 
 		if (!read_data(true) || !read_data(false)) { traceLog
 			finiHangarMessages();
-			finiNative();
+
+			delete BW_Native;
+			BW_Native = nullptr;
 
 			Py_DECREF(modGUI);
 			return;
@@ -834,7 +863,9 @@ PyMODINIT_FUNC initevent(void)
 
 		if (!ids) { traceLog
 			finiHangarMessages();
-			finiNative();
+
+			delete BW_Native;
+			BW_Native = nullptr;
 
 			Py_DECREF(modGUI);
 			return;
@@ -850,7 +881,9 @@ PyMODINIT_FUNC initevent(void)
 
 		if (!data_i18n) { traceLog
 			finiHangarMessages();
-			finiNative();
+
+			delete BW_Native;
+			BW_Native = nullptr;
 
 			Py_DECREF(modGUI);
 			return;
@@ -880,7 +913,9 @@ PyMODINIT_FUNC initevent(void)
 
 	if (curl_init_result) { traceLog
 		finiHangarMessages();
-		finiNative();
+
+		delete BW_Native;
+		BW_Native = nullptr;
 
 		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
 

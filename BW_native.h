@@ -1,20 +1,30 @@
 ﻿#pragma once
 
-#include "API_functions.h"
-#include "python2.7/Python.h"
+#include "Py_common.h"
 
-extern PyObject* m_BigWorld;
-extern PyObject* m_Model;
-extern PyObject* m_fetchModel;
-extern PyObject* m_callback;
-extern PyObject* m_cancelCallback;
-extern PyObject* m_g_gui;
-extern PyObject* m_g_appLoader;
-extern PyObject* m_partial;
-extern PyObject* m_json;
+class BW_NativeC {
+public:
+	bool inited;
 
-uint8_t initNative();
-void    finiNative();
+	PyObject* m_BigWorld;
+	PyObject* m_Model;
+	PyObject* m_fetchModel;
+	PyObject* m_callback;
+	PyObject* m_cancelCallback;
+	PyObject* m_g_gui;
+	PyObject* m_g_appLoader;
+	PyObject* m_partial;
+	PyObject* m_json;
 
-void callback(long*, PyObject*, float time_f = 1.0);
-void cancelCallback(long*);
+	uint8_t lastError;
+public:
+	BW_NativeC();
+	~BW_NativeC();
+
+	void callback(long*, PyObject*, float time_f = 1.0);
+	void cancelCallback(long*);
+private:
+	uint8_t init_p();
+	uint8_t callback_p(long*, PyObject*, float time_f = 1.0);
+	uint8_t cancelCallback_p(long*);
+};

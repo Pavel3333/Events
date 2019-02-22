@@ -2,7 +2,6 @@
 
 #include "Py_config.h"
 #include "BW_native.h"
-#include "python2.7/Python.h"
 
 extern PyObject* modGUI;
 

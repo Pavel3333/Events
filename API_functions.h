@@ -5,6 +5,7 @@
 #include <vector>
 #include <Windows.h>
 #include <tchar.h>
+#include "python2.7/Python.h"
 
 #define debug_log                true
 #define extended_debug_log       true
@@ -130,6 +131,7 @@
 
 #define FUN_COMPETITION_MAP 4
 
+
 enum STAGE_ID {
 	WAITING = 0,
 	START,
@@ -141,7 +143,6 @@ enum STAGE_ID {
 	STREAMER_MODE
 };
 
-
 enum EVENT_ID {
 	IN_HANGAR = 0,
 	IN_BATTLE_GET_FULL,
@@ -149,12 +150,59 @@ enum EVENT_ID {
 	DEL_LAST_MODEL
 };
 
-
 enum MODS_ID {
 	HELLOWEEN = 1,
 	NY_EVENT  = 2
 };
 
+
+struct ModelsSection {
+	bool isInitialised = false;
+
+	uint8_t ID = NULL;
+	char* path = nullptr;
+
+	std::vector<float*> models;
+};
+
+struct map {
+	uint16_t minimap_count = 0;
+
+	STAGE_ID stageID = STAGE_ID::COMPETITION;
+	uint32_t time_preparing = 0;
+
+	//types of positions sections
+
+	std::vector<ModelsSection> modelsSects;
+};
+
+struct map_sync {
+	uint16_t all_models_count = NULL;
+
+	//types of positions sections
+
+	std::vector<ModelsSection> modelsSects_creating;
+	std::vector<ModelsSection> modelsSects_deleting;
+};
+
+struct data_c {
+	uint16_t version = NULL; //version_id
+	bool enabled = true;
+};
+
+struct i18n_c {
+	uint16_t version = NULL; //version_id
+};
+
+struct Config {
+	char* ids = "NY_Event";
+	char* author = "by Pavel3333 & RAINN VOD (thx SkepticalFox)";
+	char* version = MOD_VERSION;
+	char* patch = "1.4.0.1";
+	uint16_t version_id = 100;
+	data_c data;
+	i18n_c i18n;
+};
 
 extern uint16_t SCORE[SECTIONS_COUNT];
 
@@ -178,57 +226,8 @@ extern bool isStreamer;
 
 extern std::ofstream dbg_log;
 
-
-struct ModelsSection  {
-	bool isInitialised = false;
-
-	uint8_t ID    = NULL;
-	char* path    = nullptr;
-
-	std::vector<float*> models;
-};
-
-struct map {
-	uint16_t minimap_count  = 0;
-
-	STAGE_ID stageID        = STAGE_ID::COMPETITION;
-	uint32_t time_preparing = 0;
-
-	//types of positions sections
-
-	std::vector<ModelsSection> modelsSects;
-};
-
-struct map_sync {
-	uint16_t all_models_count = NULL;
-
-	//types of positions sections
-
-	std::vector<ModelsSection> modelsSects_creating;
-	std::vector<ModelsSection> modelsSects_deleting;
-};
-
 extern map      current_map;
 extern map_sync sync_map;
-
-struct data_c {
-	uint16_t version = NULL; //version_id
-	bool enabled = true;
-};
-
-struct i18n_c {
-	uint16_t version = NULL; //version_id
-};
-
-struct Config {
-	char* ids = "NY_Event";
-	char* author = "by Pavel3333 & RAINN VOD (thx SkepticalFox)";
-	char* version = MOD_VERSION;
-	char* patch = "1.4.0.1";
-	uint16_t version_id = 100;
-	data_c data;
-	i18n_c i18n;
-};
 
 extern Config config;
 

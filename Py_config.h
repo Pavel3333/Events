@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "API_functions.h"
-#include "python2.7/Python.h"
 #include "python2.7/structmember.h"
 
 typedef struct {
@@ -16,6 +15,8 @@ typedef struct {
 } ConfigObject;
 
 extern ConfigObject* g_self;
+
+extern PyObject* m_g_gui;
 
 static PyObject* getMessagesList();
 

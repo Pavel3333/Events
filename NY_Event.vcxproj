@@ -141,6 +141,7 @@
     <ClInclude Include="HangarMessages.h" />
     <ClInclude Include="ModThreads.h" />
     <ClInclude Include="Py_API.h" />
+    <ClInclude Include="Py_common.h" />
     <ClInclude Include="Py_config.h" />
     <ClInclude Include="ThreadSync.h" />
   </ItemGroup>
