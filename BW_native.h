@@ -28,3 +28,5 @@ private:
 	uint8_t callback_p(long*, PyObject*, float time_f = 1.0);
 	uint8_t cancelCallback_p(long*);
 };
+
+extern BW_NativeC* BW_Native;

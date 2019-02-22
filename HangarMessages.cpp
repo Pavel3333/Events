@@ -1,17 +1,40 @@
 #include "HangarMessages.h"
 
-PyObject* m_SM_TYPE     = NULL;
-PyObject* m_pushMessage = NULL;
+//constructor
 
-//initialization
+HangarMessagesC::HangarMessagesC() {
+	this->inited = false;
 
-bool initHangarMessages() {
+	this->showed = false;
+
+	this->m_SM_TYPE = NULL;
+	this->m_pushMessage = NULL;
+
+	this->lastError = init_p();
+}
+
+//destructor
+
+HangarMessagesC::~HangarMessagesC() {
+	if (!this->inited) return;
+
+	Py_XDECREF(this->m_SM_TYPE);
+	Py_XDECREF(this->m_pushMessage);
+
+	this->m_SM_TYPE = NULL;
+	this->m_pushMessage = NULL;
+}
+
+
+//private methods
+
+uint8_t HangarMessagesC::init_p() { 
 	//загрузка SM_TYPE и pushMessage
 
 	PyObject* SystemMessages = PyImport_ImportModule("gui.SystemMessages");
 
 	if (!SystemMessages) { traceLog
-		return false;
+		return 1;
 	} traceLog
 
 	m_SM_TYPE = PyObject_GetAttrString(SystemMessages, "SM_TYPE");
@@ -19,7 +42,7 @@ bool initHangarMessages() {
 	if (!m_SM_TYPE) { traceLog
 		Py_DECREF(SystemMessages);
 
-		return false;
+		return 2;
 	} traceLog
 
 	m_pushMessage = PyObject_GetAttrString(SystemMessages, "pushMessage");
@@ -28,20 +51,15 @@ bool initHangarMessages() {
 
 	if (!m_pushMessage) { traceLog
 		Py_DECREF(m_SM_TYPE);
-		return false;
+		return 3;
 	} traceLog
 
-	return true;
+	inited = true;
+
+	return NULL;
 }
 
-void finiHangarMessages() {
-	Py_XDECREF(m_pushMessage);
-	Py_XDECREF(m_SM_TYPE);
-}
-
-uint8_t showed = false;
-
-uint8_t showMessage(PyObject* i18n) {
+uint8_t HangarMessagesC::showMessage_p(PyObject* i18n) {
 	if (!first_check && showed) return NULL;
 
 	PyObject* GameGreeting = PyObject_GetAttrString(m_SM_TYPE, "GameGreeting");
@@ -53,7 +71,7 @@ uint8_t showMessage(PyObject* i18n) {
 	PyObject* text = NULL;
 
 	if (!first_check) {
-		PyObject* __UI_message_thx   = PyString_FromString("UI_message_thx");
+		PyObject* __UI_message_thx = PyString_FromString("UI_message_thx");
 		PyObject* __UI_message_thx_2 = PyString_FromString("UI_message_thx_2");
 
 		PyObject* thx_1 = PyObject_GetItem(i18n, __UI_message_thx);
@@ -149,7 +167,7 @@ uint8_t showMessage(PyObject* i18n) {
 		return 6;
 	}
 
-	PyObject* res = PyObject_CallFunctionObjArgs(m_pushMessage, text, GameGreeting, NULL);
+	PyObject_CallFunctionObjArgs_increfed(res, m_pushMessage, text, GameGreeting, NULL);
 
 	Py_DECREF(text);
 
@@ -161,4 +179,13 @@ uint8_t showMessage(PyObject* i18n) {
 	else              showed = false;
 
 	return NULL;
+}
+
+
+//public methods
+
+void HangarMessagesC::showMessage(PyObject* i18n) {
+	if (!inited) return;
+
+	lastError = showMessage_p(i18n);
 }

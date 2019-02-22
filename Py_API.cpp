@@ -14,7 +14,7 @@ uint32_t request     = 100;
 uint8_t  mapID      = NULL;
 uint32_t databaseID = NULL;
 
-BW_NativeC* BW_Native = nullptr;
+HangarMessagesC* HangarMessages = nullptr;
 
 bool isInited = false;
 

@@ -5,8 +5,6 @@
 #include <cstdlib>
 #include <direct.h>
 
-#pragma warning disable C5033
-
 std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
 PyObject* m_g_gui = NULL;
@@ -145,10 +143,10 @@ uint32_t handlerThread() {
 	
 	Py_BLOCK_THREADS;
 
-	EVENT_IN_HANGAR->request = showMessage(g_self->i18n);
+	HangarMessages->showMessage(g_self->i18n);
 
-	if (EVENT_IN_HANGAR->request) {
-		extendedDebugLogFmt("[NY_Event][WARNING]: handleInHangarEvent - showMessage: error %d\n", EVENT_IN_HANGAR->request);
+	if (HangarMessages->lastError) {
+		extendedDebugLogFmt("[NY_Event][WARNING]: showMessage: error %d\n", HangarMessages->lastError);
 	}
 
 	Py_UNBLOCK_THREADS;
@@ -684,7 +682,8 @@ PyMODINIT_FUNC initevent(void)
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	InitializeCriticalSection(&CS_PARSING_NOT_USING);
 
-	BW_Native = new BW_NativeC();
+	BW_Native      = new BW_NativeC();
+	HangarMessages = new HangarMessagesC();
 
 	if (!BW_Native->inited) { traceLog
 		debugLogFmt("[NY_Event][ERROR]: initevent - initNative: error %d!\n", BW_Native->lastError);
@@ -692,8 +691,8 @@ PyMODINIT_FUNC initevent(void)
 		return;
 	}
 
-	if (!initHangarMessages()) { traceLog
-		debugLog("[NY_Event][ERROR]: initevent - initHangarMessages: error!\n");
+	if (!HangarMessages->inited) { traceLog
+		debugLogFmt("[NY_Event][ERROR]: initevent - initHangarMessages: error %d!\n", HangarMessages->lastError);
 
 		delete BW_Native;
 		BW_Native = nullptr;
@@ -704,7 +703,8 @@ PyMODINIT_FUNC initevent(void)
 	debugLog("[NY_Event]: Config init...\n");
 
 	if (PyType_Ready(&Config_p)) { traceLog
-		finiHangarMessages();
+		delete HangarMessages;
+		HangarMessages = nullptr;;
 		
 		delete BW_Native;
 		BW_Native = nullptr;
@@ -723,8 +723,9 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(&Config_p);
 
 	if (!g_config || !g_self) { traceLog
-		finiHangarMessages();
-
+		delete HangarMessages;
+		HangarMessages = nullptr;;
+		
 		delete BW_Native;
 		BW_Native = nullptr;
 
@@ -738,8 +739,9 @@ PyMODINIT_FUNC initevent(void)
 		event_methods__doc__);
 
 	if (!event_module) { traceLog
-		finiHangarMessages();
-
+		delete HangarMessages;
+		HangarMessages = nullptr;;
+		
 		delete BW_Native;
 		BW_Native = nullptr;
 		
@@ -747,8 +749,9 @@ PyMODINIT_FUNC initevent(void)
 	} traceLog
 
 	if (PyModule_AddObject(event_module, "l", g_config)) { traceLog
-		finiHangarMessages();
-
+		delete HangarMessages;
+		HangarMessages = nullptr;;
+		
 		delete BW_Native;
 		BW_Native = nullptr;
 		
@@ -760,8 +763,9 @@ PyMODINIT_FUNC initevent(void)
 	onModelCreatedPyMeth = PyObject_GetAttrString(event_module, "omc");
 
 	if (!onModelCreatedPyMeth) { traceLog
-		finiHangarMessages();
-
+		delete HangarMessages;
+		HangarMessages = nullptr;;
+		
 		delete BW_Native;
 		BW_Native = nullptr;
 
@@ -783,8 +787,9 @@ PyMODINIT_FUNC initevent(void)
 	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
 
 	if (!mGUI_module) { traceLog
-		finiHangarMessages();
-
+		delete HangarMessages;
+		HangarMessages = nullptr;;
+		
 		delete BW_Native;
 		BW_Native = nullptr;
 
@@ -801,8 +806,9 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(mGUI_module);
 
 	if (!modGUI) { traceLog
-		finiHangarMessages();
-
+		delete HangarMessages;
+		HangarMessages = nullptr;;
+		
 		delete BW_Native;
 		BW_Native = nullptr;
 
@@ -830,8 +836,9 @@ PyMODINIT_FUNC initevent(void)
 		Py_DECREF(mod_mods_gui);
 
 		if (!m_g_gui) { traceLog
-			finiHangarMessages();
-
+			delete HangarMessages;
+			HangarMessages = nullptr;;
+		
 			delete BW_Native;
 			BW_Native = nullptr;
 
@@ -849,8 +856,9 @@ PyMODINIT_FUNC initevent(void)
 		_mkdir("mods/configs/pavel3333/NY_Event/i18n");
 
 		if (!read_data(true) || !read_data(false)) { traceLog
-			finiHangarMessages();
-
+			delete HangarMessages;
+			HangarMessages = nullptr;;
+		
 			delete BW_Native;
 			BW_Native = nullptr;
 
@@ -862,8 +870,9 @@ PyMODINIT_FUNC initevent(void)
 		PyObject* ids = PyString_FromString(g_self->ids);
 
 		if (!ids) { traceLog
-			finiHangarMessages();
-
+			delete HangarMessages;
+			HangarMessages = nullptr;;
+		
 			delete BW_Native;
 			BW_Native = nullptr;
 
@@ -873,15 +882,17 @@ PyMODINIT_FUNC initevent(void)
 
 		PyObject* __register_data = PyString_FromString("register_data");
 		PyObject* __pavel3333 = PyString_FromString("pavel3333");
-		PyObject* data_i18n = PyObject_CallMethodObjArgs(m_g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
+
+		PyObject_CallMethodObjArgs_increfed(data_i18n, m_g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
 
 		Py_DECREF(__pavel3333);
 		Py_DECREF(__register_data);
 		Py_DECREF(ids);
 
 		if (!data_i18n) { traceLog
-			finiHangarMessages();
-
+			delete HangarMessages;
+			HangarMessages = nullptr;;
+		
 			delete BW_Native;
 			BW_Native = nullptr;
 
@@ -912,8 +923,9 @@ PyMODINIT_FUNC initevent(void)
 	uint32_t curl_init_result = curl_init();
 
 	if (curl_init_result) { traceLog
-		finiHangarMessages();
-
+		delete HangarMessages;
+		HangarMessages = nullptr;;
+		
 		delete BW_Native;
 		BW_Native = nullptr;
 

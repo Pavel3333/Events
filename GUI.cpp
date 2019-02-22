@@ -29,9 +29,11 @@ void GUI_setWarning(uint8_t warningCode) {
 	}
 
 	PyObject* __setWarning = PyString_FromStringAndSize("setWarning", 10);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setWarning, PyInt_FromSize_t((size_t)warningCode), NULL);
+
+	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setWarning, PyInt_FromSize_t((size_t)warningCode), NULL);
 
 	Py_DECREF(__setWarning);
+
 	Py_XDECREF(res);
 #endif
 }
@@ -43,7 +45,8 @@ void GUI_setError(uint8_t errorCode) {
 	}
 
 	PyObject* __setError = PyString_FromStringAndSize("setError", 8);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setError, PyInt_FromSize_t((size_t)errorCode), NULL);
+
+	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setError, PyInt_FromSize_t((size_t)errorCode), NULL);
 
 	Py_DECREF(__setError);
 	Py_XDECREF(res);
@@ -56,9 +59,11 @@ void GUI_setVisible(bool visible) {
 	}
 
 	PyObject* __setVisible = PyString_FromStringAndSize("setVisible", 10);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setVisible, PyBool_FromLong((long)visible), NULL);
+
+	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setVisible, PyBool_FromLong((long)visible), NULL);
 
 	Py_DECREF(__setVisible);
+
 	Py_XDECREF(res);
 }
 
@@ -68,9 +73,11 @@ void GUI_setTimerVisible(bool visible) {
 	}
 
 	PyObject* __setTimerVisible = PyString_FromStringAndSize("setTimerVisible", 15U);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setTimerVisible, PyBool_FromLong((long)visible), NULL);
+
+	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setTimerVisible, PyBool_FromLong((long)visible), NULL);
 
 	Py_DECREF(__setTimerVisible);
+
 	Py_XDECREF(res);
 }
 
@@ -84,9 +91,10 @@ void GUI_setTime(uint32_t time_preparing) {
 	sprintf_s(new_time, 30U, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
 
 	PyObject* __setTime = PyString_FromStringAndSize("setTime", 7);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setTime, PyString_FromString(new_time), NULL);
+	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setTime, PyString_FromString(new_time), NULL);
 
 	Py_DECREF(__setTime);
+
 	Py_XDECREF(res);
 }
 
@@ -97,9 +105,10 @@ void GUI_setText(char* msg, float time_f) {
 
 	PyObject* __setText = PyString_FromStringAndSize("setText", 7);
 
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __setText, PyString_FromString(msg), NULL);
+	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setText, PyString_FromString(msg), NULL);
 
 	Py_DECREF(__setText);
+
 	Py_XDECREF(res);
 
 	PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
@@ -116,7 +125,7 @@ void GUI_setText(char* msg, float time_f) {
 	}
 
 	if (delLabelCBID) {
-		cancelCallback(&delLabelCBID);
+		BW_Native->cancelCallback(&delLabelCBID);
 
 		PyObject* none = Py_None;
 
@@ -129,7 +138,8 @@ void GUI_setText(char* msg, float time_f) {
 
 	if (time_f) {
 		PyObject* __clearTextCB = PyString_FromStringAndSize("clearTextCB", 11);
-		PyObject* res2 = PyObject_CallMethodObjArgs(modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
+
+		PyObject_CallMethodObjArgs_increfed(res2, modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
 
 		Py_DECREF(__clearTextCB);
 
@@ -206,9 +216,11 @@ void GUI_clearText() {
 	}
 
 	PyObject* __clearText = PyString_FromStringAndSize("clearText", 9);
-	PyObject* res = PyObject_CallMethodObjArgs(modGUI, __clearText, NULL);
+
+	PyObject_CallMethodObjArgs_increfed(res, modGUI, __clearText, NULL);
 
 	Py_DECREF(__clearText);
+
 	Py_XDECREF(res);
 
 	lastStageID = STAGE_ID::COMPETITION;

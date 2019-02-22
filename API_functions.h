@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#pragma warning(disable: 5033)
+
 #include <iostream>
 #include <fstream>
 #include <vector>
