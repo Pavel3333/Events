@@ -296,6 +296,114 @@ uint8_t BW_NativeC::getDBID_p(uint32_t* DBID) {
 	return NULL;
 }
 
+uint8_t BW_NativeC::getLastModelCoords_p(float dist_equal, uint8_t* modelID, float** coords) { traceLog
+	INIT_LOCAL_MSG_BUFFER;
+
+	PyObject* player = getPlayer_p();
+
+	if (!player) { traceLog
+		return 1;
+	} traceLog
+
+	PyObject* vehicle = PyObject_GetAttrString(player, "vehicle");
+
+	Py_DECREF(player);
+
+	if (!vehicle) { traceLog
+		return 2;
+	} traceLog
+
+	PyObject* model_p = PyObject_GetAttrString(vehicle, "model");
+
+	Py_DECREF(vehicle);
+
+	if (!model_p) { traceLog
+		return 3;
+	} traceLog
+
+	PyObject* position_Vec3 = PyObject_GetAttrString(model_p, "position");
+
+	Py_DECREF(model_p);
+
+	if (!position_Vec3) { traceLog
+		return 4;
+	} traceLog
+
+	PyObject* __tuple = PyString_FromString("tuple");
+
+	PyObject_CallMethodObjArgs_increfed(position, position_Vec3, __tuple, NULL);
+
+	Py_DECREF(__tuple);
+
+	if (!position) { traceLog
+		return 5;
+	} traceLog
+	
+	double* coords_pos = new double[3];
+
+	for (uint8_t i = NULL; i < 3; i++) {
+		PyObject* coord_p = PyTuple_GetItem(position, i);
+
+		if (!coord_p) { traceLog
+			return 6;
+		} traceLog
+
+		coords_pos[i] = PyFloat_AsDouble(coord_p);
+	} traceLog
+
+	double distTemp;
+	double dist = -1.0;
+	int8_t modelTypeLast = -1;
+	float* coords_res = nullptr;
+
+	superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
+
+	for (auto it = current_map.modelsSects.cbegin();
+		it != current_map.modelsSects.cend();
+		it++) {
+		if (!it->isInitialised) {
+			extendedDebugLogFmt("[NY_Event][WARNING]: sect %d is not initialized!\n", it->ID);
+
+			continue;
+		}
+
+		for (auto it2 = it->models.cbegin();
+			it2 != it->models.cend();
+			it2++) {
+			if (*it2 == nullptr) { traceLog
+				extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - *it2 is NULL!\n");
+
+				continue;
+			}
+
+			distTemp = getDist2Points(coords_pos, *it2);
+
+			if (dist == -1.0 || distTemp < dist) {
+				dist = distTemp;
+				modelTypeLast = it->ID;
+
+				coords_res = *it2;
+			}
+		}
+	} traceLog
+
+	delete[] coords_pos;
+
+	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
+		extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - model not found!\n");
+
+		return 8;
+	} traceLog
+
+	if (dist > dist_equal) { traceLog
+		return 7;
+	} traceLog
+
+	*modelID = modelTypeLast;
+	*coords = coords_res;
+
+	return NULL;
+}
 
 //public methods
 
@@ -321,6 +429,12 @@ void BW_NativeC::getDBID(uint32_t* DBID) {
 	if (!inited) return;
 
 	lastError = getDBID_p(DBID);
+}
+
+void BW_NativeC::getLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
+	if (!inited) return;
+
+	lastError = getLastModelCoords_p(dist_equal, modelID, coords);
 }
 
 BW_NativeC* BW_Native = nullptr;

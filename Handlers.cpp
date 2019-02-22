@@ -656,9 +656,24 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 	uint8_t modelID;
 	float* coords = new float[3];
 
-	EVENT_DEL_MODEL->request = findLastModelCoords(5.0, &modelID, &coords);
+	BEGIN_USING_MODELS;
+		case WAIT_OBJECT_0: traceLog
+			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
 
-	if      (!EVENT_DEL_MODEL->request) { traceLog
+			BW_Native->getLastModelCoords(5.0, &modelID, &coords);
+
+			RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 2);
+
+			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+
+			break;
+		case WAIT_ABANDONED: traceLog
+			extendedDebugLog("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+
+			return 3;
+	END_USING_MODELS;
+
+	if      (!BW_Native->lastError) { traceLog
 		EVENT_DEL_MODEL->request = send_token_threadsafe(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
 		
 		if (EVENT_DEL_MODEL->request) { traceLog
@@ -667,7 +682,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 				//GUI_setError(EVENT_DEL_MODEL->request);
 							
-				return 2;
+				return 4;
 			} traceLog
 
 			extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - send_token_threadsafe - Warning code %d\n", EVENT_DEL_MODEL->request);
@@ -683,13 +698,13 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 				//GUI_setError(EVENT_DEL_MODEL->request);
 
-				return 3;
+				return 5;
 			}
 			extendedDebugLogFmt("[NY_Event][WARNING]: DEL_LAST_MODEL - parse_event_threadsafe - Warning code %d\n", EVENT_DEL_MODEL->request);
 
 			//GUI_setWarning(EVENT_DEL_MODEL->request);
 
-			return 4;
+			return 6;
 		} traceLog
 
 		BEGIN_USING_MODELS;
@@ -703,9 +718,9 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 					//GUI_setError(EVENT_DEL_MODEL->request);
 
-					RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 8);
+					RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 7);
 
-					return 5;
+					return 8;
 				} traceLog
 
 				scoreID = modelID;
@@ -721,14 +736,14 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 					//GUI_setError(EVENT_DEL_MODEL->request);
 
-					RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 6);
+					RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 9);
 
-					return 6;
+					return 10;
 				} traceLog
 
 				*/
 
-				RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 4);
+				RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 11);
 
 				superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
 
@@ -736,18 +751,18 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 			case WAIT_ABANDONED: traceLog
 				extendedDebugLog("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
-				return 7;
+				return 12;
 		END_USING_MODELS;
 	}
-	else if (EVENT_DEL_MODEL->request == 7 || EVENT_DEL_MODEL->request == 8) { traceLog
+	else if (BW_Native->lastError == 7 || BW_Native->lastError == 8) { traceLog
 		extendedDebugLogFmt("[NY_Event]: DEL_LAST_MODEL - Model not found!\n");
 
 		current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
 	}
 	else { traceLog
-		extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - findLastModelCoords - error %d!\n", EVENT_DEL_MODEL->request);
+		extendedDebugLogFmt("[NY_Event][ERROR]: DEL_LAST_MODEL - getLastModelCoords - error %d!\n", BW_Native->lastError);
 
-		return 8;
+		return 13;
 	}
 
 	Py_BLOCK_THREADS;

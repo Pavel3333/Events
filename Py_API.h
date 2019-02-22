@@ -58,8 +58,6 @@ bool read_data(bool);
 
 void clearModelsSections();
 
-uint8_t findLastModelCoords(float, uint8_t*, float**);
-
 uint8_t delModelPy(float*);
 
 uint8_t delModelCoords(uint8_t, float*);
