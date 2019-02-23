@@ -173,9 +173,10 @@ bool createEventsAndSecondThread() { traceLog
 	//Handler thread creating
 
 	if (hHandlerThread) { traceLog
-		CloseHandle(hHandlerThread);
-
-		hHandlerThread = NULL;
+		WaitForSingleObject(hHandlerThread, INFINITE);
+		
+		hHandlerThread  = NULL;
+		handlerThreadID = NULL;
 	} traceLog
 
 	hHandlerThread = CreateThread( //создаем второй поток
