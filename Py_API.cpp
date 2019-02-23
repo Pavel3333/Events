@@ -382,68 +382,50 @@ PyObject* event_light(float coords[3]) {
 
 	superExtendedDebugLog("light creating...\n");
 
-	PyObject* __PyOmniLight = PyString_FromString("PyOmniLight");
-
-	PyObject_CallMethodObjArgs_increfed(Light, gBigWorldUtils->m_BigWorld, __PyOmniLight, NULL);
-
-	Py_DECREF(__PyOmniLight);
-
+	PyObject* Light = PyObject_CallMethod(gBigWorldUtils->m_BigWorld, "PyOmniLight", nullptr);
 	if (!Light) { traceLog
 		superExtendedDebugLog("PyOmniLight creating FAILED\n");
-
 		return NULL;
 	}
 
 	//---------inner radius---------
 
-	PyObject* __innerRadius = PyString_FromString("innerRadius");
 	PyObject* innerRadius = PyFloat_FromDouble(0.75);
 
-	if (PyObject_SetAttr(Light, __innerRadius, innerRadius)) { traceLog
+	if (PyObject_SetAttrString(Light, "innerRadius", innerRadius)) { traceLog
 		superExtendedDebugLog("PyOmniLight innerRadius setting FAILED\n");
 
-		Py_DECREF(__innerRadius);
 		Py_DECREF(innerRadius);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
 
-	Py_DECREF(__innerRadius);
-
 	//---------outer radius---------
 
-	PyObject* __outerRadius = PyString_FromString("outerRadius");
 	PyObject* outerRadius = PyFloat_FromDouble(1.5);
 
-	if (PyObject_SetAttr(Light, __outerRadius, outerRadius)) { traceLog
+	if (PyObject_SetAttrString(Light, "outerRadius", outerRadius)) { traceLog
 		superExtendedDebugLog("PyOmniLight outerRadius setting FAILED\n");
 
 		Py_DECREF(outerRadius);
-		Py_DECREF(__outerRadius);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
-
-	Py_DECREF(__outerRadius);
 
 	//----------multiplier----------
 
-	PyObject* __multiplier = PyString_FromString("multiplier");
 	PyObject* multiplier = PyFloat_FromDouble(500.0);
 
-	if (PyObject_SetAttr(Light, __multiplier, multiplier)) { traceLog
+	if (PyObject_SetAttrString(Light, "multiplier", multiplier)) { traceLog
 		superExtendedDebugLog("PyOmniLight multiplier setting FAILED\n");
 
 		Py_DECREF(multiplier);
-		Py_DECREF(__multiplier);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
-
-	Py_DECREF(__multiplier);
 
 	//-----------position-----------
 
@@ -466,19 +448,14 @@ PyObject* event_light(float coords[3]) {
 		}
 	}
 
-	PyObject* __position = PyString_FromString("position");
-
-	if (PyObject_SetAttr(Light, __position, coords_p)) { traceLog
+	if (PyObject_SetAttrString(Light, "position", coords_p)) { traceLog
 		superExtendedDebugLog("PyOmniLight coords setting FAILED\n");
 
-		Py_DECREF(__position);
 		Py_DECREF(coords_p);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
-
-	Py_DECREF(__position);
 
 	//------------colour------------
 
@@ -505,46 +482,38 @@ PyObject* event_light(float coords[3]) {
 
 	//------------------------------
 
-	PyObject* __colour = PyString_FromString("colour");
-
-	if (PyObject_SetAttr(Light, __colour, colour_p)) { traceLog
+	if (PyObject_SetAttrString(Light, "colour", colour_p)) { traceLog
 		superExtendedDebugLog("PyOmniLight colour setting FAILED\n");
 
-		Py_DECREF(__colour);
 		Py_DECREF(colour_p);
 		Py_DECREF(Light);
 
 		return NULL;
 	}
 
-	Py_DECREF(__colour);
-
 	superExtendedDebugLog("light creating OK!\n");
 
 	return Light;
 }
 
-bool setModelPosition(PyObject* Model, float* coords_f) {
+bool setModelPosition(PyObject* Model, const float coords_f[3])
+{
 	PyObject* coords_p = PyTuple_New(3);
 
 	for (uint8_t i = NULL; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords_f[i]));
 
-	PyObject* __position = PyString_FromString("position");
-
-	if (PyObject_SetAttr(Model, __position, coords_p)) { traceLog
-		Py_DECREF(__position);
+	if (PyObject_SetAttrString(Model, "position", coords_p)) { traceLog
 		Py_DECREF(coords_p);
 		Py_DECREF(Model);
 
 		return false;
 	}
 
-	Py_DECREF(__position);
-
 	return true;
 }
 
-PyObject* event_model(char* path, float coords[3], bool isAsync) {
+PyObject* event_model(char* path, float coords[3], bool isAsync)
+{
 	if (!isInited || battleEnded) { traceLog
 		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
@@ -715,10 +684,10 @@ uint8_t create_models() { traceLog
 					continue;
 				}
 
-				for (auto it2 = it->models.cbegin(); it2 != it->models.cend(); it2++) {
+				for (float* it2 : it->models) {
 					superExtendedDebugLog("[");
 
-					event_model(it->path, *it2, true);
+					event_model(it->path, it2, true);
 
 					superExtendedDebugLog("], ");
 				}

@@ -64,7 +64,7 @@ uint8_t delModelCoords(uint8_t, float*);
 
 PyObject* event_light(float coords[3]);
 
-bool setModelPosition(PyObject*, float*);
+bool setModelPosition(PyObject*, const float coords[3]);
 
 PyObject* event_model(char*, float coords[3], bool isAsync = false);
 

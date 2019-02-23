@@ -1,13 +1,13 @@
 ﻿#include "BW_native.h"
 
 
-//constructor
+// constructor
 BigWorldUtils::BigWorldUtils()
 {
 	init();
 }
 
-//destructor
+// destructor
 BigWorldUtils::~BigWorldUtils()
 {
 	if (!inited) return;
@@ -65,7 +65,7 @@ PyObject* BigWorldUtils::getPlayer_p() const
 	return PyObject_CallMethod(m_BigWorld, "player", nullptr);
 }
 
-// BigWorld.callback() private impementation
+// BigWorld.callback() private implementation
 uint8_t BigWorldUtils::callback_p(long* CBID, PyObject* func, float time_f)
 {
 	if (!func) return 1;
@@ -97,7 +97,7 @@ uint8_t BigWorldUtils::callback_p(long* CBID, PyObject* func, float time_f)
 	return NULL;
 }
 
-// BigWorld.cancelCallback() private impementation
+// BigWorld.cancelCallback() private implementation
 uint8_t BigWorldUtils::cancelCallback_p(long* CBID)
 {
 	if (!*CBID) { traceLog
