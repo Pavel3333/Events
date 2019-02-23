@@ -128,16 +128,9 @@ bool read_data(bool isData) { traceLog
 
 		data.close();
 
-		PyObject* data_p = PyString_FromString(data_s);
+		PyObject_CallMethod_increfed(data_json_s, gBigWorldUtils->m_json, "loads", "s", data_s);
 
 		delete[] data_s;
-
-		PyObject* __loads = PyString_FromString("loads");
-
-		PyObject_CallMethodObjArgs_increfed(data_json_s, gBigWorldUtils->m_json, __loads, data_p, NULL);
-
-		Py_DECREF(__loads);
-		Py_DECREF(data_p);
 
 		if (!data_json_s) { traceLog
 			PyErr_Clear();

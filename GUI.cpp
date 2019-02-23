@@ -30,7 +30,7 @@ void GUI_setWarning(uint8_t warningCode) {
 
 	PyObject* __setWarning = PyString_FromString("setWarning");
 
-	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setWarning, PyInt_FromSize_t((size_t)warningCode), NULL);
+	PyObject_CallMethod_increfed(res, modGUI, "setWarning", "b", warningCode);
 
 	Py_DECREF(__setWarning);
 
@@ -44,11 +44,8 @@ void GUI_setError(uint8_t errorCode) {
 		return;
 	}
 
-	PyObject* __setError = PyString_FromString("setError");
+	PyObject_CallMethod_increfed(res, modGUI, "setError", "b", errorCode);
 
-	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setError, PyInt_FromSize_t((size_t)errorCode), NULL);
-
-	Py_DECREF(__setError);
 	Py_XDECREF(res);
 #endif
 }
@@ -58,11 +55,7 @@ void GUI_setVisible(bool visible) {
 		return;
 	}
 
-	PyObject* __setVisible = PyString_FromString("setVisible");
-
-	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setVisible, PyBool_FromLong((long)visible), NULL);
-
-	Py_DECREF(__setVisible);
+	PyObject_CallMethod_increfed(res, modGUI, "setVisible", "b", visible);
 
 	Py_XDECREF(res);
 }
@@ -72,11 +65,7 @@ void GUI_setTimerVisible(bool visible) {
 		return;
 	}
 
-	PyObject* __setTimerVisible = PyString_FromString("setTimerVisible");
-
-	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setTimerVisible, PyBool_FromLong((long)visible), NULL);
-
-	Py_DECREF(__setTimerVisible);
+	PyObject_CallMethod_increfed(res, modGUI, "setTimerVisible", "b", visible);
 
 	Py_XDECREF(res);
 }
@@ -90,10 +79,7 @@ void GUI_setTime(uint32_t time_preparing) {
 
 	sprintf_s(new_time, 30U, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
 
-	PyObject* __setTime = PyString_FromString("setTime");
-	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setTime, PyString_FromString(new_time), NULL);
-
-	Py_DECREF(__setTime);
+	PyObject_CallMethod_increfed(res, modGUI, "setTime", "s", new_time);
 
 	Py_XDECREF(res);
 }
@@ -103,11 +89,7 @@ void GUI_setText(char* msg, float time_f) {
 		return;
 	}
 
-	PyObject* __setText = PyString_FromString("setText");
-
-	PyObject_CallMethodObjArgs_increfed(res, modGUI, __setText, PyString_FromString(msg), NULL);
-
-	Py_DECREF(__setText);
+	PyObject_CallMethod_increfed(res, modGUI, "setText", "s", msg);
 
 	Py_XDECREF(res);
 
@@ -137,11 +119,7 @@ void GUI_setText(char* msg, float time_f) {
 	}
 
 	if (time_f) {
-		PyObject* __clearTextCB = PyString_FromString("clearTextCB");
-
-		PyObject_CallMethodObjArgs_increfed(res2, modGUI, __clearTextCB, PyFloat_FromDouble(time_f), NULL);
-
-		Py_DECREF(__clearTextCB);
+		PyObject_CallMethod_increfed(res2, modGUI, "clearTextCB", "f", time_f);
 
 		Py_XDECREF(res2);
 
@@ -215,11 +193,7 @@ void GUI_clearText() {
 		return;
 	}
 
-	PyObject* __clearText = PyString_FromString("clearText");
-
-	PyObject_CallMethodObjArgs_increfed(res, modGUI, __clearText, NULL);
-
-	Py_DECREF(__clearText);
+	PyObject_CallMethod_increfed(res, modGUI, "clearText", NULL);
 
 	Py_XDECREF(res);
 

@@ -70,11 +70,7 @@ uint8_t BigWorldUtils::callback_p(long* CBID, PyObject* func, float time_f)
 {
 	if (!func) return 1;
 
-	PyObject* time_p = NULL;
-
-	// зачем так?
-	if (!time_f) time_p = PyFloat_FromDouble(0.0);
-	else         time_p = PyFloat_FromDouble(time_f);
+	PyObject* time_p = PyFloat_FromDouble(time_f);
 
 	if (!time_p) { traceLog
 		return 2;

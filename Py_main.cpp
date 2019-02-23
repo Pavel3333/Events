@@ -496,12 +496,9 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
-		PyObject* __register = PyString_FromString("register");
-
-		PyObject_CallMethodObjArgs_increfed(result, m_g_gui, __register, PyString_FromString(g_self->ids), template_, g_self->data, apply, NULL);
+		PyObject_CallMethod_increfed(result, m_g_gui, "register", "sOOO", g_self->ids, template_, g_self->data, apply);
 
 		Py_XDECREF(result);
-		Py_DECREF(__register);
 		Py_DECREF(apply);
 		Py_DECREF(template_);
 	} traceLog
@@ -748,21 +745,7 @@ PyMODINIT_FUNC initevent(void)
 		} traceLog
 	}
 	else {
-		PyObject* ids = PyString_FromString(g_self->ids);
-
-		if (!ids) { traceLog
-			Py_DECREF(modGUI);
-			goto freeHangarMessages;
-		} traceLog
-
-		PyObject* __register_data = PyString_FromString("register_data");
-		PyObject* __pavel3333 = PyString_FromString("pavel3333");
-
-		PyObject_CallMethodObjArgs_increfed(data_i18n, m_g_gui, __register_data, ids, g_self->data, g_self->i18n, __pavel3333, NULL);
-
-		Py_DECREF(__pavel3333);
-		Py_DECREF(__register_data);
-		Py_DECREF(ids);
+		PyObject_CallMethod_increfed(data_i18n, m_g_gui, "register_data", "sOOs", g_self->ids, g_self->data, g_self->i18n, "pavel3333");
 
 		if (!data_i18n) { traceLog
 			Py_DECREF(modGUI);
