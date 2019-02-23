@@ -96,7 +96,7 @@ void GUI_setText(char* msg, float time_f) {
 	PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
 	if (!delLabelCBID_p || delLabelCBID_p == Py_None) {
-		delLabelCBID = NULL;
+		delLabelCBID = 0;
 
 		Py_XDECREF(delLabelCBID_p);
 	}
@@ -107,7 +107,8 @@ void GUI_setText(char* msg, float time_f) {
 	}
 
 	if (delLabelCBID) {
-		gBigWorldUtils->cancelCallback(&delLabelCBID);
+		gBigWorldUtils->cancelCallback(delLabelCBID);
+		delLabelCBID = 0;
 
 		PyObject* none = Py_None;
 

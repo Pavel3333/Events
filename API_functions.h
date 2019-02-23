@@ -236,7 +236,7 @@ extern map_sync sync_map;
 
 extern Config config;
 
-double getDist2Points(double*, float*);
+float getDist2Points(const float[3], const float[3]);
 
 uint32_t curl_init();
 void     curl_clean();

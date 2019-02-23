@@ -231,7 +231,7 @@ DWORD handlerThread() {
 				PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
 				if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog
-					delLabelCBID = NULL;
+					delLabelCBID = 0;
 
 					Py_XDECREF(delLabelCBID_p);
 				}
@@ -241,7 +241,8 @@ DWORD handlerThread() {
 					Py_DECREF(delLabelCBID_p);
 				} traceLog
 
-				gBigWorldUtils->cancelCallback(&delLabelCBID);
+				gBigWorldUtils->cancelCallback(delLabelCBID);
+				delLabelCBID = 0;
 
 				allModelsCreated = NULL;
 

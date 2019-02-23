@@ -80,16 +80,16 @@ bool file_exists(const char *fname)
 	return std::filesystem::exists(fname);
 }
 
-double getDist2Points(double* point1, float* point2) {
-	if (point1 == nullptr || point2 == nullptr) {
+float getDist2Points(const float point1[3], const float point2[3]) {
+	if (!point1 || !point2) {
 		return -1.0;
 	}
 
-	double dist_x = point2[0] - (double)point1[0];
-	double dist_y = point2[1] - (double)point1[1];
-	double dist_z = point2[2] - (double)point1[2];
+	float dist_x = point2[0] - point1[0];
+	float dist_y = point2[1] - point1[1];
+	float dist_z = point2[2] - point1[2];
 
-	return sqrt(dist_x * dist_x + dist_y * dist_y + dist_z * dist_z);
+	return sqrtf(dist_x * dist_x + dist_y * dist_y + dist_z * dist_z);
 }
 
 //-----------------

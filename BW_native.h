@@ -19,27 +19,34 @@ public:
 	PyObject* m_partial        = nullptr;
 	PyObject* m_json           = nullptr;
 
-	uint8_t lastError;
+	int   lastError    = 0;
+	char* lastErrorStr = nullptr;
 
 	BigWorldUtils();
 	~BigWorldUtils();
 
-	void callback(long*, PyObject*, float time_f = 1.0);
-	void cancelCallback(long*);
+	// BigWorld.callback()
+	// Registers a callback function to be called after a certain time, but not before the next tick
+	void callback(long*, PyObject*, float delay = 1.0);
+
+	// BigWorld.cancelCallback()
+	// Cancels a previously registered callback
+	void cancelCallback(long);
 
 	void getMapID(uint8_t*);
 	void getDBID(uint32_t*);
 	void getLastModelCoords(float, uint8_t*, float**);
+
 private:
 	void init();
 
 	PyObject* getPlayer_p() const;
 
-	uint8_t callback_p(long*, PyObject*, float time_f = 1.0);
-	uint8_t cancelCallback_p(long*);
-	uint8_t getMapID_p(uint8_t*);
-	uint8_t getDBID_p(uint32_t*);
-	uint8_t getLastModelCoords_p(float, uint8_t*, float**);
+	int callback_p(long*, PyObject*, float);
+	int cancelCallback_p(long);
+	int getMapID_p(uint8_t*);
+	int getDBID_p(uint32_t*);
+	int getLastModelCoords_p(float, uint8_t*, float**);
 };
 
 extern BigWorldUtils* gBigWorldUtils;
