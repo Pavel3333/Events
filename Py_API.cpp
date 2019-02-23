@@ -833,8 +833,6 @@ uint8_t del_models() { traceLog
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
-
 		PyObject* __delModel = PyString_FromString("delModel");
 
 		PyObject_CallMethodObjArgs_increfed(result, gBigWorldUtils->m_BigWorld, __delModel, (*it_model)->model, NULL);
@@ -859,8 +857,6 @@ uint8_t del_models() { traceLog
 		}
 
 		it_model++;
-
-		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
 	} traceLog
 
 	/*std::vector<ModLight*>::iterator it_light = lights.begin();
@@ -873,8 +869,6 @@ uint8_t del_models() { traceLog
 
 			continue;
 		}
-
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
 
 		if (!(*it_light)->model || (*it_light)->model == Py_None) { traceLog
 			superExtendedDebugLog("NULL\n");
@@ -893,8 +887,6 @@ uint8_t del_models() { traceLog
 		}
 
 		it_light++;
-
-		superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
 	} traceLog*/
 
 	extendedDebugLog("[NY_Event]: models deleting OK!\n");
