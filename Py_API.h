@@ -37,18 +37,6 @@ extern bool isModelsAlreadyInited;
 extern bool isTimerStarted;
 extern bool isTimeVisible;
 
-extern HANDLE hHangarTimer;
-extern HANDLE hBattleTimer;
-
-extern HANDLE hBattleTimerThread;
-extern DWORD  battleTimerThreadID;
-
-extern HANDLE hHandlerThread;
-extern DWORD  handlerThreadID;
-
-extern uint8_t hangarTimerLastError;
-extern uint8_t battleTimerLastError;
-
 extern std::vector<ModModel*> models;
 //extern std::vector<ModLight*> lights;
 

@@ -11,9 +11,9 @@
 
 #define debug_log                true
 #define extended_debug_log       true
-#define super_extended_debug_log true
+#define super_extended_debug_log false
 
-#define trace_log true
+#define trace_log false
 
 #define INIT_LOCAL_MSG_BUFFER \
 	char log_buf_c[1024];     \
@@ -104,7 +104,7 @@
 		return code;                                   \
 	} traceLog
 
-#define MOD_VERSION "v1.0.0.2 (" __TIMESTAMP__ ")"
+#define MOD_VERSION "v1.0.0.3 (" __TIMESTAMP__ ")"
 
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12
@@ -213,6 +213,9 @@ extern LPCWSTR EVENT_NAMES[4];
 extern char* COLOURS[MESSAGES_COUNT];
 extern char* MESSAGES[MESSAGES_COUNT];
 extern char* MODEL_NAMES[SECTIONS_COUNT];
+
+extern DWORD WINAPI TimerThread(LPVOID);
+extern DWORD WINAPI HandlerThread(LPVOID);
 
 extern bool isInited;
 

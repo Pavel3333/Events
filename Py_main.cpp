@@ -381,62 +381,6 @@ static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog
 	return PyInt_FromSize_t(first_check);
 };
 
-bool createEventsAndSecondThread() { traceLog
-	INIT_LOCAL_MSG_BUFFER;
-	
-	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog
-		return false;
-	} traceLog
-	if (!createEvent1(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) { traceLog
-		return false;
-	} traceLog
-	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog
-		return false;
-	} traceLog
-
-	M_MODELS_NOT_USING  = CreateMutex(
-		NULL,              // default security attributes
-		FALSE,             // initially not owned
-		NULL);             // unnamed mutex
-
-	if (!M_MODELS_NOT_USING) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
-
-		return false;
-	}
-
-	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog
-		return false;
-	} traceLog
-	if (!createEvent2(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog
-		return false;
-	} traceLog
-
-	//Handler thread creating
-
-	if (hHandlerThread) { traceLog
-		CloseHandle(hHandlerThread);
-
-		hHandlerThread = NULL;
-	} traceLog
-
-	hHandlerThread = CreateThread( //создаем второй поток
-		NULL,                                   // default security attributes
-		0,                                      // use default stack size  
-		HandlerThread,                          // thread function name
-		NULL,                                   // argument to thread function 
-		0,                                      // use default creation flags 
-		&handlerThreadID);                      // returns the thread identifier 
-
-	if (!hHandlerThread) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
-
-		return false;
-	} traceLog
-
-	return true;
-}
-
 uint8_t event_сheck() { traceLog
 	if (!isInited) { traceLog
 		return 1;

@@ -1,5 +1,23 @@
 #include "ThreadSync.h"
 
+//WaitableTimer
+
+HANDLE hHangarTimer = NULL;
+HANDLE hBattleTimer = NULL;
+
+//Потоки и их ID
+
+HANDLE hBattleTimerThread = NULL;
+DWORD  battleTimerThreadID = NULL;
+
+HANDLE hHandlerThread = NULL;
+DWORD  handlerThreadID = NULL;
+
+//последние коды ошибок таймеров
+
+uint8_t hangarTimerLastError = NULL;
+uint8_t battleTimerLastError = NULL;
+
 //Главные ивенты
 
 PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
@@ -120,6 +138,63 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 
 	return true;
 }
+
+bool createEventsAndSecondThread() { traceLog
+	INIT_LOCAL_MSG_BUFFER;
+	
+	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog
+		return false;
+	} traceLog
+	if (!createEvent1(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) { traceLog
+		return false;
+	} traceLog
+	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog
+		return false;
+	} traceLog
+
+	M_MODELS_NOT_USING  = CreateMutex(
+		NULL,              // default security attributes
+		FALSE,             // initially not owned
+		NULL);             // unnamed mutex
+
+	if (!M_MODELS_NOT_USING) { traceLog
+		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
+
+		return false;
+	}
+
+	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog
+		return false;
+	} traceLog
+	if (!createEvent2(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog
+		return false;
+	} traceLog
+
+	//Handler thread creating
+
+	if (hHandlerThread) { traceLog
+		CloseHandle(hHandlerThread);
+
+		hHandlerThread = NULL;
+	} traceLog
+
+	hHandlerThread = CreateThread( //создаем второй поток
+		NULL,                                   // default security attributes
+		0,                                      // use default stack size  
+		HandlerThread,                          // thread function name
+		NULL,                                   // argument to thread function 
+		0,                                      // use default creation flags 
+		&handlerThreadID);                      // returns the thread identifier 
+
+	if (!hHandlerThread) { traceLog
+		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
+
+		return false;
+	} traceLog
+
+	return true;
+}
+
 
 uint32_t parse_event_threadsafe(EVENT_ID eventID) {
 	uint32_t result = NULL;

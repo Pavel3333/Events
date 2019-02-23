@@ -2,6 +2,24 @@
 
 #include "ModThreads.h"
 
+//WaitableTimer
+
+extern HANDLE hHangarTimer;
+extern HANDLE hBattleTimer;
+
+//Потоки и их ID
+
+extern HANDLE hBattleTimerThread;
+extern DWORD  battleTimerThreadID;
+
+extern HANDLE hHandlerThread;
+extern DWORD  handlerThreadID;
+
+//последние коды ошибок таймеров
+
+extern uint8_t hangarTimerLastError;
+extern uint8_t battleTimerLastError;
+
 //Главные ивенты
 
 extern PEVENTDATA_1 EVENT_IN_HANGAR;
@@ -31,6 +49,9 @@ void closeEvent2(PEVENTDATA_2*);
 
 bool createEvent1(PEVENTDATA_1*, uint8_t);
 bool createEvent2(PEVENTDATA_2*, LPCWSTR, BOOL isSignaling = FALSE);
+
+bool createEventsAndSecondThread();
+
 
 uint32_t parse_event_threadsafe(EVENT_ID);
 uint32_t send_token_threadsafe(uint32_t, uint8_t, EVENT_ID, uint8_t modelID = NULL, float* coords_del = nullptr);

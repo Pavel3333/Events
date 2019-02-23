@@ -28,18 +28,6 @@ bool isTimeVisible  = false;
 
 bool isStreamer = false;
 
-HANDLE hHangarTimer = NULL;
-HANDLE hBattleTimer = NULL;
-
-HANDLE hBattleTimerThread  = NULL;
-DWORD  battleTimerThreadID = NULL;
-
-HANDLE hHandlerThread  = NULL;
-DWORD  handlerThreadID = NULL;
-
-uint8_t hangarTimerLastError = NULL;
-uint8_t battleTimerLastError = NULL;
-
 STAGE_ID lastStageID = STAGE_ID::COMPETITION;
 EVENT_ID lastEventID = EVENT_ID::IN_HANGAR;
 
