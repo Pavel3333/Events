@@ -31,7 +31,7 @@ public:
 private:
 	void init();
 
-	PyObject* getPlayer_p();
+	PyObject* getPlayer_p() const;
 
 	uint8_t callback_p(long*, PyObject*, float time_f = 1.0);
 	uint8_t cancelCallback_p(long*);

@@ -2,14 +2,12 @@
 
 
 //constructor
-
 BigWorldUtils::BigWorldUtils()
 {
 	init();
 }
 
 //destructor
-
 BigWorldUtils::~BigWorldUtils()
 {
 	if (!inited) return;
@@ -26,6 +24,8 @@ BigWorldUtils::~BigWorldUtils()
 
 // private methods
 
+
+// initialization
 void BigWorldUtils::init()
 {
 	// получение BigWorld
@@ -53,29 +53,26 @@ void BigWorldUtils::init()
 	m_partial = PyObject_GetAttrString(functools, "partial");
 	Py_DECREF(functools);
 
-	//загрузка json
+	// получение json
 	m_json = PyImport_ImportModule("json");
 
 	inited = true;
-} 
-
-PyObject* BigWorldUtils::getPlayer_p()
-{
-	PyObject* __player = PyString_FromString("player");
-
-	PyObject_CallMethodObjArgs_increfed(player, m_BigWorld, __player, NULL);
-
-	Py_DECREF(__player);
-
-	return player;
 }
 
+// BigWorld.player() private impementation
+PyObject* BigWorldUtils::getPlayer_p() const
+{
+	return PyObject_CallMethod(m_BigWorld, "player", nullptr);
+}
+
+// BigWorld.callback() private impementation
 uint8_t BigWorldUtils::callback_p(long* CBID, PyObject* func, float time_f)
 {
 	if (!func) return 1;
 
 	PyObject* time_p = NULL;
 
+	// зачем так?
 	if (!time_f) time_p = PyFloat_FromDouble(0.0);
 	else         time_p = PyFloat_FromDouble(time_f);
 
@@ -100,6 +97,7 @@ uint8_t BigWorldUtils::callback_p(long* CBID, PyObject* func, float time_f)
 	return NULL;
 }
 
+// BigWorld.cancelCallback() private impementation
 uint8_t BigWorldUtils::cancelCallback_p(long* CBID)
 {
 	if (!*CBID) { traceLog
@@ -118,9 +116,7 @@ uint8_t BigWorldUtils::cancelCallback_p(long* CBID)
 uint8_t BigWorldUtils::getMapID_p(uint8_t* mapID)
 {
 	PyObject* player = getPlayer_p();
-
 	PyObject* arena = PyObject_GetAttrString(player, "arena");
-
 	Py_DECREF(player);
 
 	if (!arena) { traceLog
@@ -143,18 +139,16 @@ uint8_t BigWorldUtils::getMapID_p(uint8_t* mapID)
 		return 4;
 	} traceLog
 
-	char* map_s = PyString_AS_STRING(map_PS);
-
+	char* map_s = _strdup(PyString_AS_STRING(map_PS));
 	Py_DECREF(map_PS);
 
-	char map_ID_s[4];
-	memcpy(map_ID_s, map_s, 3);
-	if (map_ID_s[2] == '_') map_ID_s[2] = NULL;
-	map_ID_s[3] = NULL;
+	if (map_s[2] == '_') map_s[2] = '\0';
+	map_s[3] = '\0';
 
-	*mapID = atoi(map_ID_s);
+	*mapID = atoi(map_s);
+	delete map_s;
 
-	return NULL;
+	return 0;
 }
 
 uint8_t BigWorldUtils::getDBID_p(uint32_t* DBID)
@@ -185,7 +179,7 @@ uint8_t BigWorldUtils::getDBID_p(uint32_t* DBID)
 
 	Py_DECREF(DBID_int);
 
-	return NULL;
+	return 0;
 }
 
 uint8_t BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, float** coords)
@@ -222,21 +216,16 @@ uint8_t BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, 
 		return 4;
 	} traceLog
 
-	PyObject* __tuple = PyString_FromString("tuple");
-
-	PyObject* position = PyObject_CallMethodObjArgs(position_Vec3, __tuple, NULL);
-
-	Py_DECREF(__tuple);
-
+	PyObject* position = PyObject_CallMethod(position_Vec3, "tuple", nullptr);
 	Py_DECREF(position_Vec3);
 
 	if (!position) { traceLog
 		return 5;
 	} traceLog
 
-	double* coords_pos = new double[3];
+	double coords_pos[3];
 
-	for (uint8_t i = NULL; i < 3; i++) {
+	for (uint8_t i = 0; i < 3; i++) {
 		PyObject* coord_p = PyTuple_GetItem(position, i);
 
 		if (!coord_p) { traceLog
@@ -276,8 +265,6 @@ uint8_t BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, 
 		}
 	} traceLog
 
-	delete[] coords_pos;
-
 	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
 		extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - model not found!\n");
 
@@ -291,11 +278,14 @@ uint8_t BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, 
 	*modelID = modelTypeLast;
 	*coords = coords_res;
 
-	return NULL;
+	return 0;
 }
 
-//public methods
 
+// public methods
+
+
+// BigWorld.callback()
 void BigWorldUtils::callback(long* CBID, PyObject* func, float time_f)
 {
 	if (!inited) return;
@@ -303,6 +293,7 @@ void BigWorldUtils::callback(long* CBID, PyObject* func, float time_f)
 	lastError = callback_p(CBID, func, time_f);
 }
 
+// BigWorld.cancelCallback()
 void BigWorldUtils::cancelCallback(long* CBID)
 {
 	if (!inited) return;
@@ -324,7 +315,8 @@ void BigWorldUtils::getDBID(uint32_t* DBID)
 	lastError = getDBID_p(DBID);
 }
 
-void BigWorldUtils::getLastModelCoords(float dist_equal, uint8_t* modelID, float** coords) {
+void BigWorldUtils::getLastModelCoords(float dist_equal, uint8_t* modelID, float** coords)
+{
 	if (!inited) return;
 
 	lastError = getLastModelCoords_p(dist_equal, modelID, coords);
