@@ -729,15 +729,7 @@ uint8_t init_models() { traceLog
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: addModel debug 2.1\n");
-
-		PyObject* __addModel = PyString_FromString("addModel");
-
-		PyObject_CallMethodObjArgs_increfed(result, gBigWorldUtils->m_BigWorld, __addModel, models[i]->model, NULL);
-
-		Py_DECREF(__addModel);
-
-		superExtendedDebugLog("[NY_Event]: addModel debug 2.2\n");
+		PyObject_CallFunctionObjArgs_increfed(result, gBigWorldUtils->m_addModel, models[i]->model, NULL);
 
 		if (result) {
 			Py_DECREF(result);
@@ -747,7 +739,6 @@ uint8_t init_models() { traceLog
 			superExtendedDebugLog("True\n");
 		}
 		else superExtendedDebugLog("False\n");
-		superExtendedDebugLog("[NY_Event]: addModel debug 2.3\n");
 	} traceLog
 
 	extendedDebugLog("[NY_Event]: models adding OK!\n");
@@ -817,7 +808,7 @@ uint8_t del_models() { traceLog
 		}
 
 		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) { traceLog
-			superExtendedDebugLog("NULL\n");
+			extendedDebugLog("[NY_Event][WARNING]: (*it_model)->model is NULL or None or not processed!\n");
 
 			Py_XDECREF((*it_model)->model);
 
@@ -833,11 +824,7 @@ uint8_t del_models() { traceLog
 			continue;
 		}
 
-		PyObject* __delModel = PyString_FromString("delModel");
-
-		PyObject_CallMethodObjArgs_increfed(result, gBigWorldUtils->m_BigWorld, __delModel, (*it_model)->model, NULL);
-
-		Py_DECREF(__delModel);
+		PyObject_CallFunctionObjArgs_increfed(result, gBigWorldUtils->m_delModel, (*it_model)->model, NULL);
 
 		if (result) {
 			Py_DECREF(result);
@@ -871,7 +858,7 @@ uint8_t del_models() { traceLog
 		}
 
 		if (!(*it_light)->model || (*it_light)->model == Py_None) { traceLog
-			superExtendedDebugLog("NULL\n");
+			extendedDebugLog("[NY_Event][WARNING]: (*it_light)->model is NULL or None or not processed!\n");
 
 			Py_XDECREF((*it_light)->model);
 

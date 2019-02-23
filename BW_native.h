@@ -8,14 +8,16 @@ class BigWorldUtils {
 public:
 	std::atomic_bool inited = false;
 
-	PyObject* m_BigWorld = nullptr;
-	PyObject* m_Model = nullptr;
-	PyObject* m_fetchModel = nullptr;
-	PyObject* m_callback = nullptr;
+	PyObject* m_BigWorld       = nullptr;
+	PyObject* m_Model          = nullptr;
+	PyObject* m_fetchModel     = nullptr;
+	PyObject* m_addModel       = nullptr;
+	PyObject* m_delModel       = nullptr;
+	PyObject* m_callback       = nullptr;
 	PyObject* m_cancelCallback = nullptr;
-	PyObject* m_g_appLoader = nullptr;
-	PyObject* m_partial = nullptr;
-	PyObject* m_json = nullptr;
+	PyObject* m_g_appLoader    = nullptr;
+	PyObject* m_partial        = nullptr;
+	PyObject* m_json           = nullptr;
 
 	uint8_t lastError;
 

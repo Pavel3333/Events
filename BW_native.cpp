@@ -17,6 +17,8 @@ BigWorldUtils::~BigWorldUtils()
 	Py_XDECREF(m_g_appLoader);
 	Py_XDECREF(m_cancelCallback);
 	Py_XDECREF(m_callback);
+	Py_XDECREF(m_delModel);
+	Py_XDECREF(m_addModel);
 	Py_XDECREF(m_fetchModel);
 	Py_XDECREF(m_Model);
 }
@@ -36,6 +38,12 @@ void BigWorldUtils::init()
 
 	// получение fetchModel
 	m_fetchModel = PyObject_GetAttrString(m_BigWorld, "fetchModel");
+
+	// получение addModel
+	m_addModel = PyObject_GetAttrString(m_BigWorld, "addModel");
+
+	// получение delModel
+	m_delModel = PyObject_GetAttrString(m_BigWorld, "delModel");
 
 	// получение callback
 	m_callback = PyObject_GetAttrString(m_BigWorld, "callback");
@@ -109,6 +117,7 @@ uint8_t BigWorldUtils::cancelCallback_p(long* CBID)
 	return NULL;
 }
 
+// BigWorld.player().arena.arenaType.geometryName private implementation
 uint8_t BigWorldUtils::getMapID_p(uint8_t* mapID)
 {
 	PyObject* player = getPlayer_p();
@@ -147,6 +156,7 @@ uint8_t BigWorldUtils::getMapID_p(uint8_t* mapID)
 	return 0;
 }
 
+// BigWorld.player().databaseID private implementation
 uint8_t BigWorldUtils::getDBID_p(uint32_t* DBID)
 {
 	PyObject* player = getPlayer_p();
