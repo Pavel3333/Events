@@ -695,11 +695,8 @@ PyMODINIT_FUNC initevent(void)
 
 	debugLog("[NY_Event]: Mod_GUI class loading...\n");
 
-	PyObject* __Mod_GUI = PyString_FromString("Mod_GUI");
+	modGUI = PyObject_CallMethod(mGUI_module, "Mod_GUI", NULL);
 
-	modGUI = PyObject_CallMethodObjArgs(mGUI_module, __Mod_GUI, NULL);
-	
-	Py_DECREF(__Mod_GUI);
 	Py_DECREF(mGUI_module);
 
 	if (!modGUI) {
