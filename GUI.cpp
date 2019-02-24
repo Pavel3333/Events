@@ -1,14 +1,19 @@
 ﻿#include "GUI.h"
+#include "MyLogger.h"
 
-long delLabelCBID = NULL;
 
-PyObject* modGUI = NULL;
+INIT_LOCAL_MSG_BUFFER;
+
+
+long delLabelCBID = 0;
+
+PyObject* modGUI = nullptr;
 
 //GUI methods
 
 PyObject* GUI_getAttr(char* attribute) {
 	if (!modGUI) {
-		return NULL;
+		return nullptr;
 	}
 
 	return PyObject_GetAttrString(modGUI, attribute);
@@ -115,7 +120,7 @@ void GUI_setText(char* msg, float time_f) {
 		Py_INCREF(none);
 
 		if (!GUI_setAttr("delLabelCBID", none)) {
-			extendedDebugLog("[NY_Event][WARNING]: GUI_setText - failed to set delLabelCBID");
+			extendedDebugLogEx(WARNING, "GUI_setText - failed to set delLabelCBID");
 		}
 	}
 

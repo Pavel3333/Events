@@ -2,93 +2,10 @@
 
 #pragma warning(disable: 5033)
 
-#include <iostream>
-#include <fstream>
 #include <vector>
-#include <Windows.h>
-#include <tchar.h>
 #include "python2.7/Python.h"
+#include <Windows.h>
 
-#define debug_log                true
-#define extended_debug_log       true
-#define super_extended_debug_log false
-
-#define trace_log false
-
-#define INIT_LOCAL_MSG_BUFFER \
-	char log_buf_c[1024];     \
-	WCHAR  log_buf[1024];
-
-#if debug_log
-#define debugLog(X)           \
-	OutputDebugString(_T(X)); \
-	PySys_WriteStdout(X);     \
-    dbg_log << X;             \
-	dbg_log.flush();
-
-#define debugLogFmt(fmt, ...) {                  \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
-	OutputDebugString(log_buf);                  \
-	PySys_WriteStdout(fmt, __VA_ARGS__);         \
-    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
-    dbg_log << log_buf_c;                        \
-	dbg_log.flush();                             \
-	}
-
-#if extended_debug_log
-#define extendedDebugLog(X)   \
-	OutputDebugString(_T(X)); \
-	dbg_log << X;             \
-	dbg_log.flush();
-#define extendedDebugLogFmt(fmt, ...) {          \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
-	OutputDebugString(log_buf);                  \
-    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
-    dbg_log << log_buf_c;                        \
-    dbg_log.flush();                             \
-	}
-
-
-#if super_extended_debug_log
-#define superExtendedDebugLog(X) \
-	OutputDebugString(_T(X));    \
-	dbg_log << X;                \
-	dbg_log.flush();
-#define superExtendedDebugLogFmt(fmt, ...) {     \
-	wsprintfW(log_buf, _T(fmt), __VA_ARGS__);    \
-	OutputDebugString(log_buf);                  \
-    sprintf_s(log_buf_c, 512, fmt, __VA_ARGS__); \
-    dbg_log << log_buf_c;                        \
-    dbg_log.flush();                             \
-	}
-
-#else
-#define superExtendedDebugLog(X)      0
-#define superExtendedDebugLogFmt(...) 0
-#endif
-#else
-#define extendedDebugLog(X)           0
-#define extendedDebugLogFmt(...)      0
-#define superExtendedDebugLog(X)      0
-#define superExtendedDebugLogFmt(...) 0
-#endif
-#else
-#define debugLog(X)                   0
-#define debugLogFmt(...)              0
-#define extendedDebugLog(X)           0
-#define extendedDebugLogFmt(...)      0
-#define superExtendedDebugLog(X)      0
-#define superExtendedDebugLogFmt(...) 0
-#endif
-
-#if trace_log
-#define traceLog {                                          \
-	dbg_log << __LINE__ << " - " __FUNCTION__ << std::endl; \
-	dbg_log.flush();                                        \
-}
-#else
-#define traceLog 0;
-#endif
 
 #define BEGIN_USING_MODELS {                                   \
 	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
@@ -100,7 +17,7 @@
 
 #define RELEASE_MODELS(msg, code)                     \
     if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog \
-		extendedDebugLogFmt(msg, GetLastError());      \
+		extendedDebugLogEx(ERROR, msg, GetLastError());      \
 		return code;                                   \
 	} traceLog
 
@@ -228,8 +145,6 @@ extern bool isModelsAlreadyCreated;
 extern int8_t scoreID;
 extern STAGE_ID lastStageID;
 extern bool isStreamer;
-
-extern std::ofstream dbg_log;
 
 extern map      current_map;
 extern map_sync sync_map;

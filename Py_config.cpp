@@ -1,4 +1,6 @@
 ﻿#include "Py_config.h"
+#include "MyLogger.h"
+
 
 Config config = Config();
 

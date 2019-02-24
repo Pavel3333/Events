@@ -1,4 +1,6 @@
 #include "HangarMessages.h"
+#include "MyLogger.h"
+
 
 //constructor
 

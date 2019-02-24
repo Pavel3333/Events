@@ -1,11 +1,13 @@
 #include "ThreadSync.h"
+#include "MyLogger.h"
+
 
 //WaitableTimer
 
 HANDLE hHangarTimer = NULL;
 HANDLE hBattleTimer = NULL;
 
-//Потоки и их ID
+//РџРѕС‚РѕРєРё Рё РёС… ID
 
 HANDLE hBattleTimerThread = NULL;
 DWORD  battleTimerThreadID = NULL;
@@ -13,28 +15,28 @@ DWORD  battleTimerThreadID = NULL;
 HANDLE hHandlerThread = NULL;
 DWORD  handlerThreadID = NULL;
 
-//последние коды ошибок таймеров
+//РїРѕСЃР»РµРґРЅРёРµ РєРѕРґС‹ РѕС€РёР±РѕРє С‚Р°Р№РјРµСЂРѕРІ
 
 uint8_t hangarTimerLastError = NULL;
 uint8_t battleTimerLastError = NULL;
 
-//Главные ивенты
+//Р“Р»Р°РІРЅС‹Рµ РёРІРµРЅС‚С‹
 
 PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
 PEVENTDATA_1 EVENT_START_TIMER = NULL;
 PEVENTDATA_1 EVENT_DEL_MODEL   = NULL;
 
-//Второстепенные ивенты
+//Р’С‚РѕСЂРѕСЃС‚РµРїРµРЅРЅС‹Рµ РёРІРµРЅС‚С‹
 
 PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
 
 PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 
-//Мутексы
+//РњСѓС‚РµРєСЃС‹
 
 HANDLE M_MODELS_NOT_USING  = NULL;
 
-//Критические секции
+//РљСЂРёС‚РёС‡РµСЃРєРёРµ СЃРµРєС†РёРё
 
 CRITICAL_SECTION CS_NETWORK_NOT_USING;
 CRITICAL_SECTION CS_PARSING_NOT_USING;
@@ -44,7 +46,7 @@ CRITICAL_SECTION CS_PARSING_NOT_USING;
 void closeEvent1(PEVENTDATA_1* pEvent) {
 	traceLog
 	if (*pEvent) {
-		traceLog //если уже была инициализирована структура - удаляем
+		traceLog //РµСЃР»Рё СѓР¶Рµ Р±С‹Р»Р° РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅР° СЃС‚СЂСѓРєС‚СѓСЂР° - СѓРґР°Р»СЏРµРј
 		if ((*pEvent)->hEvent) {
 			traceLog
 			CloseHandle((*pEvent)->hEvent);
@@ -61,7 +63,7 @@ void closeEvent1(PEVENTDATA_1* pEvent) {
 void closeEvent2(PEVENTDATA_2* pEvent) {
 	traceLog
 	if (*pEvent) {
-		traceLog //если уже была инициализирована структура - удаляем
+		traceLog //РµСЃР»Рё СѓР¶Рµ Р±С‹Р»Р° РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅР° СЃС‚СЂСѓРєС‚СѓСЂР° - СѓРґР°Р»СЏРµРј
 		if ((*pEvent)->hEvent) {
 			traceLog
 			CloseHandle((*pEvent)->hEvent);
@@ -75,15 +77,18 @@ void closeEvent2(PEVENTDATA_2* pEvent) {
 	} traceLog
 }
 
-bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
-	traceLog
-	closeEvent1(pEvent); //закрываем ивент, если существует
+bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID)
+{
+	INIT_LOCAL_MSG_BUFFER;
 
-	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+	traceLog
+	closeEvent1(pEvent); //Р·Р°РєСЂС‹РІР°РµРј РёРІРµРЅС‚, РµСЃР»Рё СЃСѓС‰РµСЃС‚РІСѓРµС‚
+
+	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //РІС‹РґРµР»СЏРµРј РїР°РјСЏС‚СЊ РІ РєСѓС‡Рµ РґР»СЏ РёРІРµРЅС‚Р°
 		sizeof(EVENTDATA_1));
 
 	if (!(*pEvent)) {
-		traceLog //нехватка памяти, завершаем работу
+		traceLog //РЅРµС…РІР°С‚РєР° РїР°РјСЏС‚Рё, Р·Р°РІРµСЂС€Р°РµРј СЂР°Р±РѕС‚Сѓ
 
 		return false;
 	} traceLog
@@ -97,9 +102,8 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 	if (!((*pEvent)->hEvent)) {
 		traceLog
-		INIT_LOCAL_MSG_BUFFER;
 
-		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
+		extendedDebugLogEx(ERROR, "Primary event creating: error %d", GetLastError());
 
 		return false;
 	} traceLog
@@ -109,13 +113,13 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 	traceLog
-	closeEvent2(pEvent); //закрываем ивент, если существует
+	closeEvent2(pEvent); //Р·Р°РєСЂС‹РІР°РµРј РёРІРµРЅС‚, РµСЃР»Рё СЃСѓС‰РµСЃС‚РІСѓРµС‚
 
-	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
+	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //РІС‹РґРµР»СЏРµРј РїР°РјСЏС‚СЊ РІ РєСѓС‡Рµ РґР»СЏ РёРІРµРЅС‚Р°
 		sizeof(EVENTDATA_2));
 
 	if (!(*pEvent)) {
-		traceLog //нехватка памяти, завершаем работу
+		traceLog //РЅРµС…РІР°С‚РєР° РїР°РјСЏС‚Рё, Р·Р°РІРµСЂС€Р°РµРј СЂР°Р±РѕС‚Сѓ
 
 		return false;
 	} traceLog
@@ -131,7 +135,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 		traceLog
 		INIT_LOCAL_MSG_BUFFER;
 
-		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
+		extendedDebugLogEx(ERROR, "Secondary event creating: error %d", GetLastError());
 
 		return false;
 	} traceLog
@@ -158,7 +162,7 @@ bool createEventsAndSecondThread() { traceLog
 		NULL);             // unnamed mutex
 
 	if (!M_MODELS_NOT_USING) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
+		debugLogEx(ERROR, "MODELS_NOT_USING creating: error %d", GetLastError());
 
 		return false;
 	}
@@ -179,7 +183,7 @@ bool createEventsAndSecondThread() { traceLog
 		handlerThreadID = NULL;
 	} traceLog
 
-	hHandlerThread = CreateThread( //создаем второй поток
+	hHandlerThread = CreateThread( //СЃРѕР·РґР°РµРј РІС‚РѕСЂРѕР№ РїРѕС‚РѕРє
 		NULL,                                   // default security attributes
 		0,                                      // use default stack size  
 		HandlerThread,                          // thread function name
@@ -188,7 +192,7 @@ bool createEventsAndSecondThread() { traceLog
 		&handlerThreadID);                      // returns the thread identifier 
 
 	if (!hHandlerThread) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
+		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
 
 		return false;
 	} traceLog

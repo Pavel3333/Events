@@ -1,4 +1,8 @@
 ﻿#include "BW_native.h"
+#include "MyLogger.h"
+
+
+INIT_LOCAL_MSG_BUFFER;
 
 
 // constructor
@@ -152,11 +156,10 @@ int BigWorldUtils::getMapID_p(uint8_t* mapID)
 // BigWorld.player().databaseID private implementation
 int BigWorldUtils::getDBID_p(uint32_t* DBID)
 {
-	INIT_LOCAL_MSG_BUFFER;
-
 	PyObject* player = getPlayer_p();
 	if (!player) {
 		lastErrorStr = "Error getting BigWorld.player()";
+		debugLogEx(ERROR, "%s", lastErrorStr);
 		return -1;
 	}
 
@@ -164,6 +167,7 @@ int BigWorldUtils::getDBID_p(uint32_t* DBID)
 	Py_DECREF(player);
 	if (!databaseID) {
 		lastErrorStr = "Error getting BigWorld.player().databaseID";
+		debugLogEx(ERROR, "%s", lastErrorStr);
 		return -2;
 	}
 
@@ -175,8 +179,6 @@ int BigWorldUtils::getDBID_p(uint32_t* DBID)
 
 int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, float** coords)
 {
-	INIT_LOCAL_MSG_BUFFER;
-
 	PyObject* player = getPlayer_p();
 	if (!player) {
 		lastErrorStr = "Error getting BigWorld.player()";
@@ -227,14 +229,14 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 	// TODO: Это нужно заоптимизировать!!!
 	for (const auto& it : current_map.modelsSects) {
 		if (!it.isInitialised) {
-			extendedDebugLogFmt("[NY_Event][WARNING]: sect %d is not initialized!\n", it.ID);
+			extendedDebugLogEx(WARNING, "sect %d is not initialized!", it.ID);
 
 			continue;
 		}
 
 		for (float* it2 : it.models) {
 			if (it2 == nullptr) {
-				extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - it2 is NULL!\n");
+				extendedDebugLogEx(WARNING, "getLastModelCoords - it2 is NULL!");
 				continue;
 			}
 
@@ -250,7 +252,7 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 	} traceLog
 
 	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
-		extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - model not found!\n");
+		extendedDebugLogEx(WARNING, "getLastModelCoords - model not found!");
 
 		return -6;
 	} traceLog

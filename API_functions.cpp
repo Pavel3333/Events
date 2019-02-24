@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <sstream>
 #include "curl/curl.h"
+#include "MyLogger.h"
+
 #pragma comment(lib,"libcurl.lib")
 
 #undef debug_log
@@ -212,7 +214,10 @@ static uint8_t get_token(std::string input) {
 	return res;
 }
 
-uint8_t parse_event(EVENT_ID eventID) {
+uint8_t parse_event(EVENT_ID eventID)
+{
+	INIT_LOCAL_MSG_BUFFER;
+
 	//инициализация переменных для каждого события
 
 	//EVENT_ID::IN_HANGAR
@@ -462,7 +467,7 @@ uint8_t parse_event(EVENT_ID eventID) {
 						if (modelSectionID == 0 && wr_buf[offset] == 0) sect = &(sync_map.modelsSects_creating);
 						else if (modelSectionID == 1 && wr_buf[offset] == 1) sect = &(sync_map.modelsSects_deleting);
 						else {
-							extendedDebugLog("[NY_Event]: Found unexpected section while synchronizing!\n");
+							extendedDebugLog("Found unexpected section while synchronizing!\n");
 
 							break;
 						}

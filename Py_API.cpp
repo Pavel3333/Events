@@ -1,4 +1,10 @@
 #include "Py_API.h"
+#include "MyLogger.h"
+#include <fstream>
+
+
+INIT_LOCAL_MSG_BUFFER;
+
 
 PyObject* event_module = NULL;
 
@@ -150,7 +156,7 @@ void clearModelsSections() { traceLog
 
 			while (it_model != it_sect->models.end()) {
 				if (*it_model == nullptr) { traceLog
-					extendedDebugLog("[NY_Event][WARNING]: clearModelsSections - *it_model is NULL!\n");
+					extendedDebugLogEx(WARNING, "clearModelsSections - *it_model is NULL!");
 
 					it_model = it_sect->models.erase(it_model);
 
@@ -215,7 +221,7 @@ uint8_t delModelPy(float* coords) { traceLog
 	INIT_LOCAL_MSG_BUFFER;
 	
 	if (coords == nullptr) { traceLog
-		extendedDebugLog("[NY_Event][WARNING]: delModelPy - coords is NULL!\n");
+		extendedDebugLogEx(WARNING, "delModelPy - coords is NULL!");
 
 		return 1;
 	} traceLog
@@ -224,7 +230,7 @@ uint8_t delModelPy(float* coords) { traceLog
 
 	while (it_model != models.end()) {
 		if (*it_model == nullptr) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: delModelPy - *it_model is NULL!\n");
+			extendedDebugLogEx(WARNING, "delModelPy - *it_model is NULL!");
 
 			it_model = models.erase(it_model);
 			
@@ -232,7 +238,7 @@ uint8_t delModelPy(float* coords) { traceLog
 		}
 
 		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) {
-			superExtendedDebugLog("SYNC: PyModel is NULL or None or processed is None!\n");
+			superExtendedDebugLog("SYNC: PyModel is NULL or None or processed is None!");
 
 			Py_XDECREF((*it_model)->model);
 
@@ -248,12 +254,12 @@ uint8_t delModelPy(float* coords) { traceLog
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
+		superExtendedDebugLog("del debug 1.1");
 
 		if ((*it_model)->coords[0] == coords[0] &&
 			(*it_model)->coords[1] == coords[1] &&
 			(*it_model)->coords[2] == coords[2]) {
-			superExtendedDebugLog("SYNC: model found!\n");
+			superExtendedDebugLog("SYNC: model found!");
 
 			PyObject* py_visible = PyBool_FromLong(false);
 
@@ -296,14 +302,18 @@ uint8_t delModelPy(float* coords) { traceLog
 		it_model++;
 	} traceLog
 
-	superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
+	superExtendedDebugLog("del debug 1.2");
 
 	return 2;
 }
 
-uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog
+uint8_t delModelCoords(uint8_t ID, float* coords)
+{
+	INIT_LOCAL_MSG_BUFFER;
+
+	traceLog
 	if (coords == nullptr) { traceLog
-		extendedDebugLog("[NY_Event][WARNING]: delModelCoords - coords is NULL!\n");
+		extendedDebugLogEx(WARNING, "delModelCoords - coords is NULL!");
 
 		return 1;
 	}
@@ -317,7 +327,7 @@ uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog
 
 				while (it_model != it_sect->models.end()) {
 					if ((*it_model) == nullptr) { traceLog
-						extendedDebugLog("[NY_Event][WARNING]: delModelCoords - *it_model is NULL!\n");
+						extendedDebugLogEx(WARNING, "delModelCoords - *it_model is NULL!");
 
 						it_model = it_sect->models.erase(it_model); traceLog
 
@@ -348,7 +358,7 @@ uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog
 		}
 	}
 	catch (const char* msg) {
-		dbg_log << msg << std::endl;
+		debugLog("%s", msg);
 
 		return 3;
 	}
@@ -361,11 +371,11 @@ PyObject* event_light(float coords[3]) {
 		return NULL;
 	}
 
-	superExtendedDebugLog("light creating...\n");
+	superExtendedDebugLog("light creating...");
 
 	PyObject* Light = PyObject_CallMethod(gBigWorldUtils->m_BigWorld, "PyOmniLight", nullptr);
 	if (!Light) { traceLog
-		superExtendedDebugLog("PyOmniLight creating FAILED\n");
+		superExtendedDebugLog("PyOmniLight creating FAILED");
 		return NULL;
 	}
 
@@ -374,7 +384,7 @@ PyObject* event_light(float coords[3]) {
 	PyObject* innerRadius = PyFloat_FromDouble(0.75);
 
 	if (PyObject_SetAttrString(Light, "innerRadius", innerRadius)) { traceLog
-		superExtendedDebugLog("PyOmniLight innerRadius setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight innerRadius setting FAILED");
 
 		Py_DECREF(innerRadius);
 		Py_DECREF(Light);
@@ -387,7 +397,7 @@ PyObject* event_light(float coords[3]) {
 	PyObject* outerRadius = PyFloat_FromDouble(1.5);
 
 	if (PyObject_SetAttrString(Light, "outerRadius", outerRadius)) { traceLog
-		superExtendedDebugLog("PyOmniLight outerRadius setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight outerRadius setting FAILED");
 
 		Py_DECREF(outerRadius);
 		Py_DECREF(Light);
@@ -400,7 +410,7 @@ PyObject* event_light(float coords[3]) {
 	PyObject* multiplier = PyFloat_FromDouble(500.0);
 
 	if (PyObject_SetAttrString(Light, "multiplier", multiplier)) { traceLog
-		superExtendedDebugLog("PyOmniLight multiplier setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight multiplier setting FAILED");
 
 		Py_DECREF(multiplier);
 		Py_DECREF(Light);
@@ -413,7 +423,7 @@ PyObject* event_light(float coords[3]) {
 	PyObject* coords_p = PyTuple_New(3);
 
 	if (!coords_p) { traceLog
-		superExtendedDebugLog("PyOmniLight coords creating FAILED\n");
+		superExtendedDebugLog("PyOmniLight coords creating FAILED");
 
 		Py_DECREF(Light);
 
@@ -430,7 +440,7 @@ PyObject* event_light(float coords[3]) {
 	}
 
 	if (PyObject_SetAttrString(Light, "position", coords_p)) { traceLog
-		superExtendedDebugLog("PyOmniLight coords setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight coords setting FAILED");
 
 		Py_DECREF(coords_p);
 		Py_DECREF(Light);
@@ -443,7 +453,7 @@ PyObject* event_light(float coords[3]) {
 	PyObject* colour_p = PyTuple_New(4);
 
 	if (!colour_p) { traceLog
-		superExtendedDebugLog("PyOmniLight colour creating FAILED\n");
+		superExtendedDebugLog("PyOmniLight colour creating FAILED");
 
 		Py_DECREF(Light);
 
@@ -464,7 +474,7 @@ PyObject* event_light(float coords[3]) {
 	//------------------------------
 
 	if (PyObject_SetAttrString(Light, "colour", colour_p)) { traceLog
-		superExtendedDebugLog("PyOmniLight colour setting FAILED\n");
+		superExtendedDebugLog("PyOmniLight colour setting FAILED");
 
 		Py_DECREF(colour_p);
 		Py_DECREF(Light);
@@ -472,7 +482,7 @@ PyObject* event_light(float coords[3]) {
 		return NULL;
 	}
 
-	superExtendedDebugLog("light creating OK!\n");
+	superExtendedDebugLog("light creating OK!");
 
 	return Light;
 }
@@ -501,11 +511,11 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 		return NULL;
 	}
 
-	superExtendedDebugLog("model creating...\n");
+	superExtendedDebugLog("model creating...");
 
 	if (isAsync) { //traceLog
 		if (coords == nullptr) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: event_model - coords is NULL!\n");
+			extendedDebugLogEx(WARNING, "event_model - coords is NULL!");
 
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
@@ -541,7 +551,7 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 		}
 	}
 
-	superExtendedDebugLog("model creating OK!\n");
+	superExtendedDebugLog("model creating OK!");
 
 	return Model;
 };
@@ -552,7 +562,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //прин
 	}
 
 	if (!EVENT_ALL_MODELS_CREATED->hEvent) { traceLog
-		extendedDebugLog("[NY_Event][ERROR]: AMCEvent or createModelsPyMeth event is NULL!\n");
+		extendedDebugLogEx(ERROR, "AMCEvent or createModelsPyMeth event is NULL!");
 
 		Py_RETURN_NONE;
 	}
@@ -611,7 +621,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //прин
 
 	if (models.size() >= allModelsCreated) { traceLog               //если число созданных моделей - столько же или больше, чем надо
 		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent)) { traceLog //сигналим о том, что все модели были успешно созданы
-			extendedDebugLog("[NY_Event][ERROR]: event_onModelCreated: AMCEvent event not setted!\n");
+			extendedDebugLogEx(ERROR, "event_onModelCreated: AMCEvent event not setted!");
 
 			Py_RETURN_NONE;
 		} traceLog
@@ -631,7 +641,7 @@ uint8_t create_models() { traceLog
 
 	BEGIN_USING_MODELS;
 		case WAIT_OBJECT_0: traceLog
-			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
+			superExtendedDebugLog("MODELS_USING");
 
 			for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
 				it != current_map.modelsSects.end();
@@ -645,7 +655,7 @@ uint8_t create_models() { traceLog
 
 				while (it2 != it->models.end()) {
 					if (*it2 == nullptr) { traceLog
-						extendedDebugLog("[NY_Event][WARNING]: create_models - *it2 is NULL!\n");
+						extendedDebugLogEx(WARNING, "create_models - *it2 is NULL!");
 
 						it2 = it->models.erase(it2);
 
@@ -674,15 +684,15 @@ uint8_t create_models() { traceLog
 				}
 			} traceLog
 
-			superExtendedDebugLog("], \n");
+			superExtendedDebugLog("], ");
 
-			RELEASE_MODELS("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 4)
+			RELEASE_MODELS("create_models - MODELS_NOT_USING - ReleaseMutex: error %d!", 4)
 
-			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+			superExtendedDebugLog("MODELS_NOT_USING");
 
 			break;
 		case WAIT_ABANDONED: traceLog
-			extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+			extendedDebugLogEx(ERROR, "create_models - MODELS_NOT_USING: WAIT_ABANDONED!");
 
 			return 2;
 	END_USING_MODELS;
@@ -690,16 +700,20 @@ uint8_t create_models() { traceLog
 	return NULL;
 }
 
-uint8_t init_models() { traceLog
+uint8_t init_models()
+{
+	INIT_LOCAL_MSG_BUFFER;
+	
+	traceLog
 	if (!isInited || first_check || battleEnded || models.empty()) { traceLog
 		return 10;
 	} traceLog
 
-	extendedDebugLog("[NY_Event]: models adding...\n");
+	extendedDebugLog("models adding...");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: init_models - models[i] is NULL!\n");
+			extendedDebugLogEx(WARNING, "init_models - models[i] is NULL!");
 
 			continue;
 		}
@@ -724,28 +738,31 @@ uint8_t init_models() { traceLog
 
 			models[i]->processed = true;
 
-			superExtendedDebugLog("True\n");
+			superExtendedDebugLog("True");
 		}
-		else superExtendedDebugLog("False\n");
+		else superExtendedDebugLog("False");
 	} traceLog
 
-	extendedDebugLog("[NY_Event]: models adding OK!\n");
+	extendedDebugLog("models adding OK!");
 
 	return NULL;
 }
 
-uint8_t set_visible(bool isVisible) { traceLog
+uint8_t set_visible(bool isVisible) {
+	INIT_LOCAL_MSG_BUFFER;
+
+	traceLog
 	if (!isInited || first_check || battleEnded || models.empty()) { traceLog
 		return 10;
 	} traceLog
 
 	PyObject* py_visible = PyBool_FromLong(isVisible);
 
-	extendedDebugLog("[NY_Event]: Models visiblity changing...\n");
+	extendedDebugLog("Models visiblity changing...");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: set_visible - models[i] is NULL!\n");
+			extendedDebugLogEx(WARNING, "set_visible - models[i] is NULL!");
 
 			continue;
 		}
@@ -772,23 +789,26 @@ uint8_t set_visible(bool isVisible) { traceLog
 
 	Py_DECREF(py_visible);
 
-	extendedDebugLog("[NY_Event]: Models visiblity changing OK!\n");
+	extendedDebugLog("Models visiblity changing OK!");
 
 	return NULL;
 };
 
-uint8_t del_models() { traceLog
+uint8_t del_models() {
+	INIT_LOCAL_MSG_BUFFER;
+	
+	traceLog
 	if (!isInited || first_check || battleEnded) { traceLog
 		return 1;
 	} traceLog
 
-	extendedDebugLog("[NY_Event]: models deleting...\n");
+	extendedDebugLog("models deleting...");
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
 
 	while (it_model != models.end()) {
 		if (*it_model == nullptr) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: del_models - *it_model is NULL!\n");
+			extendedDebugLogEx(WARNING, "del_models - *it_model is NULL!");
 
 			it_model = models.erase(it_model);
 
@@ -796,7 +816,7 @@ uint8_t del_models() { traceLog
 		}
 
 		if (!(*it_model)->model || (*it_model)->model == Py_None || !(*it_model)->processed) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: (*it_model)->model is NULL or None or not processed!\n");
+			extendedDebugLogEx(WARNING, "(*it_model)->model is NULL or None or not processed!");
 
 			Py_XDECREF((*it_model)->model);
 
@@ -838,7 +858,7 @@ uint8_t del_models() { traceLog
 
 	while (it_light != lights.end()) {
 		if (*it_light == nullptr) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: del_models - *it_light is NULL!\n");
+			extendedDebugLogEx(WARNING, "del_models - *it_light is NULL!");
 			
 			it_light = lights.erase(it_light);
 
@@ -846,7 +866,7 @@ uint8_t del_models() { traceLog
 		}
 
 		if (!(*it_light)->model || (*it_light)->model == Py_None) { traceLog
-			extendedDebugLog("[NY_Event][WARNING]: (*it_light)->model is NULL or None or not processed!\n");
+			extendedDebugLogEx(WARNING, "(*it_light)->model is NULL or None or not processed!");
 
 			Py_XDECREF((*it_light)->model);
 
@@ -864,7 +884,7 @@ uint8_t del_models() { traceLog
 		it_light++;
 	} traceLog*/
 
-	extendedDebugLog("[NY_Event]: models deleting OK!\n");
+	extendedDebugLog("models deleting OK!");
 
 	return NULL;
 };
