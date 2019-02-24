@@ -212,7 +212,7 @@ void clearModelsSections() { traceLog
 }
 
 uint8_t delModelPy(float* coords) { traceLog
-	INIT_LOCAL_MSG_BUFFER;
+	
 	
 	if (coords == nullptr) { traceLog
 		extendedDebugLog("[NY_Event][WARNING]: delModelPy - coords is NULL!\n");
@@ -248,7 +248,7 @@ uint8_t delModelPy(float* coords) { traceLog
 			continue;
 		}
 
-		superExtendedDebugLog("[NY_Event]: del debug 1.1\n");
+		superExtendedDebugLog("del debug 1.1\n");
 
 		if ((*it_model)->coords[0] == coords[0] &&
 			(*it_model)->coords[1] == coords[1] &&
@@ -296,7 +296,7 @@ uint8_t delModelPy(float* coords) { traceLog
 		it_model++;
 	} traceLog
 
-	superExtendedDebugLog("[NY_Event]: del debug 1.2\n");
+	superExtendedDebugLog("del debug 1.2\n");
 
 	return 2;
 }
@@ -348,7 +348,7 @@ uint8_t delModelCoords(uint8_t ID, float* coords) { traceLog
 		}
 	}
 	catch (const char* msg) {
-		dbg_log << msg << std::endl;
+		LOG(INFO) << msg;
 
 		return 3;
 	}
@@ -552,7 +552,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //прин
 	}
 
 	if (!EVENT_ALL_MODELS_CREATED->hEvent) { traceLog
-		extendedDebugLog("[NY_Event][ERROR]: AMCEvent or createModelsPyMeth event is NULL!\n");
+		extendedDebugLog("AMCEvent or createModelsPyMeth event is NULL!\n");
 
 		Py_RETURN_NONE;
 	}
@@ -611,7 +611,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //прин
 
 	if (models.size() >= allModelsCreated) { traceLog               //если число созданных моделей - столько же или больше, чем надо
 		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent)) { traceLog //сигналим о том, что все модели были успешно созданы
-			extendedDebugLog("[NY_Event][ERROR]: event_onModelCreated: AMCEvent event not setted!\n");
+			extendedDebugLog("event_onModelCreated: AMCEvent event not setted!\n");
 
 			Py_RETURN_NONE;
 		} traceLog
@@ -627,11 +627,11 @@ uint8_t create_models() { traceLog
 		return 1;
 	} traceLog
 
-	INIT_LOCAL_MSG_BUFFER;
+	
 
 	BEGIN_USING_MODELS;
 		case WAIT_OBJECT_0: traceLog
-			superExtendedDebugLog("[NY_Event]: MODELS_USING\n");
+			superExtendedDebugLog("MODELS_USING\n");
 
 			for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
 				it != current_map.modelsSects.end();
@@ -676,13 +676,13 @@ uint8_t create_models() { traceLog
 
 			superExtendedDebugLog("], \n");
 
-			RELEASE_MODELS("[NY_Event][ERROR]: create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 4)
+			RELEASE_MODELS("create_models - MODELS_NOT_USING - ReleaseMutex: error %d!\n", 4)
 
-			superExtendedDebugLog("[NY_Event]: MODELS_NOT_USING\n");
+			superExtendedDebugLog("MODELS_NOT_USING\n");
 
 			break;
 		case WAIT_ABANDONED: traceLog
-			extendedDebugLog("[NY_Event][ERROR]: create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
+			extendedDebugLog("create_models - MODELS_NOT_USING: WAIT_ABANDONED!\n");
 
 			return 2;
 	END_USING_MODELS;
@@ -695,7 +695,7 @@ uint8_t init_models() { traceLog
 		return 10;
 	} traceLog
 
-	extendedDebugLog("[NY_Event]: models adding...\n");
+	extendedDebugLog("models adding...\n");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
@@ -729,7 +729,7 @@ uint8_t init_models() { traceLog
 		else superExtendedDebugLog("False\n");
 	} traceLog
 
-	extendedDebugLog("[NY_Event]: models adding OK!\n");
+	extendedDebugLog("models adding OK!\n");
 
 	return NULL;
 }
@@ -741,7 +741,7 @@ uint8_t set_visible(bool isVisible) { traceLog
 
 	PyObject* py_visible = PyBool_FromLong(isVisible);
 
-	extendedDebugLog("[NY_Event]: Models visiblity changing...\n");
+	extendedDebugLog("Models visiblity changing...\n");
 
 	for (uint16_t i = NULL; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
@@ -772,7 +772,7 @@ uint8_t set_visible(bool isVisible) { traceLog
 
 	Py_DECREF(py_visible);
 
-	extendedDebugLog("[NY_Event]: Models visiblity changing OK!\n");
+	extendedDebugLog("Models visiblity changing OK!\n");
 
 	return NULL;
 };
@@ -782,7 +782,7 @@ uint8_t del_models() { traceLog
 		return 1;
 	} traceLog
 
-	extendedDebugLog("[NY_Event]: models deleting...\n");
+	extendedDebugLog("models deleting...\n");
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
 
@@ -864,7 +864,7 @@ uint8_t del_models() { traceLog
 		it_light++;
 	} traceLog*/
 
-	extendedDebugLog("[NY_Event]: models deleting OK!\n");
+	extendedDebugLog("models deleting OK!\n");
 
 	return NULL;
 };

@@ -97,9 +97,9 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID) {
 
 	if (!((*pEvent)->hEvent)) {
 		traceLog
-		INIT_LOCAL_MSG_BUFFER;
+		
 
-		extendedDebugLogFmt("[NY_Event][ERROR]: Primary event creating: error %d\n", GetLastError());
+		extendedDebugLogFmt("Primary event creating: error %d\n", GetLastError());
 
 		return false;
 	} traceLog
@@ -129,9 +129,9 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 
 	if (!((*pEvent)->hEvent)) {
 		traceLog
-		INIT_LOCAL_MSG_BUFFER;
+		
 
-		extendedDebugLogFmt("[NY_Event][ERROR]: Secondary event creating: error %d\n", GetLastError());
+		extendedDebugLogFmt("Secondary event creating: error %d\n", GetLastError());
 
 		return false;
 	} traceLog
@@ -140,7 +140,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 }
 
 bool createEventsAndSecondThread() { traceLog
-	INIT_LOCAL_MSG_BUFFER;
+	
 	
 	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog
 		return false;
@@ -158,7 +158,7 @@ bool createEventsAndSecondThread() { traceLog
 		NULL);             // unnamed mutex
 
 	if (!M_MODELS_NOT_USING) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: MODELS_NOT_USING creating: error %d\n", GetLastError());
+		debugLogFmt("MODELS_NOT_USING creating: error %d\n", GetLastError());
 
 		return false;
 	}
@@ -188,7 +188,7 @@ bool createEventsAndSecondThread() { traceLog
 		&handlerThreadID);                      // returns the thread identifier 
 
 	if (!hHandlerThread) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: Handler thread creating: error %d\n", GetLastError());
+		debugLogFmt("Handler thread creating: error %d\n", GetLastError());
 
 		return false;
 	} traceLog

@@ -19,6 +19,9 @@
     <Filter Include="dll">
       <UniqueIdentifier>{7158c383-0bd1-48e5-a6a8-4380a04e37fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="easylogging">
+      <UniqueIdentifier>{c748bedd-9387-4857-984a-b71903c9e756}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="API_functions.cpp">
@@ -51,6 +54,9 @@
     <ClCompile Include="HangarMessages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="third-party\easylogging\easylogging++.cc">
+      <Filter>easylogging</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="API_functions.h">
@@ -82,6 +88,9 @@
     </ClInclude>
     <ClInclude Include="Py_common.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="third-party\easylogging\easylogging++.h">
+      <Filter>easylogging</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

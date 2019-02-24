@@ -1,4 +1,5 @@
 ﻿#include "BW_native.h"
+#include "easylogging/easylogging++.h"
 
 
 // constructor
@@ -30,6 +31,8 @@ BigWorldUtils::~BigWorldUtils()
 // initialization
 void BigWorldUtils::init()
 {
+	VLOG(3) << "BigWorldUtils initialization";
+
 	// получение BigWorld
 	m_BigWorld = PyImport_AddModule("BigWorld");
 
@@ -76,14 +79,18 @@ PyObject* BigWorldUtils::getPlayer_p() const
 // BigWorld.callback() private implementation
 int BigWorldUtils::callback_p(long* callbackID, PyObject* func, float delay)
 {
+	VLOG(3) << "BigWorld.callback(delay = " << delay << ")";
+
 	if (!func) {
 		lastErrorStr = "Error: func argument is NULL";
+		LOG(ERROR) << lastErrorStr;
 		return -1;
 	}
 
 	PyObject* res = PyObject_CallFunction(m_callback, "fO", delay, func);
 	if (!res) {
 		lastErrorStr = "Error with BigWorld.callback(delay, func)";
+		LOG(ERROR) << lastErrorStr;
 		return -2;
 	}
 
@@ -96,9 +103,12 @@ int BigWorldUtils::callback_p(long* callbackID, PyObject* func, float delay)
 // BigWorld.cancelCallback() private implementation
 int BigWorldUtils::cancelCallback_p(long callbackID)
 {
+	VLOG(3) << "BigWorld.cancelCallback(callbackID = " << callbackID << ")";
+
 	PyObject* res = PyObject_CallFunction(m_cancelCallback, "l", callbackID);
 	if (!res) {
 		lastErrorStr = "Error with BigWorld.cancelCallback(callbackID)";
+		LOG(ERROR) << lastErrorStr;
 		return -1;
 	}
 
@@ -113,6 +123,7 @@ int BigWorldUtils::getMapID_p(uint8_t* mapID)
 	PyObject* player = getPlayer_p();
 	if (!player) {
 		lastErrorStr = "Error getting BigWorld.player()";
+		LOG(ERROR) << lastErrorStr;
 		return -1;
 	}
 
@@ -120,6 +131,7 @@ int BigWorldUtils::getMapID_p(uint8_t* mapID)
 	Py_DECREF(player);
 	if (!arena) {
 		lastErrorStr = "Error getting BigWorld.player().arena";
+		LOG(ERROR) << lastErrorStr;
 		return -2;
 	}
 
@@ -127,6 +139,7 @@ int BigWorldUtils::getMapID_p(uint8_t* mapID)
 	Py_DECREF(arena);
 	if (!arenaType) {
 		lastErrorStr = "Error getting BigWorld.player().arena.arenaType";
+		LOG(ERROR) << lastErrorStr;
 		return -3;
 	}
 
@@ -134,6 +147,7 @@ int BigWorldUtils::getMapID_p(uint8_t* mapID)
 	Py_DECREF(arenaType);
 	if (!map_PS) {
 		lastErrorStr = "Error getting BigWorld.player().arena.arenaType.geometryName";
+		LOG(ERROR) << lastErrorStr;
 		return -4;
 	}
 
@@ -152,11 +166,10 @@ int BigWorldUtils::getMapID_p(uint8_t* mapID)
 // BigWorld.player().databaseID private implementation
 int BigWorldUtils::getDBID_p(uint32_t* DBID)
 {
-	INIT_LOCAL_MSG_BUFFER;
-
 	PyObject* player = getPlayer_p();
 	if (!player) {
 		lastErrorStr = "Error getting BigWorld.player()";
+		LOG(ERROR) << lastErrorStr;
 		return -1;
 	}
 
@@ -164,6 +177,7 @@ int BigWorldUtils::getDBID_p(uint32_t* DBID)
 	Py_DECREF(player);
 	if (!databaseID) {
 		lastErrorStr = "Error getting BigWorld.player().databaseID";
+		LOG(ERROR) << lastErrorStr;
 		return -2;
 	}
 
@@ -175,11 +189,10 @@ int BigWorldUtils::getDBID_p(uint32_t* DBID)
 
 int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, float** coords)
 {
-	INIT_LOCAL_MSG_BUFFER;
-
 	PyObject* player = getPlayer_p();
 	if (!player) {
 		lastErrorStr = "Error getting BigWorld.player()";
+		LOG(ERROR) << lastErrorStr;
 		return -1;
 	}
 
@@ -187,6 +200,7 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 	Py_DECREF(player);
 	if (!vehicle) {
 		lastErrorStr = "Error getting BigWorld.player().vehicle";
+		LOG(ERROR) << lastErrorStr;
 		return -2;
 	}
 
@@ -194,6 +208,7 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 	Py_DECREF(vehicle);
 	if (!model_p) {
 		lastErrorStr = "Error getting BigWorld.player().vehicle.model";
+		LOG(ERROR) << lastErrorStr;
 		return -3;
 	}
 
@@ -201,6 +216,7 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 	Py_DECREF(model_p);
 	if (!position_Vec3) {
 		lastErrorStr = "Error getting BigWorld.player().vehicle.model.position";
+		LOG(ERROR) << lastErrorStr;
 		return -4;
 	}
 
@@ -208,6 +224,7 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 	Py_DECREF(position_Vec3);
 	if (!position) {
 		lastErrorStr = "Error getting BigWorld.player().vehicle.model.position.tuple()";
+		LOG(ERROR) << lastErrorStr;
 		return -5;
 	}
 
@@ -227,14 +244,13 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 	// TODO: Это нужно заоптимизировать!!!
 	for (const auto& it : current_map.modelsSects) {
 		if (!it.isInitialised) {
-			extendedDebugLogFmt("[NY_Event][WARNING]: sect %d is not initialized!\n", it.ID);
-
+			LOG(WARNING) << "sect " << it.ID << " is not initialized!";
 			continue;
 		}
 
 		for (float* it2 : it.models) {
 			if (it2 == nullptr) {
-				extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - it2 is NULL!\n");
+				LOG(WARNING) << "getLastModelCoords - it2 is NULL!";
 				continue;
 			}
 
@@ -247,17 +263,17 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 				coords_res = it2;
 			}
 		}
-	} traceLog
+	}
 
-	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
-		extendedDebugLog("[NY_Event][WARNING]: getLastModelCoords - model not found!\n");
-
+	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { //модели с такой координатой не найдено
+		LOG(WARNING) << "getLastModelCoords - model not found!";
 		return -6;
-	} traceLog
+	}
 
-	if (dist > dist_equal) { traceLog
+	if (dist > dist_equal) {
+		VLOG(3) << "dist(" << dist << ") > dist_equal(" << dist_equal << ")";
 		return -7;
-	} traceLog
+	}
 
 	*modelID = modelTypeLast;
 	*coords = coords_res;

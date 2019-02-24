@@ -462,7 +462,7 @@ uint8_t parse_event(EVENT_ID eventID) {
 						if (modelSectionID == 0 && wr_buf[offset] == 0) sect = &(sync_map.modelsSects_creating);
 						else if (modelSectionID == 1 && wr_buf[offset] == 1) sect = &(sync_map.modelsSects_deleting);
 						else {
-							extendedDebugLog("[NY_Event]: Found unexpected section while synchronizing!\n");
+							extendedDebugLog("Found unexpected section while synchronizing!\n");
 
 							break;
 						}

@@ -4,8 +4,12 @@
 #include "Py_config.h"
 #include <cstdlib>
 #include <direct.h>
+#include "easylogging/easylogging++.h"
 
-std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
+
+// Инициализация логгера
+INITIALIZE_EASYLOGGINGPP
+
 
 PyObject* m_g_gui = NULL;
 
@@ -30,9 +34,7 @@ DWORD timerThread() {
 
 	PyThreadState* _save;
 
-	INIT_LOCAL_MSG_BUFFER;
-
-	superExtendedDebugLog("[NY_Event]: waiting EVENT_START_TIMER\n");
+	superExtendedDebugLog("waiting EVENT_START_TIMER\n");
 
 	DWORD EVENT_START_TIMER_WaitResult = WaitForSingleObject(
 		EVENT_START_TIMER->hEvent, // event handle
@@ -40,7 +42,7 @@ DWORD timerThread() {
 
 	switch (EVENT_START_TIMER_WaitResult) {
 		case WAIT_OBJECT_0:  traceLog
-			superExtendedDebugLog("[NY_Event]: EVENT_START_TIMER signaled!\n");
+			superExtendedDebugLog("EVENT_START_TIMER signaled!\n");
 
 			//включаем GIL для этого потока
 
@@ -70,7 +72,7 @@ DWORD timerThread() {
 
 			// An error occurred
 		default: traceLog
-			extendedDebugLog("[NY_Event][ERROR]: START_TIMER - something wrong with WaitResult!\n");
+			extendedDebugLog("START_TIMER - something wrong with WaitResult!\n");
 
 			return 3;
 	} traceLog
@@ -81,7 +83,7 @@ DWORD timerThread() {
 DWORD WINAPI TimerThread(LPVOID lpParam) {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	INIT_LOCAL_MSG_BUFFER;
+	
 
 	DWORD result = timerThread();
 
@@ -90,7 +92,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam) {
 
 	//закрываем поток
 
-	extendedDebugLogFmt("[NY_Event]: Closing timer thread %d, result: %d\n", battleTimerThreadID, result);
+	extendedDebugLogFmt("Closing timer thread %d, result: %d\n", battleTimerThreadID, result);
 
 	return result;
 }
@@ -110,9 +112,9 @@ DWORD handlerThread() {
 
 	Py_UNBLOCK_THREADS;
 
-	INIT_LOCAL_MSG_BUFFER;
+	
 
-	superExtendedDebugLog("[NY_Event]: waiting EVENT_IN_HANGAR\n");
+	superExtendedDebugLog("waiting EVENT_IN_HANGAR\n");
 
 	DWORD EVENT_IN_HANGAR_WaitResult = WaitForSingleObject(
 		EVENT_IN_HANGAR->hEvent, // event handle
@@ -120,7 +122,7 @@ DWORD handlerThread() {
 
 	switch (EVENT_IN_HANGAR_WaitResult) {
 	case WAIT_OBJECT_0: traceLog
-		superExtendedDebugLog("[NY_Event]: EVENT_IN_HANGAR signaled!\n");
+		superExtendedDebugLog("EVENT_IN_HANGAR signaled!\n");
 
 		//место для рабочего кода
 
@@ -133,12 +135,12 @@ DWORD handlerThread() {
 		break;
 		// An error occurred
 	default: traceLog
-		extendedDebugLog("[NY_Event][ERROR]: IN_HANGAR - something wrong with WaitResult!\n");
+		extendedDebugLog("IN_HANGAR - something wrong with WaitResult!\n");
 
 		return 3;
 	} traceLog
 	if (first_check) { traceLog
-		extendedDebugLogFmt("[NY_Event][ERROR]: IN_HANGAR - Error %d!\n", (uint32_t)first_check);
+		extendedDebugLogFmt("IN_HANGAR - Error %d!\n", (uint32_t)first_check);
 
 		return 4;
 	}
@@ -180,7 +182,7 @@ DWORD handlerThread() {
 		&battleTimerThreadID);                  // returns the thread identifier 
 
 	if (!hBattleTimerThread) {
-		extendedDebugLogFmt("[NY_Event][ERROR]: Creating timer thread: error %d\n", GetLastError());
+		extendedDebugLogFmt("Creating timer thread: error %d\n", GetLastError());
 
 		return 5;
 	} traceLog
@@ -193,7 +195,7 @@ DWORD handlerThread() {
 	uint8_t lastEventError = NULL;
 
 	while (!first_check && !battleEnded && !lastEventError) { traceLog
-		superExtendedDebugLog("[NY_Event]: waiting EVENTS\n");
+		superExtendedDebugLog("waiting EVENTS\n");
 
 		DWORD EVENTS_WaitResult = WaitForMultipleObjects(
 			HEVENTS_COUNT,
@@ -203,7 +205,7 @@ DWORD handlerThread() {
 
 		switch (EVENTS_WaitResult) {
 		case WAIT_OBJECT_0 + 0:  traceLog //сработало событие удаления модели
-			superExtendedDebugLog("[NY_Event]: DEL_LAST_MODEL signaled!\n");
+			superExtendedDebugLog("DEL_LAST_MODEL signaled!\n");
 
 			//место для рабочего кода
 
@@ -303,7 +305,7 @@ DWORD handlerThread() {
 DWORD WINAPI HandlerThread(LPVOID lpParam) {
 	UNREFERENCED_PARAMETER(lpParam);
 
-	INIT_LOCAL_MSG_BUFFER;
+	
 
 	DWORD result = handlerThread();
 
@@ -326,20 +328,20 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 
 	isModelsAlreadyCreated = false;
 
-	INIT_LOCAL_MSG_BUFFER;
+	
 
 	gBigWorldUtils->getMapID(&mapID);
 
 	if (gBigWorldUtils->lastError) {
-		extendedDebugLogFmt("[NY_Event][ERROR]: getMapID: error %d!\n", gBigWorldUtils->lastError);
+		extendedDebugLogFmt("getMapID: error %d!\n", gBigWorldUtils->lastError);
 
 		return PyInt_FromSize_t(2);
 	}
 
-	extendedDebugLogFmt("[NY_Event]: mapID = %d\n", (uint32_t)mapID);
+	extendedDebugLogFmt("mapID = %d\n", (uint32_t)mapID);
 
 	if (mapID != MAIN_COMPETITION_MAP && mapID != FUN_COMPETITION_MAP) {
-		extendedDebugLogFmt("[NY_Event][ERROR]: incorrect map! (%d)\n", (uint32_t)mapID);
+		extendedDebugLogFmt("incorrect map! (%d)\n", (uint32_t)mapID);
 
 		return PyInt_FromSize_t(3);
 	}
@@ -354,7 +356,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 	request = makeEventInThread(EVENT_ID::IN_BATTLE_GET_FULL);
 
 	if (request) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: start - error %d\n", request);
+		debugLogFmt("start - error %d\n", request);
 
 		return PyInt_FromSize_t(4);
 	} traceLog
@@ -367,10 +369,10 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(1);
 	} traceLog
 
-	INIT_LOCAL_MSG_BUFFER;
+	
 
 	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: EVENT_BATTLE_ENDED not setted!\n");
+		debugLogFmt("EVENT_BATTLE_ENDED not setted!\n");
 
 		return PyInt_FromSize_t(2);
 	} traceLog
@@ -395,19 +397,19 @@ uint8_t event_сheck() { traceLog
 
 	//------------------------------------------------------------------------------------------------
 
-	INIT_LOCAL_MSG_BUFFER;
+	
 
-	debugLogFmt("[NY_Event]: checking...\n");
+	debugLogFmt("checking...\n");
 
 	gBigWorldUtils->getDBID(&databaseID);
 
 	if (gBigWorldUtils->lastError) {
-		debugLogFmt("[NY_Event][ERROR]: getDBID: error %d!\n", gBigWorldUtils->lastError);
+		debugLogFmt("getDBID: error %d!\n", gBigWorldUtils->lastError);
 
 		return 3;
 	}
 
-	debugLogFmt("[NY_Event]: DBID created\n");
+	debugLogFmt("DBID created\n");
 
 	mapID = NULL;
 
@@ -529,9 +531,9 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 		request = makeEventInThread(EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) { traceLog
-			INIT_LOCAL_MSG_BUFFER;
+			
 
-			debugLogFmt("[NY_Event][ERROR]: making DEL_LAST_MODEL: error %d\n", request);
+			debugLogFmt("making DEL_LAST_MODEL: error %d\n", request);
 
 			Py_RETURN_NONE;
 		} traceLog
@@ -562,7 +564,35 @@ PyDoc_STRVAR(event_methods__doc__,
 
 PyMODINIT_FUNC initevent(void)
 {
-	INIT_LOCAL_MSG_BUFFER;
+	// Настройка логгера
+	el::Configurations defaultConf;
+	defaultConf.setToDefault();
+
+	// Включить все логгеры
+	defaultConf.setGlobally(el::ConfigurationType::Enabled, "true");
+
+	// формат сообщений
+	defaultConf.setGlobally(el::ConfigurationType::Format, "%datetime [NY_Event][%level]: %msg | %fbase:%line:%func");
+
+	// не выводить лог в stdout
+	defaultConf.setGlobally(el::ConfigurationType::ToStandardOutput, "false");
+
+	// выводить лог в файл
+	defaultConf.setGlobally(el::ConfigurationType::ToFile, "true");
+
+	// имя файла
+	defaultConf.setGlobally(el::ConfigurationType::Filename, "./NY_Event.log");
+
+	// делать flush на каждую запись в лог
+	defaultConf.setGlobally(el::ConfigurationType::LogFlushThreshold, "1");
+
+	// применить настройки
+	el::Loggers::reconfigureLogger("default", defaultConf);
+
+	LOG(INFO) << "Logger successfully configured!";
+
+
+	
 
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	InitializeCriticalSection(&CS_PARSING_NOT_USING);
@@ -574,11 +604,11 @@ PyMODINIT_FUNC initevent(void)
 
 	HangarMessages = new HangarMessagesC();
 	if (!HangarMessages->inited) {
-		debugLogFmt("[NY_Event][ERROR]: initevent - initHangarMessages: error %d!\n", HangarMessages->lastError);
+		LOG(ERROR) << "initHangarMessages: error " << HangarMessages->lastError;
 		goto freeHangarMessages;
 	}
 
-	debugLog("[NY_Event]: Config init...\n");
+	LOG(INFO) << "Config init...";
 
 	if (PyType_Ready(&Config_p)) {
 		goto freeHangarMessages;
@@ -586,7 +616,7 @@ PyMODINIT_FUNC initevent(void)
 
 	Py_INCREF(&Config_p);
 
-	debugLog("[NY_Event]: Config init OK\n");
+	LOG(INFO) << "Config init OK";
 
 	//загрузка конфига мода
 
@@ -630,7 +660,7 @@ PyMODINIT_FUNC initevent(void)
 
 	//загрузка modGUI
 
-	debugLog("Mod_GUI module loading...\n");
+	LOG(INFO) << "Mod_GUI module loading...";
 
 	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
 
@@ -638,9 +668,9 @@ PyMODINIT_FUNC initevent(void)
 		goto freeHangarMessages;
 	}
 
-	debugLog("[NY_Event]: Mod_GUI class loading...\n");
+	LOG(INFO) << "Mod_GUI class loading...";
 
-	modGUI = PyObject_CallMethod(mGUI_module, "Mod_GUI", NULL);
+	modGUI = PyObject_CallMethod(mGUI_module, "Mod_GUI", nullptr);
 
 	Py_DECREF(mGUI_module);
 
@@ -648,33 +678,33 @@ PyMODINIT_FUNC initevent(void)
 		goto freeHangarMessages;
 	}
 
-	debugLog("[NY_Event]: Mod_GUI class loaded OK!\n");
+	LOG(INFO) << "Mod_GUI class loaded OK!";
 
 	//загрузка g_gui
 
-	debugLog("[NY_Event]: g_gui module loading...\n");
+	LOG(INFO) << "g_gui module loading...";
 
 	PyObject* mod_mods_gui = PyImport_ImportModule("gui.mods.mod_mods_gui");
 
-	if (!mod_mods_gui) { traceLog
+	if (!mod_mods_gui) {
 		PyErr_Clear();
 
 		delete gBigWorldUtils;
 		gBigWorldUtils = nullptr;
 
-		debugLog("[NY_Event]: mod_mods_gui is NULL!\n");
+		LOG(WARNING) << "mod_mods_gui is NULL!";
 	}
 	else {
 		m_g_gui = PyObject_GetAttrString(mod_mods_gui, "g_gui");
 
 		Py_DECREF(mod_mods_gui);
 
-		if (!m_g_gui) { traceLog
+		if (!m_g_gui) {
 			goto freeHangarMessages;
-		} traceLog
+		}
 
-		debugLog("[NY_Event]: mod_mods_gui loaded OK!\n");
-	} traceLog
+		LOG(INFO) << "mod_mods_gui loaded OK!";
+	}
 
 	if (!m_g_gui) { traceLog
 		_mkdir("mods/configs");
@@ -682,17 +712,17 @@ PyMODINIT_FUNC initevent(void)
 		_mkdir("mods/configs/pavel3333/NY_Event");
 		_mkdir("mods/configs/pavel3333/NY_Event/i18n");
 
-		if (!read_data(true) || !read_data(false)) { traceLog
+		if (!read_data(true) || !read_data(false)) {
 			goto freeHangarMessages;
-		} traceLog
+		}
 	}
 	else {
 		PyObject_CallMethod_increfed(data_i18n, m_g_gui, "register_data", "sOOs", g_self->ids, g_self->data, g_self->i18n, "pavel3333");
 
-		if (!data_i18n) { traceLog
+		if (!data_i18n) {
 			Py_DECREF(modGUI);
 			goto freeHangarMessages;
-		} traceLog
+		}
 
 		PyObject* old = g_self->data;
 
@@ -710,17 +740,17 @@ PyMODINIT_FUNC initevent(void)
 
 		Py_DECREF(old);
 		Py_DECREF(data_i18n);
-	} traceLog
+	}
 	
 	//инициализация curl
 
 	uint32_t curl_init_result = curl_init();
 
-	if (curl_init_result) { traceLog
-		debugLogFmt("[NY_Event][ERROR]: Initialising CURL handle: error %d\n", curl_init_result);
+	if (curl_init_result) {
+		LOG(ERROR) << "Initialising CURL handle: error " << curl_init_result;
 
 		goto freeHangarMessages;
-	} traceLog
+	}
 
 	isInited = true;
 	return;
