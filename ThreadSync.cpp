@@ -9,10 +9,10 @@ HANDLE hBattleTimer = NULL;
 
 //Потоки и их ID
 
-HANDLE hBattleTimerThread = NULL;
+HANDLE hBattleTimerThread  = NULL;
 DWORD  battleTimerThreadID = NULL;
 
-HANDLE hHandlerThread = NULL;
+HANDLE hHandlerThread  = NULL;
 DWORD  handlerThreadID = NULL;
 
 //последние коды ошибок таймеров
@@ -143,7 +143,7 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 	return true;
 }
 
-bool createEventsAndSecondThread() { traceLog
+bool createEventsAndMutexes() { traceLog
 	INIT_LOCAL_MSG_BUFFER;
 	
 	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog
@@ -171,29 +171,6 @@ bool createEventsAndSecondThread() { traceLog
 		return false;
 	} traceLog
 	if (!createEvent2(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog
-		return false;
-	} traceLog
-
-	//Handler thread creating
-
-	if (hHandlerThread) { traceLog
-		WaitForSingleObject(hHandlerThread, INFINITE);
-		
-		hHandlerThread  = NULL;
-		handlerThreadID = NULL;
-	} traceLog
-
-	hHandlerThread = CreateThread( //создаем второй поток
-		NULL,                                   // default security attributes
-		0,                                      // use default stack size  
-		HandlerThread,                          // thread function name
-		NULL,                                   // argument to thread function 
-		0,                                      // use default creation flags 
-		&handlerThreadID);                      // returns the thread identifier 
-
-	if (!hHandlerThread) { traceLog
-		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
-
 		return false;
 	} traceLog
 

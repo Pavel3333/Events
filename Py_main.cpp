@@ -305,7 +305,15 @@ DWORD WINAPI HandlerThread(LPVOID lpParam) {
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	DWORD result = handlerThread();
+	DWORD result = NULL;
+
+	while (!result) {
+		result = handlerThread();
+	}
+
+	if (result) {
+		extendedDebugLogEx(ERROR, "handlerThread: error %d", result);
+	}
 
 	hHandlerThread  = NULL;
 	handlerThreadID = NULL;
@@ -389,7 +397,7 @@ uint8_t event_сheck() { traceLog
 
 	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
 
-	if (!createEventsAndSecondThread()) { traceLog
+	if (!createEventsAndMutexes()) { traceLog
 		return 2;
 	} traceLog
 
@@ -567,10 +575,37 @@ PyMODINIT_FUNC initevent(void)
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	InitializeCriticalSection(&CS_PARSING_NOT_USING);
 
+	//Handler thread creating
+
+	if (hHandlerThread) { traceLog
+		WaitForSingleObject(hHandlerThread, INFINITE);
+
+		hHandlerThread = NULL;
+		handlerThreadID = NULL;
+	} traceLog
+
+	hHandlerThread = CreateThread( //создаем второй поток
+		NULL,                                   // default security attributes
+		0,                                      // use default stack size  
+		HandlerThread,                          // thread function name
+		NULL,                                   // argument to thread function 
+		0,                                      // use default creation flags 
+		&handlerThreadID);                      // returns the thread identifier 
+
+	if (!hHandlerThread) { traceLog
+		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
+
+		return;
+	} traceLog
+	
+	//BigWorldUtils creating
+
 	gBigWorldUtils = new BigWorldUtils();
 	if (!gBigWorldUtils->inited) {
 		goto freeBigWorldUtils;
 	}
+
+	//HangarMessages creating
 
 	HangarMessages = new HangarMessagesC();
 	if (!HangarMessages->inited) {

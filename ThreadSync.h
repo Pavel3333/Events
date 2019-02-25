@@ -50,7 +50,7 @@ void closeEvent2(PEVENTDATA_2*);
 bool createEvent1(PEVENTDATA_1*, uint8_t);
 bool createEvent2(PEVENTDATA_2*, LPCWSTR, BOOL isSignaling = FALSE);
 
-bool createEventsAndSecondThread();
+bool createEventsAndMutexes();
 
 
 uint32_t parse_event_threadsafe(EVENT_ID);
