@@ -5,16 +5,18 @@
 #include "GUI.h"
 #include "HangarMessages.h"
 
-typedef struct {
+
+struct ModModel {
 	bool processed = false;
 	PyObject* model = NULL;
 	float* coords = nullptr;
-} ModModel;
+};
 
-typedef struct {
+
+struct ModLight {
 	PyObject* model = NULL;
 	float* coords = nullptr;
-} ModLight;
+};
 
 extern PyObject* event_module;
 
@@ -48,7 +50,7 @@ void clearModelsSections();
 
 uint8_t delModelPy(float*);
 
-uint8_t delModelCoords(uint8_t, float*);
+uint8_t delModelCoords(MODEL_ID, float*);
 
 PyObject* event_light(float coords[3]);
 

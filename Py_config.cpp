@@ -1,5 +1,19 @@
 ﻿#include "Py_config.h"
 #include "MyLogger.h"
+#include "python2.7/structmember.h"
+
+
+static PyMemberDef config_members[9] = {
+	{ "ids",        T_STRING, offsetof(ConfigObject, ids),        NULL },
+	{ "author",     T_STRING, offsetof(ConfigObject, author),     NULL },
+	{ "patch",      T_STRING, offsetof(ConfigObject, patch),      NULL },
+	{ "version",    T_STRING, offsetof(ConfigObject, version),    NULL },
+	{ "version_id", T_SHORT,  offsetof(ConfigObject, version_id), NULL },
+	{ "buttons",    T_OBJECT, offsetof(ConfigObject, buttons),    NULL },
+	{ "data",       T_OBJECT, offsetof(ConfigObject, data),       NULL },
+	{ "i18n",       T_OBJECT, offsetof(ConfigObject, i18n),       NULL },
+	{ NULL }
+};
 
 
 Config config = Config();
