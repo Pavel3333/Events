@@ -72,27 +72,10 @@ DWORD timerThread() {
 		default: traceLog
 			extendedDebugLogEx(ERROR, "START_TIMER - something wrong with WaitResult!");
 
-			return 3;
+			return 2;
 	} traceLog
 
 	return NULL;
-}
-
-DWORD WINAPI TimerThread(LPVOID lpParam) {
-	UNREFERENCED_PARAMETER(lpParam);
-
-	INIT_LOCAL_MSG_BUFFER;
-
-	DWORD result = timerThread();
-
-	hBattleTimerThread  = NULL;
-	battleTimerThreadID = NULL;
-
-	//закрываем поток
-
-	extendedDebugLog("Closing timer thread %d, result: %d", battleTimerThreadID, result);
-
-	return result;
 }
 
 DWORD handlerThread() {
@@ -135,12 +118,12 @@ DWORD handlerThread() {
 	default: traceLog
 		extendedDebugLogEx(ERROR, "IN_HANGAR - something wrong with WaitResult!");
 
-		return 3;
+		return 2;
 	} traceLog
 	if (first_check) { traceLog
 		extendedDebugLogEx(ERROR, "IN_HANGAR - Error %d!", (uint32_t)first_check);
 
-		return 4;
+		return 3;
 	}
 	
 	Py_BLOCK_THREADS;
@@ -182,7 +165,7 @@ DWORD handlerThread() {
 	if (!hBattleTimerThread) {
 		extendedDebugLogEx(ERROR, "Creating timer thread: error %d", GetLastError());
 
-		return 5;
+		return 4;
 	} traceLog
 
 	HANDLE hEvents[HEVENTS_COUNT] = {
@@ -300,6 +283,25 @@ DWORD handlerThread() {
 	return NULL;
 }
 
+//threads
+
+DWORD WINAPI TimerThread(LPVOID lpParam) {
+	UNREFERENCED_PARAMETER(lpParam);
+
+	INIT_LOCAL_MSG_BUFFER;
+
+	DWORD result = timerThread();
+
+	hBattleTimerThread  = NULL;
+	battleTimerThreadID = NULL;
+
+	//закрываем поток
+
+	extendedDebugLog("Closing timer thread %d, result: %d", battleTimerThreadID, result);
+
+	return result;
+}
+
 DWORD WINAPI HandlerThread(LPVOID lpParam) {
 	UNREFERENCED_PARAMETER(lpParam);
 
@@ -325,11 +327,11 @@ DWORD WINAPI HandlerThread(LPVOID lpParam) {
 	return result;
 }
 
-//-----------------
+//loaders
 
-static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
+uint8_t event_start() {
 	if (!isInited || first_check) { traceLog
-		return PyInt_FromSize_t(1);
+		return 1;
 	} traceLog
 
 	isModelsAlreadyCreated = false;
@@ -341,7 +343,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 	if (gBigWorldUtils->lastError) {
 		extendedDebugLogEx(ERROR, "getMapID: error %d!", gBigWorldUtils->lastError);
 
-		return PyInt_FromSize_t(2);
+		return 2;
 	}
 
 	extendedDebugLog("mapID = %d", (uint32_t)mapID);
@@ -349,7 +351,7 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 	if (mapID != MAIN_COMPETITION_MAP && mapID != FUN_COMPETITION_MAP) {
 		extendedDebugLogEx(ERROR, "incorrect map! (%d)", (uint32_t)mapID);
 
-		return PyInt_FromSize_t(3);
+		return 3;
 	}
 
 	battleEnded = false;
@@ -364,31 +366,11 @@ static PyObject* event_start(PyObject *self, PyObject *args) { traceLog
 	if (request) { traceLog
 		debugLogEx(ERROR, "start - error %d", request);
 
-		return PyInt_FromSize_t(4);
+		return 4;
 	} traceLog
 
-	Py_RETURN_NONE;
-};
-
-static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
-	if (!EVENT_BATTLE_ENDED) { traceLog
-		return PyInt_FromSize_t(1);
-	} traceLog
-
-	INIT_LOCAL_MSG_BUFFER;
-
-	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog
-		debugLogEx(ERROR, "EVENT_BATTLE_ENDED not setted!");
-
-		return PyInt_FromSize_t(2);
-	} traceLog
-
-	Py_RETURN_NONE;
-};
-
-static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog
-	return PyInt_FromSize_t(first_check);
-};
+	return NULL;
+}
 
 uint8_t event_сheck() { traceLog
 	if (!isInited) { traceLog
@@ -431,15 +413,6 @@ uint8_t event_сheck() { traceLog
 	} traceLog
 }
 
-static PyObject* event_сheck_py(PyObject *self, PyObject *args) { traceLog
-	uint8_t res = event_сheck();
-
-	if (res) { traceLog
-		return PyInt_FromSize_t(res);
-	}
-	else Py_RETURN_NONE;
-};
-
 uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { traceLog
 	if (!template_ || !apply || !byteify) { traceLog
 		return 1;
@@ -478,6 +451,48 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 
 	return NULL;
 }
+
+//Py loaders
+
+static PyObject* event_start_py(PyObject *self, PyObject *args) { traceLog
+	request = event_start();
+
+	if (!request) {
+		Py_RETURN_NONE;
+	}
+	else {
+		return PyInt_FromSize_t(request);
+	}
+};
+
+static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
+	if (!EVENT_BATTLE_ENDED) { traceLog
+		return PyInt_FromSize_t(1);
+	} traceLog
+
+	INIT_LOCAL_MSG_BUFFER;
+
+	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog
+		debugLogEx(ERROR, "EVENT_BATTLE_ENDED not setted!");
+
+		return PyInt_FromSize_t(2);
+	} traceLog
+
+	Py_RETURN_NONE;
+};
+
+static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog
+	return PyInt_FromSize_t(first_check);
+};
+
+static PyObject* event_сheck_py(PyObject *self, PyObject *args) { traceLog
+	uint8_t res = event_сheck();
+
+	if (res) { traceLog
+		return PyInt_FromSize_t(res);
+	}
+	else Py_RETURN_NONE;
+};
 
 static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
 	if (!isInited) { traceLog
@@ -553,7 +568,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 static struct PyMethodDef event_methods[] =
 {
 	{ "b",             event_сheck_py,                METH_VARARGS, ":P" }, //check
-	{ "c",             event_start,                   METH_NOARGS,  ":P" }, //start
+	{ "c",             event_start_py,                METH_NOARGS,  ":P" }, //start
 	{ "d",             event_fini_py,                 METH_NOARGS,  ":P" }, //fini
 	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code
 	{ "g",             event_init_py,                 METH_VARARGS, ":P" }, //init
