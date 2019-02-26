@@ -589,29 +589,6 @@ PyMODINIT_FUNC initevent(void)
 
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	InitializeCriticalSection(&CS_PARSING_NOT_USING);
-
-	//Handler thread creating
-
-	if (hHandlerThread) { traceLog
-		WaitForSingleObject(hHandlerThread, INFINITE);
-
-		hHandlerThread = NULL;
-		handlerThreadID = NULL;
-	} traceLog
-
-	hHandlerThread = CreateThread( //создаем второй поток
-		NULL,                                   // default security attributes
-		0,                                      // use default stack size  
-		HandlerThread,                          // thread function name
-		NULL,                                   // argument to thread function 
-		0,                                      // use default creation flags 
-		&handlerThreadID);                      // returns the thread identifier 
-
-	if (!hHandlerThread) { traceLog
-		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
-
-		return;
-	} traceLog
 	
 	//BigWorldUtils creating
 
@@ -774,6 +751,32 @@ PyMODINIT_FUNC initevent(void)
 	} traceLog
 
 	isInited = true;
+
+	//Handler thread creating
+
+	if (hHandlerThread) { traceLog
+		WaitForSingleObject(hHandlerThread, INFINITE);
+
+		hHandlerThread = NULL;
+		handlerThreadID = NULL;
+	} traceLog
+
+	//создаем второй поток
+
+	hHandlerThread = CreateThread( 
+		NULL,                                   // default security attributes
+		0,                                      // use default stack size  
+		HandlerThread,                          // thread function name
+		NULL,                                   // argument to thread function 
+		0,                                      // use default creation flags 
+		&handlerThreadID);                      // returns the thread identifier 
+
+	if (!hHandlerThread) { traceLog
+		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
+
+		goto freeHangarMessages;
+	} traceLog
+
 	return;
 
 freeHangarMessages:
