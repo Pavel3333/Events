@@ -377,14 +377,6 @@ uint8_t event_сheck() { traceLog
 		return 1;
 	} traceLog
 
-	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
-
-	if (!createEventsAndMutexes()) { traceLog
-		return 2;
-	} traceLog
-
-	//------------------------------------------------------------------------------------------------
-
 	INIT_LOCAL_MSG_BUFFER;
 
 	debugLog("checking...");
@@ -751,6 +743,14 @@ PyMODINIT_FUNC initevent(void)
 	} traceLog
 
 	isInited = true;
+
+	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
+
+	if (!createEventsAndMutexes()) { traceLog
+		goto freeHangarMessages;
+	} traceLog
+
+	//------------------------------------------------------------------------------------------------
 
 	//Handler thread creating
 
