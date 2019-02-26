@@ -36,7 +36,7 @@ size_t __my_log_fmt(char* buf, const char* fmt, ...)
 	return len;
 }
 
-size_t __my_log_fmt(char* buf, const char* fmt, va_list args)
+size_t __my_log_fmt(char* buf, const char* fmt, va_list argList)
 {
 	using namespace std::chrono;
 	const std::time_t t = system_clock::to_time_t(system_clock::now());
@@ -44,7 +44,7 @@ size_t __my_log_fmt(char* buf, const char* fmt, va_list args)
 	localtime_s(&tm, &t);
 	size_t len = std::strftime(buf, 1024, "%H:%M:%S: ", &tm);
 
-	vsprintf_s(buf + len, 1024 - len, fmt, args);
+	vsprintf_s(buf + len, 1024 - len, fmt, argList);
 
 	__my_log(buf);
 
