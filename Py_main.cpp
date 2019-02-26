@@ -310,10 +310,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam) {
 	DWORD result = NULL;
 
 	while (!result) {
-		result = createEventsAndMutexes();
-
-		if (result) { traceLog
-			extendedDebugLogEx(ERROR, "HandlerThread - createEventsAndMutexes: error %ld", result);
+		if (!createEventsAndMutexes()) { traceLog
+			extendedDebugLogEx(ERROR, "HandlerThread - createEventsAndMutexes: error!");
 
 			break;
 		} traceLog
