@@ -177,7 +177,7 @@ int BigWorldUtils::getDBID_p(uint32_t* DBID)
 	return 0;
 }
 
-int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, float** coords)
+int BigWorldUtils::getLastModelCoords_p(float dist_equal, MODEL_ID* modelID, float** coords)
 {
 	PyObject* player = getPlayer_p();
 	if (!player) {
@@ -222,7 +222,7 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 
 	float distTemp;
 	float dist = -1.0;
-	int8_t modelTypeLast = -1;
+	MODEL_ID modelTypeLast = MODEL_ID::UNKNOWN;
 	float* coords_res = nullptr;
 
 
@@ -251,7 +251,7 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, uint8_t* modelID, floa
 		}
 	} traceLog
 
-	if (dist == -1.0 || modelTypeLast == -1 || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
+	if (dist == -1.0 || modelTypeLast == MODEL_ID::UNKNOWN || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
 		extendedDebugLogEx(WARNING, "getLastModelCoords - model not found!");
 
 		return -6;
@@ -299,7 +299,7 @@ void BigWorldUtils::getDBID(uint32_t* DBID)
 	lastError = getDBID_p(DBID);
 }
 
-void BigWorldUtils::getLastModelCoords(float dist_equal, uint8_t* modelID, float** coords)
+void BigWorldUtils::getLastModelCoords(float dist_equal, MODEL_ID* modelID, float** coords)
 {
 	if (!inited) return;
 

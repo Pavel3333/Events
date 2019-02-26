@@ -1,4 +1,5 @@
 ﻿#include "GUI.h"
+#include "BW_native.h"
 #include "MyLogger.h"
 
 
@@ -8,6 +9,7 @@ INIT_LOCAL_MSG_BUFFER;
 long delLabelCBID = 0;
 
 PyObject* modGUI = nullptr;
+
 
 //GUI methods
 
@@ -33,11 +35,7 @@ void GUI_setWarning(uint8_t warningCode) {
 		return;
 	}
 
-	PyObject* __setWarning = PyString_FromString("setWarning");
-
 	PyObject_CallMethod_increfed(res, modGUI, "setWarning", "b", warningCode);
-
-	Py_DECREF(__setWarning);
 
 	Py_XDECREF(res);
 #endif
@@ -82,7 +80,7 @@ void GUI_setTime(uint32_t time_preparing) {
 
 	char new_time[30];
 
-	sprintf_s(new_time, 30U, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
+	sprintf_s(new_time, 30, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
 
 	PyObject_CallMethod_increfed(res, modGUI, "setTime", "s", new_time);
 
@@ -115,11 +113,7 @@ void GUI_setText(char* msg, float time_f) {
 		gBigWorldUtils->cancelCallback(delLabelCBID);
 		delLabelCBID = 0;
 
-		PyObject* none = Py_None;
-
-		Py_INCREF(none);
-
-		if (!GUI_setAttr("delLabelCBID", none)) {
+		if (!GUI_setAttr("delLabelCBID", Py_None)) {
 			extendedDebugLogEx(WARNING, "GUI_setText - failed to set delLabelCBID");
 		}
 	}
@@ -147,16 +141,7 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 
 	// получить из словаря локализации нужную строку
 
-	PyObject* __UI_messages = PyString_FromString("UI_messages");
-
-	/*if (PyDict_Contains(g_self->i18n, __UI_messages) != 1) {
-		Py_DECREF(__UI_messages);
-		return ;
-	}*/
-
-	PyObject* messagesList = PyDict_GetItem(g_self->i18n, __UI_messages);
-
-	Py_DECREF(__UI_messages);
+	PyObject* messagesList = PyDict_GetItemString(g_self->i18n, "UI_messages");
 
 	if (!messagesList) {
 		return;
@@ -183,10 +168,10 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 	char new_msg[255];
 
 	if (msgID == STAGE_ID::GET_SCORE) { // если это - сообщение о том, что получили баллы
-		sprintf_s(new_msg, 255U, msg, COLOURS[msgID], SCORE[scoreID]);
+		sprintf_s(new_msg, 255, msg, COLOURS[msgID], SCORE[scoreID]);
 	}
 	else {
-		sprintf_s(new_msg, 255U, msg, COLOURS[msgID]);
+		sprintf_s(new_msg, 255, msg, COLOURS[msgID]);
 	}
 
 	GUI_setText(new_msg, time_f);
@@ -194,16 +179,17 @@ void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
 	lastStageID = current_map.stageID;
 }
 
-void GUI_clearText() {
+void GUI_clearText()
+{
 	if (!isInited || !modGUI) {
 		return;
 	}
 
-	PyObject_CallMethod_increfed(res, modGUI, "clearText", NULL);
+	PyObject_CallMethod_increfed(res, modGUI, "clearText", nullptr);
 
 	Py_XDECREF(res);
 
 	lastStageID = STAGE_ID::COMPETITION;
 
-	delLabelCBID = NULL;
+	delLabelCBID = 0;
 }

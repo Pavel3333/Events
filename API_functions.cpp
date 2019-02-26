@@ -67,7 +67,7 @@ char* MODEL_NAMES[SECTIONS_COUNT] {
 
 //---------------------------------------------API functions--------------------------------------------------------
 
-const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSects, uint8_t ID) {
+const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSects, MODEL_ID ID) {
 	for (const auto &it : modelsSects) {
 		if (it.isInitialised && it.ID == ID) {
 			return &it.models;
@@ -354,7 +354,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 						ModelsSection model_sect{
 							false,
-							model_type,
+							(MODEL_ID)model_type,
 							path_buffer
 						};
 
@@ -515,7 +515,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 							ModelsSection model_sect {
 								false,
-								model_type,
+								(MODEL_ID)model_type,
 								path_buffer
 							};
 
@@ -523,15 +523,12 @@ uint8_t parse_event(EVENT_ID eventID)
 
 							model_sect.models.resize(models_count_sect);
 
-							for (uint16_t i = NULL; i < models_count_sect; i++) {
+							for (uint16_t i = 0; i < models_count_sect; i++) {
 								float* coords = new float[3];
 
-								for (uint8_t j = NULL; j < 3; j++) {
-									memcpy(&coords[j], wr_buf + offset, 4);
-
-									offset += 4;
-								}
-
+								memcpy(coords, wr_buf + offset, 12);
+								offset += 12;
+								
 								model_sect.models[i] = coords;
 							}
 
@@ -621,7 +618,7 @@ uint8_t parse_event(EVENT_ID eventID)
 	return 21;
 }
 
-uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID, float* coords_del) {
+uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del) {
 	unsigned char* token = nullptr;
 
 	uint16_t size = NULL;
@@ -657,9 +654,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelI
 		token[6] = eventID; //код события
 		token[7] = modelID; //код модели
 
-		memcpy(&token[8],  &coords_del[0], 4);
-		memcpy(&token[12], &coords_del[1], 4);
-		memcpy(&token[16], &coords_del[2], 4);
+		memcpy(token+8, coords_del, 12);
 	}
 
 	//-------------------------------------

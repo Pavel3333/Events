@@ -54,4 +54,4 @@ bool createEventsAndMutexes();
 
 
 uint32_t parse_event_threadsafe(EVENT_ID);
-uint32_t send_token_threadsafe(uint32_t, uint8_t, EVENT_ID, uint8_t modelID = NULL, float* coords_del = nullptr);
+uint32_t send_token_threadsafe(uint32_t, uint8_t, EVENT_ID, MODEL_ID modelID, float* coords_del = nullptr);

@@ -24,16 +24,16 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 			EVENT_START_TIMER->request = parse_event_threadsafe(EVENT_START_TIMER->eventID);
 
 			if (EVENT_START_TIMER->request) { traceLog
-				extendedDebugLog("parsing FAILED! Error code: %d", EVENT_START_TIMER->request);
+				extendedDebugLogEx(ERROR, "parsing FAILED! Error code: %d", EVENT_START_TIMER->request);
 
 				//GUI_setError(parsing_result);
 
-				RELEASE_MODELS("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 5);
+				RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 5);
 
 				return 4;
 			} traceLog
 
-			RELEASE_MODELS("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 3);
+			RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 3);
 
 			superExtendedDebugLog("MODELS_NOT_USING");
 
@@ -121,10 +121,12 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 					case WAIT_OBJECT_0: traceLog
 						superExtendedDebugLog("MODELS_USING");
 
+						// Что это ???
+						// Может models.clear() стоит ?
 						models.~vector();
 						//lights.~vector();
 
-						RELEASE_MODELS("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 6);
+						RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 6);
 
 						superExtendedDebugLog("MODELS_NOT_USING");
 
@@ -308,7 +310,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 
 				sync_map.modelsSects_deleting.~vector();
 
-				RELEASE_MODELS("[NY_Event][ERROR]: handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 14);
+				RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 14);
 
 				superExtendedDebugLog("MODELS_NOT_USING");
 
@@ -385,7 +387,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save)
 
 				if (isModelsAlreadyCreated && isModelsAlreadyInited) EVENT_START_TIMER->eventID = EVENT_ID::IN_BATTLE_GET_SYNC;
 
-				EVENT_START_TIMER->request = send_token_threadsafe(databaseID, mapID, EVENT_START_TIMER->eventID);
+				EVENT_START_TIMER->request = send_token_threadsafe(databaseID, mapID, EVENT_START_TIMER->eventID, MODEL_ID::BALL);
 
 				if (EVENT_START_TIMER->request) { traceLog
 					if (EVENT_START_TIMER->request > 9) { traceLog
@@ -475,7 +477,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 		if (bSuccess)
 		{
 			while (first_check && !hangarTimerLastError) {
-				EVENT_IN_HANGAR->request = send_token_threadsafe(databaseID, mapID, EVENT_IN_HANGAR->eventID);
+				EVENT_IN_HANGAR->request = send_token_threadsafe(databaseID, mapID, EVENT_IN_HANGAR->eventID, MODEL_ID::BALL);
 
 				if (EVENT_IN_HANGAR->request) {
 					extendedDebugLogEx(ERROR, "handleInHangarEvent - send_token_threadsafe: error %d!", EVENT_IN_HANGAR->request);
@@ -626,7 +628,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 
 			current_map.minimap_count = NULL;
 
-			RELEASE_MODELS("[NY_Event][ERROR]: handleBattleEndEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 3);
+			RELEASE_MODELS("handleBattleEndEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 3);
 
 			superExtendedDebugLog("MODELS_NOT_USING");
 
@@ -666,7 +668,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	uint8_t modelID;
+	MODEL_ID modelID;
 	float* coords = new float[3];
 
 	BEGIN_USING_MODELS;
@@ -679,7 +681,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 			Py_UNBLOCK_THREADS;
 
-			RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 2);
+			RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 2);
 
 			superExtendedDebugLog("MODELS_NOT_USING");
 
@@ -739,12 +741,12 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 					//GUI_setError(EVENT_DEL_MODEL->request);
 
-					RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 7);
+					RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 7);
 
 					return 8;
 				} traceLog
 
-				scoreID = modelID;
+				scoreID = (int8_t)modelID;
 				current_map.stageID = STAGE_ID::GET_SCORE;
 
 				delete[] coords;
@@ -757,14 +759,14 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 					//GUI_setError(EVENT_DEL_MODEL->request);
 
-					RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 9);
+					RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 9);
 
 					return 10;
 				} traceLog
 
 				*/
 
-				RELEASE_MODELS("[NY_Event][ERROR]: handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 11);
+				RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 11);
 
 				superExtendedDebugLog("MODELS_NOT_USING");
 
@@ -855,4 +857,4 @@ uint8_t makeEventInThread(EVENT_ID eventID) { traceLog //переводим ив
 	} traceLog
 
 	return NULL;
-};
+}

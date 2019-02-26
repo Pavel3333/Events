@@ -190,7 +190,7 @@ uint32_t parse_event_threadsafe(EVENT_ID eventID) {
 	return result;
 }
 
-uint32_t send_token_threadsafe(uint32_t id, uint8_t map_id, EVENT_ID eventID, uint8_t modelID, float* coords_del) {
+uint32_t send_token_threadsafe(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del) {
 	uint32_t result = NULL;
 
 	EnterCriticalSection(&CS_NETWORK_NOT_USING);

@@ -7,6 +7,7 @@
 #include <Windows.h>
 
 
+// не использовать такой код!
 #define BEGIN_USING_MODELS {                                   \
 	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
 	M_MODELS_NOT_USING,    				                       \
@@ -35,23 +36,27 @@
 #define MESSAGES_COUNT 8
 #define SECTIONS_COUNT 10
 
-#define BALL        0
-#define CANDY_CANE  1
-#define FIR         2
-#define SANTA_CLAUS 3
-#define SNOWMAN     4
-#define GIFTS_BOXES 5
-#define PIG         6
-#define LOLLIPOP    7
-#define MANDARINE   8
-#define WOOD_TOILET 9
+
+enum MODEL_ID : uint8_t {
+	BALL = 0,
+	CANDY_CANE,
+	FIR,
+	SANTA_CLAUS,
+	SNOWMAN,
+	GIFTS_BOXES,
+	PIG,
+	LOLLIPOP,
+	MANDARINE,
+	WOOD_TOILET,
+	UNKNOWN = 0xff // не модель
+};
 
 #define MAIN_COMPETITION_MAP 217
 
 #define FUN_COMPETITION_MAP 4
 
 
-enum STAGE_ID {
+enum STAGE_ID : uint8_t {
 	WAITING = 0,
 	START,
 	COMPETITION,
@@ -62,14 +67,14 @@ enum STAGE_ID {
 	STREAMER_MODE
 };
 
-enum EVENT_ID {
+enum EVENT_ID : uint8_t {
 	IN_HANGAR = 0,
 	IN_BATTLE_GET_FULL,
 	IN_BATTLE_GET_SYNC,
 	DEL_LAST_MODEL
 };
 
-enum MODS_ID {
+enum MODS_ID : uint8_t {
 	HELLOWEEN = 1,
 	NY_EVENT  = 2
 };
@@ -78,7 +83,7 @@ enum MODS_ID {
 struct ModelsSection {
 	bool isInitialised = false;
 
-	uint8_t ID = NULL;
+	MODEL_ID ID = MODEL_ID::UNKNOWN;
 	char* path = nullptr;
 
 	std::vector<float*> models;
@@ -96,7 +101,7 @@ struct map {
 };
 
 struct map_sync {
-	uint16_t all_models_count = NULL;
+	uint16_t all_models_count = 0;
 
 	//types of positions sections
 
@@ -105,12 +110,12 @@ struct map_sync {
 };
 
 struct data_c {
-	uint16_t version = NULL; //version_id
+	uint16_t version = 0; //version_id
 	bool enabled = true;
 };
 
 struct i18n_c {
-	uint16_t version = NULL; //version_id
+	uint16_t version = 0; //version_id
 };
 
 struct Config {
@@ -162,4 +167,4 @@ uint8_t parse_event(EVENT_ID);
 
 bool file_exists(const char*);
 
-uint8_t send_token(uint32_t, uint8_t, EVENT_ID, uint8_t modelID = NULL, float* coords_del = nullptr);
+uint8_t send_token(uint32_t, uint8_t, EVENT_ID, MODEL_ID modelID, float* coords_del = nullptr);

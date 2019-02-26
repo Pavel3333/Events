@@ -35,7 +35,7 @@ public:
 
 	void getMapID(uint8_t*);
 	void getDBID(uint32_t*);
-	void getLastModelCoords(float, uint8_t*, float**);
+	void getLastModelCoords(float, MODEL_ID*, float**);
 
 private:
 	void init();
@@ -46,7 +46,7 @@ private:
 	int cancelCallback_p(long);
 	int getMapID_p(uint8_t*);
 	int getDBID_p(uint32_t*);
-	int getLastModelCoords_p(float, uint8_t*, float**);
+	int getLastModelCoords_p(float, MODEL_ID*, float**);
 };
 
 extern BigWorldUtils* gBigWorldUtils;

@@ -307,7 +307,7 @@ uint8_t delModelPy(float* coords) { traceLog
 	return 2;
 }
 
-uint8_t delModelCoords(uint8_t ID, float* coords)
+uint8_t delModelCoords(MODEL_ID ID, float* coords)
 {
 	INIT_LOCAL_MSG_BUFFER;
 

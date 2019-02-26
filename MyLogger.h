@@ -21,17 +21,17 @@ void __log_private_with_pystdout(char* buf, const char* fmt, ...);
 
 #if debug_log
 #define debugLogEx(level, fmt, ...) \
-	__log_private_with_pystdout(__log_buf_private, "[NY_Event][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__log_private_with_pystdout(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #if extended_debug_log
 #define extendedDebugLogEx(level, fmt, ...) \
-	__log_private(__log_buf_private, "[NY_Event][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__log_private(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #if super_extended_debug_log
 #define superExtendedDebugLogEx(level, fmt, ...) \
-	__log_private(__log_buf_private, "[NY_Event][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__log_private(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #else

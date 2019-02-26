@@ -712,6 +712,7 @@ PyMODINIT_FUNC initevent(void)
 	} traceLog
 
 	if (!m_g_gui) { traceLog
+		// переделать на WinAPI: CreateDirectory?
 		_mkdir("mods/configs");
 		_mkdir("mods/configs/pavel3333");
 		_mkdir("mods/configs/pavel3333/NY_Event");
