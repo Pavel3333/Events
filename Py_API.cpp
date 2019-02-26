@@ -254,8 +254,6 @@ uint8_t delModelPy(float* coords) { traceLog
 			continue;
 		}
 
-		superExtendedDebugLog("del debug 1.1");
-
 		if ((*it_model)->coords[0] == coords[0] &&
 			(*it_model)->coords[1] == coords[1] &&
 			(*it_model)->coords[2] == coords[2]) {
@@ -301,8 +299,6 @@ uint8_t delModelPy(float* coords) { traceLog
 
 		it_model++;
 	} traceLog
-
-	superExtendedDebugLog("del debug 1.2");
 
 	return 2;
 }
