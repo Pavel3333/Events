@@ -11,44 +11,33 @@
 static std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
 
+size_t timedFmt(char* buf, const char* fmt, va_list args) {
+	using namespace std::chrono;
+	const std::time_t t = system_clock::to_time_t(system_clock::now());
+	std::tm tm;
+	localtime_s(&tm, &t);
+	size_t len = std::strftime(buf, 1024, "%H:%M:%S: ", &tm);
+
+	vsprintf_s(buf + len, 1024 - len, fmt, args);
+
+	return len;
+}
+
+
 void __my_log(const char* str)
 {
 	OutputDebugStringA(str);
 	dbg_log << str << std::flush;
 }
 
-
-size_t __my_log_fmt(char* buf, const char* fmt, ...)
+void __my_log_fmt(char* buf, const char* fmt, ...)
 {
-	using namespace std::chrono;
-	const std::time_t t = system_clock::to_time_t(system_clock::now());
-	std::tm tm;
-	localtime_s(&tm, &t);
-	size_t len = std::strftime(buf, 1024, "%H:%M:%S: ", &tm);
-
 	va_list args;
 	va_start(args, fmt);
-	vsprintf_s(buf + len, 1024 - len, fmt, args);
+	timedFmt(buf, fmt, args);
 	va_end(args);
 
 	__my_log(buf);
-
-	return len;
-}
-
-size_t __my_log_fmt(char* buf, const char* fmt, va_list argList)
-{
-	using namespace std::chrono;
-	const std::time_t t = system_clock::to_time_t(system_clock::now());
-	std::tm tm;
-	localtime_s(&tm, &t);
-	size_t len = std::strftime(buf, 1024, "%H:%M:%S: ", &tm);
-
-	vsprintf_s(buf + len, 1024 - len, fmt, argList);
-
-	__my_log(buf);
-
-	return len;
 }
 
 void __my_log_fmt_with_pystdout(char* buf, const char* fmt, ...)
@@ -57,8 +46,10 @@ void __my_log_fmt_with_pystdout(char* buf, const char* fmt, ...)
 
 	va_list args;
 	va_start(args, fmt);
-	len = __my_log_fmt(buf, fmt, args);
+	len = timedFmt(buf, fmt, args);
 	va_end(args);
+
+	__my_log(buf);
 
 	PySys_WriteStdout(buf + len);
 }

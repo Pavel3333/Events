@@ -13,8 +13,7 @@
 
 
 void __my_log(const char*);
-size_t __my_log_fmt(char*, const char*, ...);
-size_t __my_log_fmt(char*, const char*, va_list);
+void __my_log_fmt(char*, const char*, ...);
 void __my_log_fmt_with_pystdout(char*, const char*, ...);
 
 
