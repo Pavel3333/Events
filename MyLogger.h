@@ -1,12 +1,10 @@
 ﻿#pragma once
 
-#include <cstdarg>
-
 #define debug_log                true
 #define extended_debug_log       true
 #define super_extended_debug_log true
 
-#define trace_log false
+#define trace_log true
 
 #define INIT_LOCAL_MSG_BUFFER \
 	static char __log_buf_private[1024]

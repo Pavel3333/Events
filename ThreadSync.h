@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ModThreads.h"
+#include "Network.h"
 
 //WaitableTimer
 

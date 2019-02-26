@@ -5,13 +5,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include "python2.7/Python.h"
+#include <cstdarg>
 
 
 
 static std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
 
-size_t timedFmt(char* buf, const char* fmt, va_list args) {
+static size_t timedFmt(char* buf, const char* fmt, va_list args) {
 	using namespace std::chrono;
 	const std::time_t t = system_clock::to_time_t(system_clock::now());
 	std::tm tm;

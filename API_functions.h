@@ -159,13 +159,6 @@ extern Config config;
 
 float getDist2Points(const float[3], const float[3]);
 
-uint32_t curl_init();
-void     curl_clean();
-
 const std::vector<float*>* findModelsByID(std::vector<ModelsSection>&, uint8_t);
 
-uint8_t parse_event(EVENT_ID);
-
 bool file_exists(const char*);
-
-uint8_t send_token(uint32_t, uint8_t, EVENT_ID, MODEL_ID modelID, float* coords_del = nullptr);

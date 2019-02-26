@@ -141,6 +141,7 @@
     <ClInclude Include="HangarMessages.h" />
     <ClInclude Include="MyLogger.h" />
     <ClInclude Include="ModThreads.h" />
+    <ClInclude Include="Network.h" />
     <ClInclude Include="Py_API.h" />
     <ClInclude Include="Py_common.h" />
     <ClInclude Include="Py_config.h" />
@@ -154,6 +155,7 @@
     <ClCompile Include="HangarMessages.cpp" />
     <ClCompile Include="MyLogger.cpp" />
     <ClCompile Include="ModThreads.cpp" />
+    <ClCompile Include="Network.cpp" />
     <ClCompile Include="Py_API.cpp" />
     <ClCompile Include="Py_config.cpp" />
     <ClCompile Include="Py_main.cpp" />
