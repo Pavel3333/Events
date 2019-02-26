@@ -297,7 +297,7 @@ DWORD WINAPI TimerThread(LPVOID lpParam) {
 
 	//закрываем поток
 
-	extendedDebugLog("Closing timer thread %d, result: %d", battleTimerThreadID, result);
+	extendedDebugLog("Closing timer thread %ld, result: %ld", battleTimerThreadID, result);
 
 	return result;
 }
@@ -310,11 +310,21 @@ DWORD WINAPI HandlerThread(LPVOID lpParam) {
 	DWORD result = NULL;
 
 	while (!result) {
-		result = handlerThread();
-	}
+		result = createEventsAndMutexes();
 
-	if (result) {
-		extendedDebugLogEx(ERROR, "handlerThread: error %d", result);
+		if (result) { traceLog
+			extendedDebugLogEx(ERROR, "HandlerThread - createEventsAndMutexes: error %ld", result);
+
+			break;
+		} traceLog
+
+		result = handlerThread();
+
+		if (result) {
+			extendedDebugLogEx(ERROR, "HandlerThread - handlerThread: error %ld", result);
+
+			break;
+		}
 	}
 
 	hHandlerThread  = NULL;
@@ -322,7 +332,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam) {
 
 	//закрываем поток
 
-	extendedDebugLog("Closing handler thread %d", handlerThreadID);
+	extendedDebugLog("Closing handler thread %ld", handlerThreadID);
 
 	return result;
 }
@@ -743,14 +753,6 @@ PyMODINIT_FUNC initevent(void)
 	} traceLog
 
 	isInited = true;
-
-	// инициализация второго потока, если не существует, иначе - завершить второй поток и начать новый
-
-	if (!createEventsAndMutexes()) { traceLog
-		goto freeHangarMessages;
-	} traceLog
-
-	//------------------------------------------------------------------------------------------------
 
 	//Handler thread creating
 
