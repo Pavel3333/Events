@@ -254,11 +254,11 @@ int BigWorldUtils::getLastModelCoords_p(float dist_equal, MODEL_ID* modelID, flo
 	if (dist == -1.0 || modelTypeLast == MODEL_ID::UNKNOWN || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
 		extendedDebugLogEx(WARNING, "getLastModelCoords - model not found!");
 
-		return -6;
+		return 1;
 	} traceLog
 
 	if (dist > dist_equal) { traceLog
-		return -7;
+		return 2;
 	} traceLog
 
 	*modelID = modelTypeLast;

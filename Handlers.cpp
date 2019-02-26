@@ -777,7 +777,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 				return 12;
 		END_USING_MODELS;
 	}
-	else if (gBigWorldUtils->lastError == 7 || gBigWorldUtils->lastError == 8) { traceLog
+	else if (gBigWorldUtils->lastError > 0) { traceLog
 		extendedDebugLog("DEL_LAST_MODEL - Model not found!");
 
 		current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
