@@ -10,8 +10,9 @@
 	static char __log_buf_private[1024]
 
 
-void __log_private(char* buf, const char* fmt, ...);
-void __log_private_with_pystdout(char* buf, const char* fmt, ...);
+void __my_log(const char* str);
+void __my_log_fmt(char* buf, const char* fmt, ...);
+void __my_log_fmt_with_pystdout(char* buf, const char* fmt, ...);
 
 
 #define debugLog(fmt, ...) debugLogEx(INFO, fmt, ##__VA_ARGS__)
@@ -21,17 +22,17 @@ void __log_private_with_pystdout(char* buf, const char* fmt, ...);
 
 #if debug_log
 #define debugLogEx(level, fmt, ...) \
-	__log_private_with_pystdout(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt_with_pystdout(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #if extended_debug_log
 #define extendedDebugLogEx(level, fmt, ...) \
-	__log_private(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #if super_extended_debug_log
 #define superExtendedDebugLogEx(level, fmt, ...) \
-	__log_private(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #else
@@ -48,8 +49,11 @@ void __log_private_with_pystdout(char* buf, const char* fmt, ...);
 #endif
 
 #if trace_log
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
 #define traceLog \
-	dbg_log << __LINE__ << " - " __FUNCTION__ << std::endl;
+	__my_log(TOSTRING(__LINE__) " - " __FUNCTION__ "\n");
 #else
 #define traceLog ((void)0);
 #endif
