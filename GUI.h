@@ -16,5 +16,5 @@ void GUI_setVisible(bool);
 void GUI_setTimerVisible(bool);
 void GUI_setTime(uint32_t);
 void GUI_setText(char*, float time_f = 0.0f);
-void GUI_setMsg(uint8_t, uint8_t scoreID = 0, float time_f = 0.0f);
+void GUI_setMsg(uint8_t, float time_f = 0.0f, uint8_t scoreID = 0);
 void GUI_clearText();

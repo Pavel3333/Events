@@ -618,6 +618,8 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 					lights.~vector();
 				} traceLog*/
 
+			isModelsAlreadyInited = false;
+
 			Py_UNBLOCK_THREADS;
 
 			if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog
@@ -791,12 +793,12 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 	Py_BLOCK_THREADS;
 
 	if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) { traceLog
-		GUI_setMsg(current_map.stageID, scoreID, 5.0f);
+		GUI_setMsg(current_map.stageID, 5.0f, scoreID);
 
 		scoreID = -1;
 	}
 	else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) { traceLog
-		GUI_setMsg(current_map.stageID);
+		GUI_setMsg(current_map.stageID, 5.0f);
 	} traceLog
 
 	Py_UNBLOCK_THREADS;

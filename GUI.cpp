@@ -130,7 +130,7 @@ void GUI_setText(char* msg, float time_f) {
 	}
 }
 
-void GUI_setMsg(uint8_t msgID, uint8_t scoreID, float time_f) {
+void GUI_setMsg(uint8_t msgID, float time_f, uint8_t scoreID) {
 	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= SECTIONS_COUNT) {
 		return;
 	}

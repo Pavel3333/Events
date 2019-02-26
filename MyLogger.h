@@ -10,9 +10,8 @@
 	static char __log_buf_private[1024]
 
 
-void __my_log(const char* str);
-void __my_log_fmt(char* buf, const char* fmt, ...);
-void __my_log_fmt_with_pystdout(char* buf, const char* fmt, ...);
+void __my_log(const char*, bool);
+void __my_log_fmt(bool, char*, const char*, ...);
 
 
 #define debugLog(fmt, ...) debugLogEx(INFO, fmt, ##__VA_ARGS__)
@@ -22,17 +21,17 @@ void __my_log_fmt_with_pystdout(char* buf, const char* fmt, ...);
 
 #if debug_log
 #define debugLogEx(level, fmt, ...) \
-	__my_log_fmt_with_pystdout(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt(true, __log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #if extended_debug_log
 #define extendedDebugLogEx(level, fmt, ...) \
-	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt(false, __log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #if super_extended_debug_log
 #define superExtendedDebugLogEx(level, fmt, ...) \
-	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt(false, __log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #else

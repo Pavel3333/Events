@@ -652,7 +652,7 @@ PyMODINIT_FUNC initevent(void)
 	spaceKey = PyList_New(1);
 
 	if (spaceKey) {
-		PyList_SET_ITEM(spaceKey, 0, PyInt_FromSize_t(57));
+		PyList_SET_ITEM(spaceKey, 0, PyInt_FromSize_t(KEY_DEL_LAST_MODEL));
 	}
 
 	//загрузка modGUI

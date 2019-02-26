@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "API_functions.h"
 
+#define KEY_DEL_LAST_MODEL 256 //Keys.KEY_LEFTMOUSE
 
 struct ConfigObject {
 	PyObject_HEAD
