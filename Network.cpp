@@ -37,75 +37,41 @@ static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data) {
 	return size * nmemb;
 }
 
-std::string urlencode(unsigned char* s, size_t size)
-{
-	static const char lookup[] = "0123456789abcdef";
-	std::stringstream e;
-	for (size_t i = NULL; i < size; i++)
-	{
-		const char& c = s[i];
-		if ((c > 47 && c < 58) ||//0-9
-			(c > 64 && c < 91) ||//abc...xyz
-			(c > 96 && c < 123) || //ABC...XYZ
-			(c == '-' || c == '_' || c == '.' || c == '~')
-			)
-		{
-			e << c;
-		}
-		else
-		{
-			e << '%';
-			e << lookup[(c & 0xF0) >> 4];
-			e << lookup[(c & 0x0F)];
-		}
-	}
-
-	return e.str();
-}
-
-static uint8_t send_to_server(std::string input) {
+static uint8_t send_to_server(char* data, uint16_t length) {
 	if (!curl_handle) {
 		return 1;
 	}
 
-	memset(response_buffer, NULL, NET_BUFFER_SIZE + 1); // filling buffer by NULL
+	memset(response_buffer, NULL, NET_BUFFER_SIZE); // filling buffer by NULL
 	response_size = NULL;
 
 	char user_agent[] = "NY_Event";
+	char url[] = "http://api.pavel3333.ru/events/index.php";
 
-	size_t length = input.length();
+	struct curl_httppost *formpost = NULL;
+	struct curl_httppost *lastptr = NULL;
 
-	char* url = new char[47 + length + 1];
-
-	char url_[48] = "http://api.pavel3333.ru/events/index.php?token=";
-
-	memcpy(url, url_, 47);
-	memcpy(&url[47], input.c_str(), length);
-	url[47 + length] = NULL;
-
-#if debug_log
-	std::ofstream fil("url_pos.txt", std::ios::binary);
-
-	fil << url;
-
-	fil.close();
-#endif
+	curl_formadd(&formpost, &lastptr,
+		CURLFORM_COPYNAME, "response",
+		CURLFORM_PTRCONTENTS, data,
+		CURLFORM_CONTENTSLENGTH, length,
+		CURLFORM_END);
 
 	//setting user agent
 	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, user_agent);
 	// setting url
 	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+	//setting POST form
+	curl_easy_setopt(curl_handle, CURLOPT_HTTPPOST, formpost);
 	//setting function for write data
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
 	//setting buffer
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, response_buffer);
 	//setting max buffer size
-	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, 32768);
+	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, NET_BUFFER_SIZE);
+
 	// requesting
 	CURLcode res = curl_easy_perform(curl_handle);
-
-	memset(url, NULL, 47 + length);
-	delete[] url;
 
 	return res;
 }
@@ -161,10 +127,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 	// точно ли нужно?
 	request_raw[size] = '\0';
 
-	std::string request_urlencoded = urlencode((unsigned char*)request_raw, size);
-
-	uint8_t code = send_to_server(request_urlencoded);
-
+	uint8_t code = send_to_server(request_raw, size);
 
 	if (code || !response_size) { //get token
 		return 2;
