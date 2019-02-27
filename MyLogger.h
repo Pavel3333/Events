@@ -16,7 +16,7 @@ void __my_log(const char*);
 void __my_log_fmt(char*, const char*, ...);
 void __my_log_fmt_with_pystdout(char*, const char*, ...);
 
-char* __my_log_write_data_to_file(char* name, char* data)
+void __my_log_write_data_to_file(char* name, char* data, size_t size);
 
 
 #define debugLog(fmt, ...) debugLogEx(INFO, fmt, ##__VA_ARGS__)
@@ -32,7 +32,7 @@ char* __my_log_write_data_to_file(char* name, char* data)
 #if extended_debug_log
 #define extendedDebugLogEx(level, fmt, ...) \
 	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
-#define writeDebugDataToFile(name, data) __my_log_write_data_to_file(#name, data)
+#define writeDebugDataToFile(name, data, size) __my_log_write_data_to_file(#name, data, size)
 
 #if super_extended_debug_log
 #define superExtendedDebugLogEx(level, fmt, ...) \

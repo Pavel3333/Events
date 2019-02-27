@@ -186,7 +186,7 @@ uint32_t parse_event_threadsafe(EVENT_ID eventID) {
 	result = parse_event(eventID);
 
 	if (result) {
-		writeDebugDataToFile(PARSING, get_response_data());
+		writeDebugDataToFile(PARSING, (char*)response_buffer, response_size);
 	}
 
 	LeaveCriticalSection(&CS_PARSING_NOT_USING);

@@ -539,7 +539,3 @@ uint8_t parse_event(EVENT_ID eventID)
 
 	return 21;
 }
-
-char* get_response_data() {
-	return (char*)response_buffer;
-}
