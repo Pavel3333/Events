@@ -112,7 +112,7 @@ static uint8_t send_to_server(std::string input) {
 
 uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del)
 {
-	char* token = nullptr;
+	char* request_raw = nullptr;
 	uint16_t size = 0;
 
 	//Код наполнения токена по типу события
@@ -122,14 +122,14 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 		case EVENT_ID::IN_BATTLE_GET_FULL:
 		case EVENT_ID::IN_BATTLE_GET_SYNC: {
 			size = 7;
-			ReqPacket7b req;
+			ReqMain req;
 
 			req.mod_id   = MODS_ID::NY_EVENT; //mod
 			req.map_id   = map_id;            //map ID
 			req.id       = id;
 			req.event_id = eventID;           //код события
 
-			token = (char*)&req;
+			request_raw = (char*)&req;
 			break;
 		}
 		case EVENT_ID::DEL_LAST_MODEL: {
@@ -138,7 +138,7 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 			}
 
 			size = 20;
-			ReqPacket20b req;
+			ReqMain_DelModel req;
 
 			req.mod_id   = MODS_ID::NY_EVENT; //mod
 			req.map_id   = map_id;            //map ID
@@ -147,44 +147,28 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 			req.model_id = modelID; //код модели
 			memcpy(req.coords_del, coords_del, 12);
 
-			token = (char*)&req;
+			request_raw = (char*)&req;
 			break;
 		}
 	}
 
 	//-------------------------------------
 
-	if (token == nullptr) {
+	if (request_raw == nullptr) {
 		return 1;
 	}
 
 	// точно ли нужно?
-	token[size] = '\0';
+	request_raw[size] = '\0';
 
-#if debug_log
-	std::ofstream tok("token_pos.bin", std::ios::binary);
+	std::string request_urlencoded = urlencode((unsigned char*)request_raw, size);
 
-	tok.write(token, size);
-
-	tok.close();
-#endif
-
-	std::string new_token = urlencode((unsigned char*)token, size);
-
-	uint8_t code = send_to_server(new_token);
+	uint8_t code = send_to_server(request_urlencoded);
 
 
 	if (code || !response_size) { //get token
 		return 2;
 	}
-
-#if debug_log
-	std::ofstream resp("responce_pos.bin", std::ios::binary);
-
-	resp.write((const char*)response_buffer, response_size);
-
-	resp.close();
-#endif
 
 	return NULL;
 }
@@ -591,4 +575,8 @@ uint8_t parse_event(EVENT_ID eventID)
 	}
 
 	return 21;
+}
+
+char* get_response_data() {
+	return (char*)response_buffer;
 }

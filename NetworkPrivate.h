@@ -7,42 +7,42 @@
 
 // придумать имена структурам:
 
-struct ReqPacket7b {
-    MODS_ID mod_id;    // id-мода
-    uint8_t map_id;    // id-карты
-    uint32_t id;       // ?
+struct ReqMain {
+    MODS_ID mod_id;    // id мода
+    uint8_t map_id;    // id карты
+    uint32_t id;       // id игрока
     EVENT_ID event_id; // код события
 
 	// пока так
 	char _zero;
 };
 
-struct ReqPacket20b {
-    MODS_ID  mod_id;     // id-мода
-    uint8_t  map_id;     // id-карты
-    uint32_t id;         // ?
+struct ReqMain_DelModel {
+    MODS_ID  mod_id;     // id мода
+    uint8_t  map_id;     // id карты
+    uint32_t id;         // id игрока
     EVENT_ID event_id;   // код события
     MODEL_ID model_id;   // код модели
-    float coords_del[3]; // ?
+    float coords_del[3]; // координаты модели, которую следует убрать
 
 	// пока так
 	char _zero;
 };
 
-struct RspPacket6b {
+struct RspMain {
     uint8_t  zero_byte;      // ноль для проверки
     STAGE_ID stage_id;       // 0/1 (СТАРТ / соревнование идет)
     uint32_t time_preparing; // оставшееся время
 };
 
-struct RspPacket3b_sect {
+struct RspModelsHeader {
     uint8_t  sections_count; // число секций
-    uint16_t minimap_count;  // ?
+    uint16_t minimap_count;  // число моделей (общее)
 };
 
-struct RspPacket3b_model {
+struct RspModelSect {
     MODEL_ID model_id;          // тип модели
-    uint16_t models_count_sect; // ?
+    uint16_t models_count_sect; // число моделей в секции
 };
 
 
@@ -50,8 +50,8 @@ struct RspPacket3b_model {
 
 
 // проверка на корректность
-static_assert( sizeof(ReqPacket7b)       == 8  );
-static_assert( sizeof(ReqPacket20b)      == 21 );
-static_assert( sizeof(RspPacket6b)       == 6  );
-static_assert( sizeof(RspPacket3b_sect)  == 3  );
-static_assert( sizeof(RspPacket3b_model) == 3  );
+static_assert( sizeof(ReqMain)          == 8  );
+static_assert( sizeof(ReqMain_DelModel) == 21 );
+static_assert( sizeof(RspMain)          == 6  );
+static_assert( sizeof(RspModelsHeader)  == 3  );
+static_assert( sizeof(RspModelSect)     == 3  );

@@ -6,9 +6,6 @@
 
 #pragma comment(lib,"libcurl.lib")
 
-#undef debug_log
-#define debug_log false
-
 map      current_map;
 map_sync sync_map;
 

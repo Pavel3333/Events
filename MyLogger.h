@@ -9,10 +9,14 @@
 #define INIT_LOCAL_MSG_BUFFER \
 	static char __log_buf_private[1024]
 
+#define MAX_DBG_LINE_SIZE 1024
+#define MAX_DBG_TIME_SIZE 64
 
 void __my_log(const char*);
 void __my_log_fmt(char*, const char*, ...);
 void __my_log_fmt_with_pystdout(char*, const char*, ...);
+
+char* __my_log_write_data_to_file(char* name, char* data)
 
 
 #define debugLog(fmt, ...) debugLogEx(INFO, fmt, ##__VA_ARGS__)
@@ -28,7 +32,7 @@ void __my_log_fmt_with_pystdout(char*, const char*, ...);
 #if extended_debug_log
 #define extendedDebugLogEx(level, fmt, ...) \
 	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
-
+#define writeDebugDataToFile(name, data) __my_log_write_data_to_file(#name, data)
 
 #if super_extended_debug_log
 #define superExtendedDebugLogEx(level, fmt, ...) \
@@ -39,11 +43,13 @@ void __my_log_fmt_with_pystdout(char*, const char*, ...);
 #define superExtendedDebugLogEx(...) ((void)0)
 #endif
 #else
+#define writeDebugDataToFile(...)    ((void)0)
 #define extendedDebugLogEx(...)      ((void)0)
 #define superExtendedDebugLogEx(...) ((void)0)
 #endif
 #else
 #define debugLogEx(...)              ((void)0)
+#define writeDebugDataToFile(...)    ((void)0)
 #define extendedDebugLogEx(...)      ((void)0)
 #define superExtendedDebugLogEx(...) ((void)0)
 #endif
