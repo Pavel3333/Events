@@ -386,7 +386,7 @@ uint8_t event_start() {
 	return NULL;
 }
 
-uint8_t event_сheck() { traceLog
+uint8_t event_check() { traceLog
 	if (!isInited) { traceLog
 		return 1;
 	} traceLog
@@ -491,8 +491,8 @@ static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog
 	return PyInt_FromSize_t(first_check);
 };
 
-static PyObject* event_сheck_py(PyObject *self, PyObject *args) { traceLog
-	uint8_t res = event_сheck();
+static PyObject* event_check_py(PyObject *self, PyObject *args) { traceLog
+	uint8_t res = event_check();
 
 	if (res) { traceLog
 		return PyInt_FromSize_t(res);
@@ -573,7 +573,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 static struct PyMethodDef event_methods[] =
 {
-	{ "b",             event_сheck_py,                METH_VARARGS, ":P" }, //check
+	{ "b",             event_check_py,                METH_VARARGS, ":P" }, //check
 	{ "c",             event_start_py,                METH_NOARGS,  ":P" }, //start
 	{ "d",             event_fini_py,                 METH_NOARGS,  ":P" }, //fini
 	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code
