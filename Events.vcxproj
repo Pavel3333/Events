@@ -142,6 +142,7 @@
     <ClInclude Include="MyLogger.h" />
     <ClInclude Include="ModThreads.h" />
     <ClInclude Include="Network.h" />
+    <ClInclude Include="NetworkPrivate.h" />
     <ClInclude Include="Py_API.h" />
     <ClInclude Include="Py_common.h" />
     <ClInclude Include="Py_config.h" />

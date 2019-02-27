@@ -1,4 +1,4 @@
-#include "Network.h"
+#include "NetworkPrivate.h"
 
 //------------------------------------------CLIENT-SERVER PART---------------------------------------------------
 
@@ -110,43 +110,46 @@ static uint8_t send_to_server(std::string input) {
 	return res;
 }
 
-uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del) {
-	unsigned char* token = nullptr;
+uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del)
+{
+	char* token = nullptr;
+	uint16_t size = 0;
 
-	uint16_t size = NULL;
+	//РљРѕРґ РЅР°РїРѕР»РЅРµРЅРёСЏ С‚РѕРєРµРЅР° РїРѕ С‚РёРїСѓ СЃРѕР±С‹С‚РёСЏ
 
-	//Код наполнения токена по типу события
+	switch (eventID) {
+		case EVENT_ID::IN_HANGAR:
+		case EVENT_ID::IN_BATTLE_GET_FULL:
+		case EVENT_ID::IN_BATTLE_GET_SYNC: {
+			size = 7;
+			ReqPacket7b req;
 
-	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
-		size = 7;
+			req.mod_id   = MODS_ID::NY_EVENT; //mod
+			req.map_id   = map_id;            //map ID
+			req.id       = id;
+			req.event_id = eventID;           //РєРѕРґ СЃРѕР±С‹С‚РёСЏ
 
-		token = new unsigned char[size + 1];
-
-		token[0] = MODS_ID::NY_EVENT;    //mod
-		token[1] = map_id;             //map ID
-
-		memcpy(&token[2], &id, 4);
-
-		token[6] = eventID; //код события
-	}
-	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
-		if (coords_del == nullptr) {
-			return 24;
+			token = (char*)&req;
+			break;
 		}
+		case EVENT_ID::DEL_LAST_MODEL: {
+			if (coords_del == nullptr) {
+				return 24;
+			}
 
-		size = 20;
+			size = 20;
+			ReqPacket20b req;
 
-		token = new unsigned char[size + 1];
+			req.mod_id   = MODS_ID::NY_EVENT; //mod
+			req.map_id   = map_id;            //map ID
+			req.id       = id;
+			req.event_id = eventID; //РєРѕРґ СЃРѕР±С‹С‚РёСЏ
+			req.model_id = modelID; //РєРѕРґ РјРѕРґРµР»Рё
+			memcpy(req.coords_del, coords_del, 12);
 
-		token[0] = MODS_ID::NY_EVENT;    //mod
-		token[1] = map_id;             //map ID
-
-		memcpy(&token[2], &id, 4);
-
-		token[6] = eventID; //код события
-		token[7] = modelID; //код модели
-
-		memcpy(token + 8, coords_del, 12);
+			token = (char*)&req;
+			break;
+		}
 	}
 
 	//-------------------------------------
@@ -155,23 +158,21 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 		return 1;
 	}
 
-	token[size] = NULL;
+	// С‚РѕС‡РЅРѕ Р»Рё РЅСѓР¶РЅРѕ?
+	token[size] = '\0';
 
 #if debug_log
 	std::ofstream tok("token_pos.bin", std::ios::binary);
 
-	tok.write((const char*)token, size);
+	tok.write(token, size);
 
 	tok.close();
 #endif
 
-	std::string new_token = urlencode(token, size);
-
-	delete[] token;
+	std::string new_token = urlencode((unsigned char*)token, size);
 
 	uint8_t code = send_to_server(new_token);
 
-	new_token.~basic_string();
 
 	if (code || !response_size) { //get token
 		return 2;
@@ -192,7 +193,7 @@ uint8_t parse_event(EVENT_ID eventID)
 {
 	INIT_LOCAL_MSG_BUFFER;
 
-	//инициализация переменных для каждого события
+	//РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїРµСЂРµРјРµРЅРЅС‹С… РґР»СЏ РєР°Р¶РґРѕРіРѕ СЃРѕР±С‹С‚РёСЏ
 
 	//EVENT_ID::IN_HANGAR
 
@@ -211,12 +212,12 @@ uint8_t parse_event(EVENT_ID eventID)
 
 	std::vector<ModelsSection>* sect = nullptr;
 
-	//парсинг пакета с сервера
+	//РїР°СЂСЃРёРЅРі РїР°РєРµС‚Р° СЃ СЃРµСЂРІРµСЂР°
 
 	switch (eventID) {
-		case EVENT_ID::IN_HANGAR:          //запрос из ангара       
+		case EVENT_ID::IN_HANGAR:          //Р·Р°РїСЂРѕСЃ РёР· Р°РЅРіР°СЂР°       
 			if (response_size == 3) {
-				memcpy(&length, response_buffer, 2); //смотрим длину данных
+				memcpy(&length, response_buffer, 2); //СЃРјРѕС‚СЂРёРј РґР»РёРЅСѓ РґР°РЅРЅС‹С…
 
 				if (length == response_size) {
 					return response_buffer[2];
@@ -228,7 +229,7 @@ uint8_t parse_event(EVENT_ID eventID)
 			return 2;
 
 			break;
-		case EVENT_ID::IN_BATTLE_GET_FULL: // при входе в бой
+		case EVENT_ID::IN_BATTLE_GET_FULL: // РїСЂРё РІС…РѕРґРµ РІ Р±РѕР№
 			if (!response_size) {
 				return 3;
 			}
@@ -241,7 +242,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 			offset += 2;
 
-			if (response_size == 3) { //код ошибки
+			if (response_size == 3) { //РєРѕРґ РѕС€РёР±РєРё
 				error_code = response_buffer[offset];
 
 				if (error_code < 10) {
@@ -268,10 +269,10 @@ uint8_t parse_event(EVENT_ID eventID)
 			}
 			else if (response_size >= 8) {
 				/*
-				Всё прошло успешно.
-				Первый байт - ноль для проверки,
-				второй байт - 0/1 (СТАРТ / соревнование идет),
-				остальные четыре байта - оставшееся время
+				Р’СЃС‘ РїСЂРѕС€Р»Рѕ СѓСЃРїРµС€РЅРѕ.
+				РџРµСЂРІС‹Р№ Р±Р°Р№С‚ - РЅРѕР»СЊ РґР»СЏ РїСЂРѕРІРµСЂРєРё,
+				РІС‚РѕСЂРѕР№ Р±Р°Р№С‚ - 0/1 (РЎРўРђР Рў / СЃРѕСЂРµРІРЅРѕРІР°РЅРёРµ РёРґРµС‚),
+				РѕСЃС‚Р°Р»СЊРЅС‹Рµ С‡РµС‚С‹СЂРµ Р±Р°Р№С‚Р° - РѕСЃС‚Р°РІС€РµРµСЃСЏ РІСЂРµРјСЏ
 				*/
 
 				if (response_buffer[offset] != 0) {
@@ -289,13 +290,13 @@ uint8_t parse_event(EVENT_ID eventID)
 
 				offset += 6;
 
-				if (response_size > 8) { //парсинг координат
+				if (response_size > 8) { //РїР°СЂСЃРёРЅРі РєРѕРѕСЂРґРёРЅР°С‚
 					sections_count = response_buffer[offset];
 
 					offset++;
 
 					if (sections_count > SECTIONS_COUNT) {
-						return 6; //проверяем валидность числа секций
+						return 6; //РїСЂРѕРІРµСЂСЏРµРј РІР°Р»РёРґРЅРѕСЃС‚СЊ С‡РёСЃР»Р° СЃРµРєС†РёР№
 					}
 
 					memcpy(&(current_map.minimap_count), response_buffer + offset, 2);
@@ -308,7 +309,7 @@ uint8_t parse_event(EVENT_ID eventID)
 						offset++;
 
 						if (model_type >= SECTIONS_COUNT) {
-							return 7;  //проверяем валидность типа модели
+							return 7;  //РїСЂРѕРІРµСЂСЏРµРј РІР°Р»РёРґРЅРѕСЃС‚СЊ С‚РёРїР° РјРѕРґРµР»Рё
 						}
 
 						memcpy(&models_count_sect, response_buffer + offset, 2);
@@ -316,15 +317,15 @@ uint8_t parse_event(EVENT_ID eventID)
 						offset += 2;
 
 						if (!models_count_sect) {
-							continue; //нет моделей, идем далее
+							continue; //РЅРµС‚ РјРѕРґРµР»РµР№, РёРґРµРј РґР°Р»РµРµ
 						}
 
 						char *path_buffer = new char[80];
 
-						sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //форматируем путь к модели
-						//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //форматируем путь к модели
+						sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //С„РѕСЂРјР°С‚РёСЂСѓРµРј РїСѓС‚СЊ Рє РјРѕРґРµР»Рё
+						//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //С„РѕСЂРјР°С‚РёСЂСѓРµРј РїСѓС‚СЊ Рє РјРѕРґРµР»Рё
 
-						//инициализация новой секции моделей
+						//РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РЅРѕРІРѕР№ СЃРµРєС†РёРё РјРѕРґРµР»РµР№
 
 						ModelsSection model_sect{
 							false,
@@ -350,14 +351,14 @@ uint8_t parse_event(EVENT_ID eventID)
 
 						model_sect.isInitialised = true;
 
-						//добавление секции
+						//РґРѕР±Р°РІР»РµРЅРёРµ СЃРµРєС†РёРё
 
 						current_map.modelsSects.push_back(model_sect);
 
 						//-----------------
 					}
 
-					isModelsAlreadyCreated = true; //если парсинг пакета был удачен и это было событие полного создания моделей, то мы получили полный пакет моделей
+					isModelsAlreadyCreated = true; //РµСЃР»Рё РїР°СЂСЃРёРЅРі РїР°РєРµС‚Р° Р±С‹Р» СѓРґР°С‡РµРЅ Рё СЌС‚Рѕ Р±С‹Р»Рѕ СЃРѕР±С‹С‚РёРµ РїРѕР»РЅРѕРіРѕ СЃРѕР·РґР°РЅРёСЏ РјРѕРґРµР»РµР№, С‚Рѕ РјС‹ РїРѕР»СѓС‡РёР»Рё РїРѕР»РЅС‹Р№ РїР°РєРµС‚ РјРѕРґРµР»РµР№
 				}
 
 				return NULL;
@@ -366,7 +367,7 @@ uint8_t parse_event(EVENT_ID eventID)
 			return 8;
 
 			break;
-		case EVENT_ID::IN_BATTLE_GET_SYNC: // синхронизация
+		case EVENT_ID::IN_BATTLE_GET_SYNC: // СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ
 			if (!response_size) {
 				return 9;
 			}
@@ -379,7 +380,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 			offset += 2;
 
-			if (response_size == 3) { //код ошибки
+			if (response_size == 3) { //РєРѕРґ РѕС€РёР±РєРё
 				error_code = response_buffer[offset];
 
 				if (error_code < 10) {
@@ -406,19 +407,19 @@ uint8_t parse_event(EVENT_ID eventID)
 			}
 			else if (response_size >= 8) {
 				/*
-				Всё прошло успешно.
-				Первый байт - ноль для проверки,
-				второй байт - 0/1 (СТАРТ / соревнование идет),
-				остальные четыре байта - оставшееся время
+				Р’СЃС‘ РїСЂРѕС€Р»Рѕ СѓСЃРїРµС€РЅРѕ.
+				РџРµСЂРІС‹Р№ Р±Р°Р№С‚ - РЅРѕР»СЊ РґР»СЏ РїСЂРѕРІРµСЂРєРё,
+				РІС‚РѕСЂРѕР№ Р±Р°Р№С‚ - 0/1 (РЎРўРђР Рў / СЃРѕСЂРµРІРЅРѕРІР°РЅРёРµ РёРґРµС‚),
+				РѕСЃС‚Р°Р»СЊРЅС‹Рµ С‡РµС‚С‹СЂРµ Р±Р°Р№С‚Р° - РѕСЃС‚Р°РІС€РµРµСЃСЏ РІСЂРµРјСЏ
 
-				0 - код создания моделей
-				  1б - число секций для создания
-				  2б - число создаваемых моделей
-					   координаты создаваемых моделей
-				1 - код удаления моделей
-				  1б - число секций для удаления
-				  2б - число удаляемых моделей
-					   координаты удаляемых моделей
+				0 - РєРѕРґ СЃРѕР·РґР°РЅРёСЏ РјРѕРґРµР»РµР№
+				  1Р± - С‡РёСЃР»Рѕ СЃРµРєС†РёР№ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ
+				  2Р± - С‡РёСЃР»Рѕ СЃРѕР·РґР°РІР°РµРјС‹С… РјРѕРґРµР»РµР№
+					   РєРѕРѕСЂРґРёРЅР°С‚С‹ СЃРѕР·РґР°РІР°РµРјС‹С… РјРѕРґРµР»РµР№
+				1 - РєРѕРґ СѓРґР°Р»РµРЅРёСЏ РјРѕРґРµР»РµР№
+				  1Р± - С‡РёСЃР»Рѕ СЃРµРєС†РёР№ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ
+				  2Р± - С‡РёСЃР»Рѕ СѓРґР°Р»СЏРµРјС‹С… РјРѕРґРµР»РµР№
+					   РєРѕРѕСЂРґРёРЅР°С‚С‹ СѓРґР°Р»СЏРµРјС‹С… РјРѕРґРµР»РµР№
 				*/
 
 				if (response_buffer[offset] != 0) {
@@ -436,7 +437,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 				offset += 6;
 
-				if (response_size > 8) { //парсинг координат
+				if (response_size > 8) { //РїР°СЂСЃРёРЅРі РєРѕРѕСЂРґРёРЅР°С‚
 					for (uint8_t modelSectionID = NULL; modelSectionID < 2; modelSectionID++) {
 						if (modelSectionID == 0 && response_buffer[offset] == 0) sect = &(sync_map.modelsSects_creating);
 						else if (modelSectionID == 1 && response_buffer[offset] == 1) sect = &(sync_map.modelsSects_deleting);
@@ -453,7 +454,7 @@ uint8_t parse_event(EVENT_ID eventID)
 						offset++;
 
 						if (sections_count > SECTIONS_COUNT) {
-							return 12; //проверяем валидность числа секций
+							return 12; //РїСЂРѕРІРµСЂСЏРµРј РІР°Р»РёРґРЅРѕСЃС‚СЊ С‡РёСЃР»Р° СЃРµРєС†РёР№
 						}
 
 						memcpy(&(sync_map.all_models_count), response_buffer + offset, 2);
@@ -469,7 +470,7 @@ uint8_t parse_event(EVENT_ID eventID)
 							offset++;
 
 							if (model_type >= SECTIONS_COUNT) {
-								return 13;  //проверяем валидность типа модели
+								return 13;  //РїСЂРѕРІРµСЂСЏРµРј РІР°Р»РёРґРЅРѕСЃС‚СЊ С‚РёРїР° РјРѕРґРµР»Рё
 							}
 
 							memcpy(&models_count_sect, response_buffer + offset, 2);
@@ -477,15 +478,15 @@ uint8_t parse_event(EVENT_ID eventID)
 							offset += 2;
 
 							if (!models_count_sect) {
-								continue; //нет моделей, идем далее
+								continue; //РЅРµС‚ РјРѕРґРµР»РµР№, РёРґРµРј РґР°Р»РµРµ
 							}
 
 							char *path_buffer = new char[80];
 
-							sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //форматируем путь к модели
-							//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //форматируем путь к модели
+							sprintf_s(path_buffer, 80U, "objects/pavel3333_NewYear/%s/%s.model", MODEL_NAMES[model_type], MODEL_NAMES[model_type]); //С„РѕСЂРјР°С‚РёСЂСѓРµРј РїСѓС‚СЊ Рє РјРѕРґРµР»Рё
+							//sprintf_s(path_buffer, 80U, "objects/misc/bbox/sphere1.model"); //С„РѕСЂРјР°С‚РёСЂСѓРµРј РїСѓС‚СЊ Рє РјРѕРґРµР»Рё
 
-							//инициализация новой секции моделей
+							//РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РЅРѕРІРѕР№ СЃРµРєС†РёРё РјРѕРґРµР»РµР№
 
 							ModelsSection model_sect {
 								false,
@@ -508,7 +509,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 							model_sect.isInitialised = true;
 
-							//добавление секции
+							//РґРѕР±Р°РІР»РµРЅРёРµ СЃРµРєС†РёРё
 
 							sect->push_back(model_sect);
 
@@ -525,7 +526,7 @@ uint8_t parse_event(EVENT_ID eventID)
 			return 14;
 
 			break;
-		case EVENT_ID::DEL_LAST_MODEL:     // удаление ближайшей модели
+		case EVENT_ID::DEL_LAST_MODEL:     // СѓРґР°Р»РµРЅРёРµ Р±Р»РёР¶Р°Р№С€РµР№ РјРѕРґРµР»Рё
 			if (!response_size) {
 				return 15;
 			}
@@ -538,7 +539,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 			offset += 2;
 
-			if (response_size == 3) { //код ошибки
+			if (response_size == 3) { //РєРѕРґ РѕС€РёР±РєРё
 				uint8_t error_code = response_buffer[offset];
 
 				if (error_code < 10) {
@@ -559,10 +560,10 @@ uint8_t parse_event(EVENT_ID eventID)
 			}
 			else if (response_size >= 9) {
 				/*
-				Всё прошло успешно.
-				Первый байт - ноль для проверки,
-				второй байт - 0/1 (СТАРТ / соревнование идет),
-				остальные четыре байта - оставшееся время
+				Р’СЃС‘ РїСЂРѕС€Р»Рѕ СѓСЃРїРµС€РЅРѕ.
+				РџРµСЂРІС‹Р№ Р±Р°Р№С‚ - РЅРѕР»СЊ РґР»СЏ РїСЂРѕРІРµСЂРєРё,
+				РІС‚РѕСЂРѕР№ Р±Р°Р№С‚ - 0/1 (РЎРўРђР Рў / СЃРѕСЂРµРІРЅРѕРІР°РЅРёРµ РёРґРµС‚),
+				РѕСЃС‚Р°Р»СЊРЅС‹Рµ С‡РµС‚С‹СЂРµ Р±Р°Р№С‚Р° - РѕСЃС‚Р°РІС€РµРµСЃСЏ РІСЂРµРјСЏ
 				*/
 
 				if (response_buffer[offset] != 0) {
