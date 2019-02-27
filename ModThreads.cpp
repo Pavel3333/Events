@@ -1,4 +1,4 @@
-﻿#include "ModThreads.h"
+#include "ModThreads.h"
 
 #include <thread>
 
