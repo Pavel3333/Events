@@ -12,6 +12,9 @@ struct ReqPacket7b {
     uint8_t map_id;    // id-карты
     uint32_t id;       // ?
     EVENT_ID event_id; // код события
+
+	// пока так
+	char _zero;
 };
 
 struct ReqPacket20b {
@@ -20,7 +23,10 @@ struct ReqPacket20b {
     uint32_t id;         // ?
     EVENT_ID event_id;   // код события
     MODEL_ID model_id;   // код модели
-    float[3] coords_del; // ?
+    float coords_del[3]; // ?
+
+	// пока так
+	char _zero;
 };
 
 struct RspPacket6b {
@@ -44,8 +50,8 @@ struct RspPacket3b_model {
 
 
 // проверка на корректность
-static_assert( sizeof(ReqPacket7b)       == 7  );
-static_assert( sizeof(ReqPacket20b)      == 20 );
+static_assert( sizeof(ReqPacket7b)       == 8  );
+static_assert( sizeof(ReqPacket20b)      == 21 );
 static_assert( sizeof(RspPacket6b)       == 6  );
 static_assert( sizeof(RspPacket3b_sect)  == 3  );
 static_assert( sizeof(RspPacket3b_model) == 3  );

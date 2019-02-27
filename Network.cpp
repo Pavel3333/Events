@@ -1,4 +1,4 @@
-#include "Network.h"
+#include "NetworkPrivate.h"
 
 //------------------------------------------CLIENT-SERVER PART---------------------------------------------------
 
@@ -111,43 +111,46 @@ static uint8_t get_token(const std::string& input) {
 	return res;
 }
 
-uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del) {
-	unsigned char* token = nullptr;
-
-	uint16_t size = NULL;
+uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del)
+{
+	char* token = nullptr;
+	uint16_t size = 0;
 
 	//Код наполнения токена по типу события
 
-	if (eventID == EVENT_ID::IN_HANGAR || eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) {
-		size = 7;
+	switch (eventID) {
+		case EVENT_ID::IN_HANGAR:
+		case EVENT_ID::IN_BATTLE_GET_FULL:
+		case EVENT_ID::IN_BATTLE_GET_SYNC: {
+			size = 7;
+			ReqPacket7b req;
 
-		token = new unsigned char[size + 1];
+			req.mod_id   = MODS_ID::NY_EVENT; //mod
+			req.map_id   = map_id;            //map ID
+			req.id       = id;
+			req.event_id = eventID;           //код события
 
-		token[0] = MODS_ID::NY_EVENT;    //mod
-		token[1] = map_id;             //map ID
-
-		memcpy(&token[2], &id, 4);
-
-		token[6] = eventID; //код события
-	}
-	else if (eventID == EVENT_ID::DEL_LAST_MODEL) {
-		if (coords_del == nullptr) {
-			return 24;
+			token = (char*)&req;
+			break;
 		}
+		case EVENT_ID::DEL_LAST_MODEL: {
+			if (coords_del == nullptr) {
+				return 24;
+			}
 
-		size = 20;
+			size = 20;
+			ReqPacket20b req;
 
-		token = new unsigned char[size + 1];
+			req.mod_id   = MODS_ID::NY_EVENT; //mod
+			req.map_id   = map_id;            //map ID
+			req.id       = id;
+			req.event_id = eventID; //код события
+			req.model_id = modelID; //код модели
+			memcpy(req.coords_del, coords_del, 12);
 
-		token[0] = MODS_ID::NY_EVENT;    //mod
-		token[1] = map_id;             //map ID
-
-		memcpy(&token[2], &id, 4);
-
-		token[6] = eventID; //код события
-		token[7] = modelID; //код модели
-
-		memcpy(token + 8, coords_del, 12);
+			token = (char*)&req;
+			break;
+		}
 	}
 
 	//-------------------------------------
@@ -156,19 +159,18 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 		return 1;
 	}
 
-	token[size] = NULL;
+	// точно ли нужно?
+	token[size] = '\0';
 
 #if debug_log
 	std::ofstream tok("token_pos.bin", std::ios::binary);
 
-	tok.write((const char*)token, size);
+	tok.write(token, size);
 
 	tok.close();
 #endif
 
-	std::string new_token = urlencode(token, size);
-
-	delete[] token;
+	std::string new_token = urlencode((unsigned char*)token, size);
 
 	uint8_t code = get_token(new_token);
 
