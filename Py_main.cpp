@@ -172,6 +172,8 @@ DWORD handlerThread() {
 		EVENT_BATTLE_ENDED->hEvent //событие выхода из боя
 	};
 
+	PyObject* delLabelCBID_p;
+
 	uint8_t lastEventError = NULL;
 
 	while (!first_check && !battleEnded && !lastEventError) { traceLog
@@ -215,7 +217,7 @@ DWORD handlerThread() {
 
 			current_map.stageID = STAGE_ID::COMPETITION;
 
-			PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
+			delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
 			if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog
 				delLabelCBID = 0;
