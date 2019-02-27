@@ -4,8 +4,8 @@
 
 CURL *  curl_handle = NULL;
 
-unsigned char wr_buf[NET_BUFFER_SIZE + 1];
-size_t wr_index = NULL;
+unsigned char response_buffer[NET_BUFFER_SIZE + 1];
+size_t response_size = NULL;
 
 uint32_t curl_init() {
 	if (curl_global_init(CURL_GLOBAL_ALL))
@@ -30,10 +30,10 @@ void curl_clean() {
 
 //writing response from server into array ptr and return size of response
 static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data) {
-	if (data == NULL || wr_index + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
+	if (data == NULL || response_size + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
 
-	memcpy(&data[wr_index], ptr, size*nmemb);// appending data into the end
-	wr_index += size * nmemb;  // changing position
+	memcpy(&data[response_size], ptr, size*nmemb);// appending data into the end
+	response_size += size * nmemb;  // changing position
 	return size * nmemb;
 }
 
@@ -63,14 +63,13 @@ std::string urlencode(unsigned char* s, size_t size)
 	return e.str();
 }
 
-//getting token in pre-auth step
-static uint8_t get_token(std::string input) {
+static uint8_t send_to_server(std::string input) {
 	if (!curl_handle) {
 		return 1;
 	}
 
-	memset(wr_buf, NULL, NET_BUFFER_SIZE + 1); // filling buffer by NULL
-	wr_index = NULL;
+	memset(response_buffer, NULL, NET_BUFFER_SIZE + 1); // filling buffer by NULL
+	response_size = NULL;
 
 	char user_agent[] = "NY_Event";
 
@@ -99,7 +98,7 @@ static uint8_t get_token(std::string input) {
 	//setting function for write data
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
 	//setting buffer
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, wr_buf);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, response_buffer);
 	//setting max buffer size
 	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, 32768);
 	// requesting
@@ -170,18 +169,18 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 
 	delete[] token;
 
-	uint8_t code = get_token(new_token);
+	uint8_t code = send_to_server(new_token);
 
 	new_token.~basic_string();
 
-	if (code || !wr_index) { //get token
+	if (code || !response_size) { //get token
 		return 2;
 	}
 
 #if debug_log
 	std::ofstream resp("responce_pos.bin", std::ios::binary);
 
-	resp.write((const char*)wr_buf, wr_index);
+	resp.write((const char*)response_buffer, response_size);
 
 	resp.close();
 #endif
@@ -216,11 +215,11 @@ uint8_t parse_event(EVENT_ID eventID)
 
 	switch (eventID) {
 		case EVENT_ID::IN_HANGAR:          //запрос из ангара       
-			if (wr_index == 3) {
-				memcpy(&length, wr_buf, 2); //смотрим длину данных
+			if (response_size == 3) {
+				memcpy(&length, response_buffer, 2); //смотрим длину данных
 
-				if (length == wr_index) {
-					return wr_buf[2];
+				if (length == response_size) {
+					return response_buffer[2];
 				}
 
 				return 1;
@@ -230,20 +229,20 @@ uint8_t parse_event(EVENT_ID eventID)
 
 			break;
 		case EVENT_ID::IN_BATTLE_GET_FULL: // при входе в бой
-			if (!wr_index) {
+			if (!response_size) {
 				return 3;
 			}
 
-			memcpy(&length, wr_buf, 2);
+			memcpy(&length, response_buffer, 2);
 
-			if (length != wr_index) {
+			if (length != response_size) {
 				return 4;
 			}
 
 			offset += 2;
 
-			if (wr_index == 3) { //код ошибки
-				error_code = wr_buf[offset];
+			if (response_size == 3) { //код ошибки
+				error_code = response_buffer[offset];
 
 				if (error_code < 10) {
 					if (error_code == 7) {
@@ -262,12 +261,12 @@ uint8_t parse_event(EVENT_ID eventID)
 						return NULL;
 					}
 
-					return wr_buf[offset];
+					return response_buffer[offset];
 				}
 
-				return wr_buf[offset];
+				return response_buffer[offset];
 			}
-			else if (wr_index >= 8) {
+			else if (response_size >= 8) {
 				/*
 				Всё прошло успешно.
 				Первый байт - ноль для проверки,
@@ -275,23 +274,23 @@ uint8_t parse_event(EVENT_ID eventID)
 				остальные четыре байта - оставшееся время
 				*/
 
-				if (wr_buf[offset] != 0) {
+				if (response_buffer[offset] != 0) {
 					return 5;
 				}
 
-				current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
+				current_map.stageID = (STAGE_ID)response_buffer[offset + 1];
 
 				if (current_map.stageID == STAGE_ID::COMPETITION)
 					isStreamer = false;
 				else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
 					isStreamer = true;
 
-				memcpy(&(current_map.time_preparing), wr_buf + offset + 2, 4);
+				memcpy(&(current_map.time_preparing), response_buffer + offset + 2, 4);
 
 				offset += 6;
 
-				if (wr_index > 8) { //парсинг координат
-					sections_count = wr_buf[offset];
+				if (response_size > 8) { //парсинг координат
+					sections_count = response_buffer[offset];
 
 					offset++;
 
@@ -299,12 +298,12 @@ uint8_t parse_event(EVENT_ID eventID)
 						return 6; //проверяем валидность числа секций
 					}
 
-					memcpy(&(current_map.minimap_count), wr_buf + offset, 2);
+					memcpy(&(current_map.minimap_count), response_buffer + offset, 2);
 
 					offset += 2;
 
 					for (uint16_t i = NULL; i < sections_count; i++) {
-						model_type = wr_buf[offset];
+						model_type = response_buffer[offset];
 
 						offset++;
 
@@ -312,7 +311,7 @@ uint8_t parse_event(EVENT_ID eventID)
 							return 7;  //проверяем валидность типа модели
 						}
 
-						memcpy(&models_count_sect, wr_buf + offset, 2);
+						memcpy(&models_count_sect, response_buffer + offset, 2);
 
 						offset += 2;
 
@@ -341,7 +340,7 @@ uint8_t parse_event(EVENT_ID eventID)
 							float* coords = new float[3];
 
 							for (uint8_t j = NULL; j < 3; j++) {
-								memcpy(&coords[j], wr_buf + offset, 4);
+								memcpy(&coords[j], response_buffer + offset, 4);
 
 								offset += 4;
 							}
@@ -368,20 +367,20 @@ uint8_t parse_event(EVENT_ID eventID)
 
 			break;
 		case EVENT_ID::IN_BATTLE_GET_SYNC: // синхронизация
-			if (!wr_index) {
+			if (!response_size) {
 				return 9;
 			}
 
-			memcpy(&length, wr_buf, 2);
+			memcpy(&length, response_buffer, 2);
 
-			if (length != wr_index) {
+			if (length != response_size) {
 				return 10;
 			}
 
 			offset += 2;
 
-			if (wr_index == 3) { //код ошибки
-				error_code = wr_buf[offset];
+			if (response_size == 3) { //код ошибки
+				error_code = response_buffer[offset];
 
 				if (error_code < 10) {
 					if (error_code == 7) {
@@ -400,12 +399,12 @@ uint8_t parse_event(EVENT_ID eventID)
 						return NULL;
 					}
 
-					return wr_buf[offset];
+					return response_buffer[offset];
 				}
 
-				return wr_buf[offset];
+				return response_buffer[offset];
 			}
-			else if (wr_index >= 8) {
+			else if (response_size >= 8) {
 				/*
 				Всё прошло успешно.
 				Первый байт - ноль для проверки,
@@ -422,25 +421,25 @@ uint8_t parse_event(EVENT_ID eventID)
 					   координаты удаляемых моделей
 				*/
 
-				if (wr_buf[offset] != 0) {
+				if (response_buffer[offset] != 0) {
 					return 11;
 				}
 
-				current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
+				current_map.stageID = (STAGE_ID)response_buffer[offset + 1];
 
 				if (current_map.stageID == STAGE_ID::COMPETITION)
 					isStreamer = false;
 				else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
 					isStreamer = true;
 
-				memcpy(&(current_map.time_preparing), wr_buf + offset + 2, 4);
+				memcpy(&(current_map.time_preparing), response_buffer + offset + 2, 4);
 
 				offset += 6;
 
-				if (wr_index > 8) { //парсинг координат
+				if (response_size > 8) { //парсинг координат
 					for (uint8_t modelSectionID = NULL; modelSectionID < 2; modelSectionID++) {
-						if (modelSectionID == 0 && wr_buf[offset] == 0) sect = &(sync_map.modelsSects_creating);
-						else if (modelSectionID == 1 && wr_buf[offset] == 1) sect = &(sync_map.modelsSects_deleting);
+						if (modelSectionID == 0 && response_buffer[offset] == 0) sect = &(sync_map.modelsSects_creating);
+						else if (modelSectionID == 1 && response_buffer[offset] == 1) sect = &(sync_map.modelsSects_deleting);
 						else {
 							extendedDebugLog("Found unexpected section while synchronizing!\n");
 
@@ -449,7 +448,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 						offset++;
 
-						uint8_t sections_count = wr_buf[offset];
+						uint8_t sections_count = response_buffer[offset];
 
 						offset++;
 
@@ -457,7 +456,7 @@ uint8_t parse_event(EVENT_ID eventID)
 							return 12; //проверяем валидность числа секций
 						}
 
-						memcpy(&(sync_map.all_models_count), wr_buf + offset, 2);
+						memcpy(&(sync_map.all_models_count), response_buffer + offset, 2);
 
 						offset += 2;
 
@@ -465,7 +464,7 @@ uint8_t parse_event(EVENT_ID eventID)
 						uint16_t models_count_sect = NULL;
 
 						for (uint16_t i = NULL; i < sections_count; i++) {
-							model_type = wr_buf[offset];
+							model_type = response_buffer[offset];
 
 							offset++;
 
@@ -473,7 +472,7 @@ uint8_t parse_event(EVENT_ID eventID)
 								return 13;  //проверяем валидность типа модели
 							}
 
-							memcpy(&models_count_sect, wr_buf + offset, 2);
+							memcpy(&models_count_sect, response_buffer + offset, 2);
 
 							offset += 2;
 
@@ -501,7 +500,7 @@ uint8_t parse_event(EVENT_ID eventID)
 							for (uint16_t i = 0; i < models_count_sect; i++) {
 								float* coords = new float[3];
 
-								memcpy(coords, wr_buf + offset, 12);
+								memcpy(coords, response_buffer + offset, 12);
 								offset += 12;
 								
 								model_sect.models[i] = coords;
@@ -527,20 +526,20 @@ uint8_t parse_event(EVENT_ID eventID)
 
 			break;
 		case EVENT_ID::DEL_LAST_MODEL:     // удаление ближайшей модели
-			if (!wr_index) {
+			if (!response_size) {
 				return 15;
 			}
 
-			memcpy(&length, wr_buf, 2);
+			memcpy(&length, response_buffer, 2);
 
-			if (length != wr_index) {
+			if (length != response_size) {
 				return 16;
 			}
 
 			offset += 2;
 
-			if (wr_index == 3) { //код ошибки
-				uint8_t error_code = wr_buf[offset];
+			if (response_size == 3) { //код ошибки
+				uint8_t error_code = response_buffer[offset];
 
 				if (error_code < 10) {
 					if (error_code == 7) {
@@ -558,7 +557,7 @@ uint8_t parse_event(EVENT_ID eventID)
 
 				return error_code;
 			}
-			else if (wr_index >= 9) {
+			else if (response_size >= 9) {
 				/*
 				Всё прошло успешно.
 				Первый байт - ноль для проверки,
@@ -566,17 +565,17 @@ uint8_t parse_event(EVENT_ID eventID)
 				остальные четыре байта - оставшееся время
 				*/
 
-				if (wr_buf[offset] != 0) {
+				if (response_buffer[offset] != 0) {
 					return 17;
 				}
 
-				current_map.stageID = (STAGE_ID)wr_buf[offset + 1];
+				current_map.stageID = (STAGE_ID)response_buffer[offset + 1];
 
-				memcpy(&(current_map.time_preparing), wr_buf + offset + 2, 4);
+				memcpy(&(current_map.time_preparing), response_buffer + offset + 2, 4);
 
 				offset += 6;
 
-				if (wr_buf[offset] == NULL) return NULL;
+				if (response_buffer[offset] == NULL) return NULL;
 
 				return 18;
 			}

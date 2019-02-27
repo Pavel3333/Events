@@ -54,7 +54,7 @@ void GUI_setError(uint8_t errorCode) {
 }
 
 void GUI_setVisible(bool visible) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || !modGUI) {
 		return;
 	}
 
@@ -64,7 +64,7 @@ void GUI_setVisible(bool visible) {
 }
 
 void GUI_setTimerVisible(bool visible) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || !modGUI) {
 		return;
 	}
 
@@ -74,7 +74,7 @@ void GUI_setTimerVisible(bool visible) {
 }
 
 void GUI_setTime(uint32_t time_preparing) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || !modGUI) {
 		return;
 	}
 
@@ -88,7 +88,7 @@ void GUI_setTime(uint32_t time_preparing) {
 }
 
 void GUI_setText(char* msg, float time_f) {
-	if (!isInited || battleEnded || !modGUI) {
+	if (!isInited || !modGUI) {
 		return;
 	}
 
@@ -131,7 +131,7 @@ void GUI_setText(char* msg, float time_f) {
 }
 
 void GUI_setMsg(uint8_t msgID, float time_f, uint8_t scoreID) {
-	if (!isInited || battleEnded || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= SECTIONS_COUNT) {
+	if (!isInited || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= SECTIONS_COUNT) {
 		return;
 	}
 

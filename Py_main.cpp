@@ -25,10 +25,17 @@ DWORD timerThread() {
 	if (!isInited ||!EVENT_START_TIMER) { traceLog
 		return 1;
 	} traceLog
-
+		
 	PyGILState_STATE gstate;
-
 	PyThreadState* _save;
+
+	//включаем GIL для этого потока
+
+	gstate = PyGILState_Ensure();
+
+	//-----------------------------
+
+	Py_UNBLOCK_THREADS;
 
 	INIT_LOCAL_MSG_BUFFER;
 
@@ -42,29 +49,13 @@ DWORD timerThread() {
 		case WAIT_OBJECT_0:  traceLog
 			superExtendedDebugLog("EVENT_START_TIMER signaled!");
 
-			//включаем GIL для этого потока
-
-			gstate = PyGILState_Ensure();
-
-			//-----------------------------
-
-			Py_UNBLOCK_THREADS;
-
 			//рабочая часть
 
-			request = handleStartTimerEvent(_save);
+			EVENT_START_TIMER->request = handleStartTimerEvent(_save);
 
-			if (request) { traceLog
-				extendedDebugLogEx(WARNING, "EVENT_START_TIMER - handleStartTimerEvent: error %d", request);
+			if (EVENT_START_TIMER->request) { traceLog
+				extendedDebugLogEx(WARNING, "EVENT_START_TIMER - handleStartTimerEvent: error %d", EVENT_START_TIMER->request);
 			}
-
-			Py_BLOCK_THREADS;
-
-			//выключаем GIL для этого потока
-
-			PyGILState_Release(gstate);
-
-			//------------------------------
 
 			break;
 
@@ -74,6 +65,14 @@ DWORD timerThread() {
 
 			return 2;
 	} traceLog
+
+	Py_BLOCK_THREADS;
+
+	//выключаем GIL для этого потока
+
+	PyGILState_Release(gstate);
+
+	//------------------------------
 
 	return NULL;
 }
@@ -206,35 +205,40 @@ DWORD handlerThread() {
 
 			EVENT_BATTLE_ENDED->request = handleBattleEndEvent(_save);
 
-			if (!EVENT_BATTLE_ENDED->request) { traceLog
-				battleEnded = true;
+			if (EVENT_BATTLE_ENDED->request) { traceLog
+				extendedDebugLogEx(WARNING, "EVENT_BATTLE_ENDED - handleBattleEndEvent: error %d!", EVENT_BATTLE_ENDED->request);
 
-				current_map.stageID = STAGE_ID::COMPETITION;
-
-				PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
-
-				if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog
-					delLabelCBID = 0;
-
-					Py_XDECREF(delLabelCBID_p);
-				}
-				else { traceLog
-					delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
-
-					Py_DECREF(delLabelCBID_p);
-				} traceLog
-
-				gBigWorldUtils->cancelCallback(delLabelCBID);
-				delLabelCBID = 0;
-
-				allModelsCreated = NULL;
-
-				GUI_setVisible(false);
-				GUI_clearText();
-
-				mapID   = NULL;
+				goto end_EVENT_BATTLE_ENDED;
 			}
 
+			battleEnded = true;
+
+			current_map.stageID = STAGE_ID::COMPETITION;
+
+			PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
+
+			if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog
+				delLabelCBID = 0;
+
+				Py_XDECREF(delLabelCBID_p);
+			}
+			else { traceLog
+				delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
+
+				Py_DECREF(delLabelCBID_p);
+			} traceLog
+
+			gBigWorldUtils->cancelCallback(delLabelCBID);
+			delLabelCBID = 0;
+
+			allModelsCreated = NULL;
+
+			GUI_setVisible(false);
+			GUI_clearText();
+
+			mapID   = NULL;
+
+end_EVENT_BATTLE_ENDED:
 			Py_UNBLOCK_THREADS;
 
 			break;
