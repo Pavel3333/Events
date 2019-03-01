@@ -16,6 +16,8 @@ static PyMemberDef config_members[9] = {
 };
 
 
+PyObject* m_g_gui = NULL;
+
 Config config = Config();
 
 ConfigObject* g_self = NULL;
