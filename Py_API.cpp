@@ -8,7 +8,7 @@ INIT_LOCAL_MSG_BUFFER;
 
 PyObject* event_module = NULL;
 
-PyObject* spaceKey = NULL;
+PyObject* keyDelLastModel = NULL;
 
 uint16_t allModelsCreated = NULL;
 
@@ -39,113 +39,6 @@ EVENT_ID lastEventID = EVENT_ID::IN_HANGAR;
 
 std::vector<ModModel*> models;
 //std::vector<ModLight*> lights;
-
-bool write_data(char* data_path, PyObject* data_p) { traceLog
-
-	PyObject* arg2 = Py_False;
-	Py_INCREF(arg2);
-
-	PyObject* arg3 = Py_True;
-	Py_INCREF(arg3);
-
-	PyObject* arg4 = Py_True;
-	Py_INCREF(arg4);
-
-	PyObject* arg5 = Py_True;
-	Py_INCREF(arg5);
-
-	PyObject* arg6 = Py_None;
-	Py_INCREF(arg6);
-
-	PyObject* indent = PyInt_FromSize_t(4);
-	Py_INCREF(indent);
-
-	PyObject* __dumps = PyString_FromString("dumps");
-
-	PyObject_CallMethodObjArgs_increfed(data_json_s, gBigWorldUtils->m_json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
-
-	Py_DECREF(__dumps);
-	Py_DECREF(arg2);
-	Py_DECREF(arg3);
-	Py_DECREF(arg4);
-	Py_DECREF(arg5);
-	Py_DECREF(arg6);
-	Py_DECREF(indent);
-
-	if (!data_json_s) { traceLog
-		return false;
-	} traceLog
-
-	size_t data_size = PyObject_Length(data_json_s);
-
-	std::ofstream data_w(data_path);
-
-	data_w.write(PyString_AS_STRING(data_json_s), data_size);
-
-	data_w.close();
-
-	Py_DECREF(data_json_s);
-
-	return true;
-}
-
-bool read_data(bool isData) { traceLog
-	char* data_path;
-	PyObject* data_src;
-	if (isData) { traceLog
-		data_path = "mods/configs/pavel3333/NY_Event/NY_Event.json";
-		data_src = g_self->data;
-	}
-	else {
-		data_src = g_self->i18n;
-		data_path = "mods/configs/pavel3333/NY_Event/i18n/ru.json";
-	} traceLog
-
-	std::ifstream data(data_path, std::ios::binary);
-
-	if (!data.is_open()) { traceLog
-		data.close();
-		if (!write_data(data_path, data_src)) { traceLog
-			return false;
-		} traceLog
-	}
-	else {
-		data.seekg(0, std::ios::end);
-		size_t size = (size_t)data.tellg(); //getting file size
-		data.seekg(0);
-
-		char* data_s = new char[size + 1];
-
-		while (!data.eof()) {
-			data.read(data_s, size);
-		} traceLog
-
-		data.close();
-
-		PyObject_CallMethod_increfed(data_json_s, gBigWorldUtils->m_json, "loads", "s", data_s);
-
-		delete[] data_s;
-
-		if (!data_json_s) { traceLog
-			PyErr_Clear();
-
-			if (!write_data(data_path, data_src)) { traceLog
-				return false;
-			} traceLog
-
-			return true;
-		} traceLog
-
-		PyObject* old = data_src;
-		if (isData) g_self->data = data_json_s;
-		else g_self->i18n = data_json_s;
-
-		PyDict_Clear(old);
-		Py_DECREF(old);
-	} traceLog
-
-	return true;
-}
 
 void clearModelsSections() { traceLog
 	std::vector<ModelsSection>::iterator it_sect = current_map.modelsSects.begin();

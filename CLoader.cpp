@@ -126,7 +126,7 @@ DWORD handlerThread() {
 	
 	Py_BLOCK_THREADS;
 
-	HangarMessages->showMessage(g_self->i18n);
+	HangarMessages->showMessage(gPyConfig->g_self->i18n);
 
 	if (HangarMessages->lastError) {
 		extendedDebugLogEx(WARNING, "showMessage: error %d", HangarMessages->lastError);
@@ -415,29 +415,29 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		return 1;
 	} traceLog
 
-	if (m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog
+	if (gPyConfig->m_g_gui && PyCallable_Check(template_) && PyCallable_Check(apply)) { traceLog
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
-		PyObject_CallMethod_increfed(result, m_g_gui, "register", "sOOO", g_self->ids, template_, g_self->data, apply);
+		PyObject_CallMethod_increfed(result, gPyConfig->m_g_gui, "register", "sOOO", gPyConfig->g_self->ids, template_, gPyConfig->g_self->data, apply);
 
 		Py_XDECREF(result);
 		Py_DECREF(apply);
 		Py_DECREF(template_);
 	} traceLog
 
-	if (!m_g_gui && PyCallable_Check(byteify)) { traceLog
+	if (!gPyConfig->m_g_gui && PyCallable_Check(byteify)) { traceLog
 		Py_INCREF(byteify);
 
 		PyObject* args1 = PyTuple_New(1);
-		PyTuple_SET_ITEM(args1, NULL, g_self->i18n);
+		PyTuple_SET_ITEM(args1, NULL, gPyConfig->g_self->i18n);
 
 		PyObject* result = PyObject_CallObject(byteify, args1);
 
 		if (result) { traceLog
-			PyObject* old = g_self->i18n;
+			PyObject* old = gPyConfig->g_self->i18n;
 
-			g_self->i18n = result;
+			gPyConfig->g_self->i18n = result;
 
 			PyDict_Clear(old);
 			Py_DECREF(old);

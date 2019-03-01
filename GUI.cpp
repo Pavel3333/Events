@@ -1,5 +1,6 @@
 ﻿#include "GUI.h"
 #include "BW_native.h"
+#include "Py_config.h"
 #include "MyLogger.h"
 
 
@@ -141,7 +142,7 @@ void GUI_setMsg(uint8_t msgID, float time_f, uint8_t scoreID) {
 
 	// получить из словаря локализации нужную строку
 
-	PyObject* messagesList = PyDict_GetItemString(g_self->i18n, "UI_messages");
+	PyObject* messagesList = PyDict_GetItemString(gPyConfig->g_self->i18n, "UI_messages");
 
 	if (!messagesList) {
 		return;

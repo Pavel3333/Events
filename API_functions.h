@@ -140,8 +140,6 @@ extern bool isStreamer;
 extern map      current_map;
 extern map_sync sync_map;
 
-extern Config config;
-
 float getDist2Points(const float[3], const float[3]);
 
 const std::vector<float*>* findModelsByID(std::vector<ModelsSection>&, uint8_t);

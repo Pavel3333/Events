@@ -20,7 +20,7 @@ struct ModLight {
 
 extern PyObject* event_module;
 
-extern PyObject* spaceKey;
+extern PyObject* keyDelLastModel;
 
 extern uint16_t allModelsCreated;
 
@@ -41,10 +41,6 @@ extern bool isTimeVisible;
 
 extern std::vector<ModModel*> models;
 //extern std::vector<ModLight*> lights;
-
-bool write_data(char*, PyObject*);
-
-bool read_data(bool);
 
 void clearModelsSections();
 

@@ -77,7 +77,7 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
 };
 
 static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLog
-	if (!isInited || first_check || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog
+	if (!isInited || first_check || !databaseID || !mapID || !keyDelLastModel || isStreamer) { traceLog
 		Py_RETURN_NONE;
 	} //traceLog
 
@@ -87,10 +87,10 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted = NULL;
 
-	if (m_g_gui) { //traceLog
+	if (gPyConfig->m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, m_g_gui, __get_key, spaceKey, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, gPyConfig->m_g_gui, __get_key, keyDelLastModel, NULL);
 
 		Py_DECREF(__get_key);
 
@@ -105,7 +105,7 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 
 		PyObject* ____contains__ = PyString_FromString("__contains__");
 
-		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, spaceKey, ____contains__, key, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, keyDelLastModel, ____contains__, key, NULL);
 
 		Py_DECREF(____contains__);
 
@@ -152,6 +152,7 @@ PyMODINIT_FUNC initevent(void)
 
 	gBigWorldUtils = new BigWorldUtils();
 	if (!gBigWorldUtils->inited) {
+		debugLogEx(ERROR, "initevent - init BigWorldUtils: error %d!", gBigWorldUtils->lastError);
 		goto freeBigWorldUtils;
 	}
 
@@ -159,40 +160,30 @@ PyMODINIT_FUNC initevent(void)
 
 	HangarMessages = new HangarMessagesC();
 	if (!HangarMessages->inited) {
-		debugLogEx(ERROR, "initevent - initHangarMessages: error %d!", HangarMessages->lastError);
+		debugLogEx(ERROR, "initevent - init HangarMessages: error %d!", HangarMessages->lastError);
 		goto freeHangarMessages;
 	}
 
 	debugLog("Config init...");
 
-	if (PyType_Ready(&Config_p)) {
-		goto freeHangarMessages;
+	gPyConfig = new PyConfig();
+	if (!gPyConfig->inited) {
+		debugLogEx(ERROR, "initevent - init PyConfig: error %d!", gPyConfig->lastError);
+		goto freePyConfig;
 	}
-
-	Py_INCREF(&Config_p);
 
 	debugLog("Config init OK");
-
-	//загрузка конфига мода
-
-	PyObject* g_config = PyObject_CallObject((PyObject*)&Config_p, NULL);
-
-	Py_DECREF(&Config_p);
-
-	if (!g_config || !g_self) {
-		goto freeHangarMessages;
-	}
 
 	//инициализация модуля
 
 	event_module = Py_InitModule("event", event_methods);
 
 	if (!event_module) {
-		goto freeHangarMessages;
+		goto freePyConfig;
 	}
 
-	if (PyModule_AddObject(event_module, "l", g_config)) {
-		goto freeHangarMessages;
+	if (PyModule_AddObject(event_module, "l", gPyConfig->g_config)) {
+		goto freePyConfig;
 	}
 
 	//получение указателя на метод модуля onModelCreated
@@ -200,15 +191,15 @@ PyMODINIT_FUNC initevent(void)
 	onModelCreatedPyMeth = PyObject_GetAttrString(event_module, "omc");
 
 	if (!onModelCreatedPyMeth) {
-		goto freeHangarMessages;
+		goto freePyConfig;
 	}
 
 	//Space key
 
-	spaceKey = PyList_New(1);
+	keyDelLastModel = PyList_New(1);
 
-	if (spaceKey) {
-		PyList_SET_ITEM(spaceKey, 0, PyInt_FromSize_t(KEY_DEL_LAST_MODEL));
+	if (keyDelLastModel) {
+		PyList_SET_ITEM(keyDelLastModel, 0, PyInt_FromSize_t(KEY_DEL_LAST_MODEL));
 	}
 
 	//загрузка modGUI
@@ -218,7 +209,7 @@ PyMODINIT_FUNC initevent(void)
 	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
 
 	if (!mGUI_module) {
-		goto freeHangarMessages;
+		goto freePyConfig;
 	}
 
 	debugLog("Mod_GUI class loading...");
@@ -228,72 +219,10 @@ PyMODINIT_FUNC initevent(void)
 	Py_DECREF(mGUI_module);
 
 	if (!modGUI) {
-		goto freeHangarMessages;
+		goto freePyConfig;
 	}
 
 	debugLog("Mod_GUI class loaded OK!");
-
-	//загрузка g_gui
-
-	debugLog("g_gui module loading...");
-
-	PyObject* mod_mods_gui = PyImport_ImportModule("gui.mods.mod_mods_gui");
-
-	if (!mod_mods_gui) { traceLog
-		PyErr_Clear();
-
-		delete gBigWorldUtils;
-		gBigWorldUtils = nullptr;
-
-		debugLog("mod_mods_gui is NULL!");
-	}
-	else {
-		m_g_gui = PyObject_GetAttrString(mod_mods_gui, "g_gui");
-
-		Py_DECREF(mod_mods_gui);
-
-		if (!m_g_gui) { traceLog
-			goto freeHangarMessages;
-		} traceLog
-
-		debugLog("mod_mods_gui loaded OK!");
-	} traceLog
-
-	if (!m_g_gui) { traceLog
-		CreateDirectoryA("mods/configs", NULL);
-		CreateDirectoryA("mods/configs/pavel3333", NULL);
-		CreateDirectoryA("mods/configs/pavel3333/NY_Event", NULL);
-		CreateDirectoryA("mods/configs/pavel3333/NY_Event/i18n", NULL);
-
-		if (!read_data(true) || !read_data(false)) { traceLog
-			goto freeHangarMessages;
-		} traceLog
-	}
-	else {
-		PyObject_CallMethod_increfed(data_i18n, m_g_gui, "register_data", "sOOs", g_self->ids, g_self->data, g_self->i18n, "pavel3333");
-
-		if (!data_i18n) { traceLog
-			Py_DECREF(modGUI);
-			goto freeHangarMessages;
-		} traceLog
-
-		PyObject* old = g_self->data;
-
-		g_self->data = PyTuple_GET_ITEM(data_i18n, NULL);
-
-		PyDict_Clear(old);
-
-		Py_DECREF(old);
-
-		old = g_self->i18n;
-
-		g_self->i18n = PyTuple_GET_ITEM(data_i18n, 1);
-
-		PyDict_Clear(old);
-
-		Py_DECREF(old);
-		Py_DECREF(data_i18n);
-	} traceLog
 	
 	//инициализация curl
 
@@ -302,7 +231,7 @@ PyMODINIT_FUNC initevent(void)
 	if (curl_init_result) { traceLog
 		debugLogEx(ERROR, "Initialising CURL handle: error %d", curl_init_result);
 
-		goto freeHangarMessages;
+		goto freePyConfig;
 	} traceLog
 
 	isInited = true;
@@ -329,10 +258,14 @@ PyMODINIT_FUNC initevent(void)
 	if (!hHandlerThread) { traceLog
 		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
 
-		goto freeHangarMessages;
+		goto freePyConfig;
 	} traceLog
 
 	return;
+
+freePyConfig:
+	delete gPyConfig;
+	gPyConfig = nullptr;;
 
 freeHangarMessages:
 	delete HangarMessages;
