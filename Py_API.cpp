@@ -629,69 +629,60 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //прин
 }
 
 uint8_t create_models() { traceLog
-	if (!isInited || battleEnded || !onModelCreatedPyMeth || !M_MODELS_NOT_USING) { traceLog
+	if (!isInited || battleEnded || !onModelCreatedPyMeth) { traceLog
 		return 1;
 	} traceLog
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	BEGIN_USING_MODELS;
-		case WAIT_OBJECT_0: traceLog
-			superExtendedDebugLog("MODELS_USING");
+	g_models_mutex.lock();
+	superExtendedDebugLog("MODELS_USING");
 
-			for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
-				it != current_map.modelsSects.end();
-				it++) {
+	for (auto it = current_map.modelsSects.begin(); //первый проход - получаем число всех созданных моделей
+		it != current_map.modelsSects.end();
+		it++) {
 
-				if (!it->isInitialised || it->models.empty()) { traceLog
-					continue;
-				}
+		if (!it->isInitialised || it->models.empty()) { traceLog
+			continue;
+		}
 
-				auto it2 = it->models.begin();
+		auto it2 = it->models.begin();
 
-				while (it2 != it->models.end()) {
-					if (*it2 == nullptr) { traceLog
-						extendedDebugLogEx(WARNING, "create_models - *it2 is NULL!");
+		while (it2 != it->models.end()) {
+			if (*it2 == nullptr) { traceLog
+				extendedDebugLogEx(WARNING, "create_models - *it2 is NULL!");
 
-						it2 = it->models.erase(it2);
+				it2 = it->models.erase(it2);
 
-						continue;
-					}
+				continue;
+			}
 
-					allModelsCreated++;
+			allModelsCreated++;
 
-					it2++;
-				}
-			} traceLog
+			it2++;
+		}
+	} traceLog
 
-			for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
-				it != current_map.modelsSects.cend();
-				it++) {
-				if (!it->isInitialised || it->models.empty()) { traceLog
-					continue;
-				}
+	for (auto it = current_map.modelsSects.cbegin(); //второй проход - создаем модели
+		it != current_map.modelsSects.cend();
+		it++) {
+		if (!it->isInitialised || it->models.empty()) { traceLog
+			continue;
+		}
 
-				for (float* it2 : it->models) {
-					superExtendedDebugLog("[");
+		for (float* it2 : it->models) {
+			superExtendedDebugLog("[");
 
-					event_model(it->path, it2, true);
-
-					superExtendedDebugLog("], ");
-				}
-			} traceLog
+			event_model(it->path, it2, true);
 
 			superExtendedDebugLog("], ");
+		}
+	} traceLog
 
-			RELEASE_MODELS("create_models - MODELS_NOT_USING - ReleaseMutex: error %d!", 4)
+	superExtendedDebugLog("], ");
 
-			superExtendedDebugLog("MODELS_NOT_USING");
-
-			break;
-		case WAIT_ABANDONED: traceLog
-			extendedDebugLogEx(ERROR, "create_models - MODELS_NOT_USING: WAIT_ABANDONED!");
-
-			return 2;
-	END_USING_MODELS;
+	superExtendedDebugLog("MODELS_NOT_USING");
+	g_models_mutex.unlock();
 
 	return NULL;
 }

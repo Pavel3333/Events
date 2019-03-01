@@ -2,6 +2,7 @@
 
 #include "ModThreads.h"
 #include "Network.h"
+#include <mutex>
 
 //WaitableTimer
 
@@ -35,7 +36,7 @@ extern PEVENTDATA_2 EVENT_BATTLE_ENDED;
 
 //Мутексы
 
-extern HANDLE M_MODELS_NOT_USING;
+extern std::mutex g_models_mutex;
 
 //Критические секции
 

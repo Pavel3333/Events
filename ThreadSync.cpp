@@ -34,7 +34,7 @@ PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
 
 //Мутексы
 
-HANDLE M_MODELS_NOT_USING  = NULL;
+std::mutex g_models_mutex;
 
 //Критические секции
 
@@ -154,17 +154,6 @@ bool createEventsAndMutexes() { traceLog
 	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog
 		return false;
 	} traceLog
-
-	M_MODELS_NOT_USING  = CreateMutex(
-		NULL,              // default security attributes
-		FALSE,             // initially not owned
-		NULL);             // unnamed mutex
-
-	if (!M_MODELS_NOT_USING) { traceLog
-		debugLogEx(ERROR, "MODELS_NOT_USING creating: error %d", GetLastError());
-
-		return false;
-	}
 
 	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog
 		return false;

@@ -272,14 +272,6 @@ end_EVENT_BATTLE_ENDED:
 	closeEvent2(&EVENT_ALL_MODELS_CREATED);
 	closeEvent2(&EVENT_BATTLE_ENDED);
 
-	//освобождаем мутексы
-
-	if (M_MODELS_NOT_USING) { traceLog
-		CloseHandle(M_MODELS_NOT_USING);
-
-		M_MODELS_NOT_USING = NULL;
-	} traceLog
-
 	Py_BLOCK_THREADS;
 
 	//выключаем GIL для этого потока

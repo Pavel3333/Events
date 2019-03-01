@@ -8,21 +8,6 @@
 #include "python2.7/Python.h"
 
 
-// не использовать такой код!
-#define BEGIN_USING_MODELS {                                   \
-	DWORD M_MODELS_NOT_USING_WaitResult = WaitForSingleObject( \
-	M_MODELS_NOT_USING,    				                       \
-	INFINITE);                                                 \
-	switch (M_MODELS_NOT_USING_WaitResult) {
-
-#define END_USING_MODELS }}
-
-#define RELEASE_MODELS(msg, code)                     \
-    if (!ReleaseMutex(M_MODELS_NOT_USING)) { traceLog \
-		extendedDebugLogEx(ERROR, msg, GetLastError());      \
-		return code;                                   \
-	} traceLog
-
 #define MOD_VERSION "v1.0.0.4 (" __TIMESTAMP__ ")"
 
 #define NET_BUFFER_SIZE 16384

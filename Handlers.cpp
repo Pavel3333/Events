@@ -11,38 +11,27 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 {
 	traceLog
 	
-	if (!isInited || first_check || battleEnded || !M_MODELS_NOT_USING || !EVENT_START_TIMER) { traceLog
+	if (!isInited || first_check || battleEnded || !EVENT_START_TIMER) { traceLog
 		return 1;
 	} traceLog
 
 	extendedDebugLog("parsing...");
 
-	BEGIN_USING_MODELS;
-		case WAIT_OBJECT_0: traceLog
-			superExtendedDebugLog("MODELS_USING");
+	g_models_mutex.lock();
+	superExtendedDebugLog("MODELS_USING");
 
-			EVENT_START_TIMER->request = parse_event_threadsafe(EVENT_START_TIMER->eventID);
+	EVENT_START_TIMER->request = parse_event_threadsafe(EVENT_START_TIMER->eventID);
 
-			if (EVENT_START_TIMER->request) { traceLog
-				extendedDebugLogEx(ERROR, "parsing FAILED! Error code: %d", EVENT_START_TIMER->request);
+	if (EVENT_START_TIMER->request) { traceLog
+		extendedDebugLogEx(ERROR, "parsing FAILED! Error code: %d", EVENT_START_TIMER->request);
 
-				//GUI_setError(parsing_result);
+		//GUI_setError(parsing_result);
 
-				RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 5);
+		return 4;
+	} traceLog
 
-				return 4;
-			} traceLog
-
-			RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 3);
-
-			superExtendedDebugLog("MODELS_NOT_USING");
-
-			break;
-		case WAIT_ABANDONED: traceLog
-			extendedDebugLogEx(ERROR, "handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!");
-
-			return 2;
-	END_USING_MODELS;
+	superExtendedDebugLog("MODELS_NOT_USING");
+	g_models_mutex.unlock();
 
 	extendedDebugLog("parsing OK!");
 
@@ -117,26 +106,17 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 
 				extendedDebugLog("creating...");
 
-				BEGIN_USING_MODELS;
-					case WAIT_OBJECT_0: traceLog
-						superExtendedDebugLog("MODELS_USING");
+				g_models_mutex.lock();
+				superExtendedDebugLog("MODELS_USING");
 
-						// Что это ???
-						// Может models.clear() стоит ?
-						models.~vector();
-						//lights.~vector();
+				// Что это ???
+				// Может models.clear() стоит ?
+				models.~vector();
+				//lights.~vector();
 
-						RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 6);
+				superExtendedDebugLog("MODELS_NOT_USING");
+				g_models_mutex.unlock();
 
-						superExtendedDebugLog("MODELS_NOT_USING");
-
-						break;
-					case WAIT_ABANDONED: traceLog
-						extendedDebugLogEx(ERROR, "handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!");
-
-						return 5;
-				END_USING_MODELS;
-						
 				Py_BLOCK_THREADS;
 
 				/*
@@ -233,93 +213,84 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 		std::vector<ModelsSection>::iterator it_sect_sync;
 		std::vector<float*>::iterator        it_model;
 
-		BEGIN_USING_MODELS;
-			case WAIT_OBJECT_0: traceLog
-				superExtendedDebugLog("MODELS_USING");
+		g_models_mutex.lock();
+		superExtendedDebugLog("MODELS_USING");
 
-				it_sect_sync = sync_map.modelsSects_deleting.begin();
+		it_sect_sync = sync_map.modelsSects_deleting.begin();
 
-				superExtendedDebugLog("SYNC - %d models sections to delete", sync_map.modelsSects_deleting.size());
+		superExtendedDebugLog("SYNC - %d models sections to delete", sync_map.modelsSects_deleting.size());
 
-				Py_BLOCK_THREADS;
+		Py_BLOCK_THREADS;
 
-				while (it_sect_sync != sync_map.modelsSects_deleting.end()) { traceLog
-					if (it_sect_sync->isInitialised) {
-						superExtendedDebugLog("SYNC - %d models to delete in section %d", it_sect_sync->models.size(), it_sect_sync->ID);
+		while (it_sect_sync != sync_map.modelsSects_deleting.end()) { traceLog
+			if (it_sect_sync->isInitialised) {
+				superExtendedDebugLog("SYNC - %d models to delete in section %d", it_sect_sync->models.size(), it_sect_sync->ID);
 
-						it_model = it_sect_sync->models.begin();
+				it_model = it_sect_sync->models.begin();
 
-						while (it_model != it_sect_sync->models.end()) { traceLog
-							if (*it_model == nullptr) { traceLog
-								extendedDebugLog("WARNING, handleBattleEvent - *it_model is NULL!%d");
+				while (it_model != it_sect_sync->models.end()) { traceLog
+					if (*it_model == nullptr) { traceLog
+						extendedDebugLog("WARNING, handleBattleEvent - *it_model is NULL!%d");
 
-								it_model = it_sect_sync->models.erase(it_model);
+						it_model = it_sect_sync->models.erase(it_model);
 										
-								continue;
-							}
-
-							EVENT_START_TIMER->request = delModelPy(*it_model);
-
-							if (EVENT_START_TIMER->request) { traceLog
-								extendedDebugLogEx(WARNING, "handleBattleEvent - delModelPy - Error code %d", EVENT_START_TIMER->request);
-
-								//GUI_setError(EVENT_START_TIMER->request);
-
-								it_model++;
-
-								continue;
-							}
-
-							delete[] *it_model;
-							*it_model = nullptr;
-
-							it_model = it_sect_sync->models.erase(it_model);
-
-							/*
-
-							EVENT_START_TIMER->request = delModelCoords(it_sect_sync->ID, *it_model);
-
-							if (EVENT_START_TIMER->request) { traceLog
-								extendedDebugLogEx(ERROR, "handleBattleEvent - delModelCoords - Error code %d", EVENT_START_TIMER->request);
-
-								//GUI_setError(res);
-
-								it_model++;
-
-								continue;
-							}
-
-							*/
-						}
+						continue;
 					}
+
+					EVENT_START_TIMER->request = delModelPy(*it_model);
+
+					if (EVENT_START_TIMER->request) { traceLog
+						extendedDebugLogEx(WARNING, "handleBattleEvent - delModelPy - Error code %d", EVENT_START_TIMER->request);
+
+						//GUI_setError(EVENT_START_TIMER->request);
+
+						it_model++;
+
+						continue;
+					}
+
+					delete[] *it_model;
+					*it_model = nullptr;
+
+					it_model = it_sect_sync->models.erase(it_model);
+
+					/*
+
+					EVENT_START_TIMER->request = delModelCoords(it_sect_sync->ID, *it_model);
+
+					if (EVENT_START_TIMER->request) { traceLog
+						extendedDebugLogEx(ERROR, "handleBattleEvent - delModelCoords - Error code %d", EVENT_START_TIMER->request);
+
+						//GUI_setError(res);
+
+						it_model++;
+
+						continue;
+					}
+
+					*/
+				}
+			}
 							
-					superExtendedDebugLog("SYNC - %d models after deleting", sync_map.modelsSects_deleting.size());
+			superExtendedDebugLog("SYNC - %d models after deleting", sync_map.modelsSects_deleting.size());
 
-					if (it_sect_sync->path != nullptr) {
-						delete[] it_sect_sync->path;
+			if (it_sect_sync->path != nullptr) {
+				delete[] it_sect_sync->path;
 
-						it_sect_sync->path = nullptr;
-					}
+				it_sect_sync->path = nullptr;
+			}
 
-					it_sect_sync->models.~vector();
+			it_sect_sync->models.~vector();
 
-					it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
-				} traceLog
+			it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //удаляем секцию из вектора секций синхронизации
+		} traceLog
 
-				Py_UNBLOCK_THREADS;
+		Py_UNBLOCK_THREADS;
 
-				sync_map.modelsSects_deleting.~vector();
+		sync_map.modelsSects_deleting.~vector();
 
-				RELEASE_MODELS("handleBattleEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 14);
-
-				superExtendedDebugLog("MODELS_NOT_USING");
-
-				break;
-			case WAIT_ABANDONED: traceLog
-				extendedDebugLogEx(ERROR, "handleBattleEvent - MODELS_NOT_USING: WAIT_ABANDONED!");
-
-				return 13;
-			END_USING_MODELS;
+		superExtendedDebugLog("MODELS_NOT_USING");
+		g_models_mutex.unlock();
 	}
 	else { traceLog
 		return NULL;
@@ -542,7 +513,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 {
 	traceLog
 	
-	if (!isInited || first_check || !M_MODELS_NOT_USING) { traceLog
+	if (!isInited || first_check) { traceLog
 		return 1;
 	} traceLog
 
@@ -551,97 +522,86 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 	std::vector<ModModel*>::iterator it_model;
 	std::vector<ModLight*>::iterator it_light;
 
-	BEGIN_USING_MODELS;
-		case WAIT_OBJECT_0: traceLog
-			superExtendedDebugLog("MODELS_USING");
+	g_models_mutex.lock();
+	superExtendedDebugLog("MODELS_USING");
 
-			Py_BLOCK_THREADS;
+	Py_BLOCK_THREADS;
 
-			if (!models.empty()) { traceLog
-				EVENT_BATTLE_ENDED->request = del_models();
+	if (!models.empty()) { traceLog
+		EVENT_BATTLE_ENDED->request = del_models();
 
-				if (EVENT_BATTLE_ENDED->request) { traceLog
-					extendedDebugLogEx(WARNING, "handleBattleEndEvent - del_models: %d", EVENT_BATTLE_ENDED->request);
-				} traceLog
+		if (EVENT_BATTLE_ENDED->request) { traceLog
+			extendedDebugLogEx(WARNING, "handleBattleEndEvent - del_models: %d", EVENT_BATTLE_ENDED->request);
+		} traceLog
 
-				it_model = models.begin();
+		it_model = models.begin();
 
-				while (it_model != models.end()) {
-					if (*it_model == nullptr) { traceLog
-						extendedDebugLogEx(WARNING, "handleBattleEndEvent - *it_model is NULL!%d");
+		while (it_model != models.end()) {
+			if (*it_model == nullptr) { traceLog
+				extendedDebugLogEx(WARNING, "handleBattleEndEvent - *it_model is NULL!%d");
 
-						it_model = models.erase(it_model);
+				it_model = models.erase(it_model);
 
-						continue;
-					}
+				continue;
+			}
 
-					Py_XDECREF((*it_model)->model);
+			Py_XDECREF((*it_model)->model);
 
-					(*it_model)->model = NULL;
-					(*it_model)->coords = nullptr;
-					(*it_model)->processed = false;
+			(*it_model)->model = NULL;
+			(*it_model)->coords = nullptr;
+			(*it_model)->processed = false;
 
-					delete *it_model;
-					*it_model = nullptr;
+			delete *it_model;
+			*it_model = nullptr;
 
-					it_model = models.erase(it_model);
+			it_model = models.erase(it_model);
 
-					it_model++;
-				} traceLog
+			it_model++;
+		} traceLog
 
-				models.~vector();
+		models.~vector();
+	} traceLog
+
+	/*if (!lights.empty()) { traceLog
+			it_light = lights.begin();
+
+			while (it_light != lights.end()) {
+				if (*it_light == nullptr) { traceLog
+					extendedDebugLogEx(WARNING, "handleBattleEndEvent - *it_light is NULL!%d");
+
+					it_light = lights.erase(it_light);
+
+					continue;
+				}
+
+				Py_XDECREF((*it_light)->model);
+
+				(*it_light)->model = NULL;
+				(*it_light)->coords = nullptr;
+
+				delete *it_light;
+				*it_light = nullptr;
+
+				it_light = lights.erase(it_light);
 			} traceLog
 
-			/*if (!lights.empty()) { traceLog
-					it_light = lights.begin();
+			lights.~vector();
+		} traceLog*/
 
-					while (it_light != lights.end()) {
-						if (*it_light == nullptr) { traceLog
-							extendedDebugLogEx(WARNING, "handleBattleEndEvent - *it_light is NULL!%d");
+	isModelsAlreadyInited = false;
 
-							it_light = lights.erase(it_light);
+	Py_UNBLOCK_THREADS;
 
-							continue;
-						}
+	if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog
+		clearModelsSections();
+	} traceLog
 
-						Py_XDECREF((*it_light)->model);
+	isModelsAlreadyCreated = false;
 
-						(*it_light)->model = NULL;
-						(*it_light)->coords = nullptr;
+	current_map.minimap_count = NULL;
 
-						delete *it_light;
-						*it_light = nullptr;
-
-						it_light = lights.erase(it_light);
-					} traceLog
-
-					lights.~vector();
-				} traceLog*/
-
-			isModelsAlreadyInited = false;
-
-			Py_UNBLOCK_THREADS;
-
-			if (!current_map.modelsSects.empty() && current_map.minimap_count) { traceLog
-				clearModelsSections();
-			} traceLog
-
-			isModelsAlreadyCreated = false;
-
-			current_map.minimap_count = NULL;
-
-			RELEASE_MODELS("handleBattleEndEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 3);
-
-			superExtendedDebugLog("MODELS_NOT_USING");
-
-			break;
-		case WAIT_ABANDONED: traceLog
-			extendedDebugLogEx(ERROR, "handleBattleEndEvent - MODELS_NOT_USING: WAIT_ABANDONED!");
-
-			Py_BLOCK_THREADS;
-
-			return 2;
-	END_USING_MODELS;
+	superExtendedDebugLog("MODELS_NOT_USING");
+	g_models_mutex.unlock();
 
 	Py_BLOCK_THREADS;
 
@@ -673,26 +633,17 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 	MODEL_ID modelID;
 	float* coords = new float[3];
 
-	BEGIN_USING_MODELS;
-		case WAIT_OBJECT_0: traceLog
-			superExtendedDebugLog("MODELS_USING");
+	g_models_mutex.lock();
+	superExtendedDebugLog("MODELS_USING");
 
-			Py_BLOCK_THREADS;
+	Py_BLOCK_THREADS;
 
-			gBigWorldUtils->getLastModelCoords(5.0, &modelID, &coords);
+	gBigWorldUtils->getLastModelCoords(5.0, &modelID, &coords);
 
-			Py_UNBLOCK_THREADS;
+	Py_UNBLOCK_THREADS;
 
-			RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 2);
-
-			superExtendedDebugLog("MODELS_NOT_USING");
-
-			break;
-		case WAIT_ABANDONED: traceLog
-			extendedDebugLogEx(ERROR, "handleDelModelEvent - MODELS_NOT_USING: WAIT_ABANDONED!");
-
-			return 3;
-	END_USING_MODELS;
+	superExtendedDebugLog("MODELS_NOT_USING");
+	g_models_mutex.unlock();
 
 	if      (!gBigWorldUtils->lastError) { traceLog
 		EVENT_DEL_MODEL->request = send_token_threadsafe(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
@@ -728,56 +679,44 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 			return 6;
 		} traceLog
 
-		BEGIN_USING_MODELS;
-			case WAIT_OBJECT_0: traceLog
-				superExtendedDebugLog("MODELS_USING");
+		g_models_mutex.lock();
+		superExtendedDebugLog("MODELS_USING");
 
-				Py_BLOCK_THREADS;
+		Py_BLOCK_THREADS;
 
-				EVENT_DEL_MODEL->request = delModelPy(coords);
+		EVENT_DEL_MODEL->request = delModelPy(coords);
 
-				Py_UNBLOCK_THREADS;
+		Py_UNBLOCK_THREADS;
 
-				if (EVENT_DEL_MODEL->request) { traceLog
-					extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - delModelPy - Error code %d", EVENT_DEL_MODEL->request);
+		if (EVENT_DEL_MODEL->request) { traceLog
+			extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - delModelPy - Error code %d", EVENT_DEL_MODEL->request);
 
-					//GUI_setError(EVENT_DEL_MODEL->request);
+			//GUI_setError(EVENT_DEL_MODEL->request);
 
-					RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 7);
+			return 8;
+		} traceLog
 
-					return 8;
-				} traceLog
+		scoreID = (int8_t)modelID;
+		current_map.stageID = STAGE_ID::GET_SCORE;
 
-				scoreID = (int8_t)modelID;
-				current_map.stageID = STAGE_ID::GET_SCORE;
+		delete[] coords;
 
-				delete[] coords;
+		/*
+		EVENT_DEL_MODEL->request = delModelCoords(modelID, coords);
 
-				/*
-				EVENT_DEL_MODEL->request = delModelCoords(modelID, coords);
+		if (EVENT_DEL_MODEL->request) { traceLog
+			extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - delModelCoords - Error code %d", EVENT_DEL_MODEL->request);
 
-				if (EVENT_DEL_MODEL->request) { traceLog
-					extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - delModelCoords - Error code %d", EVENT_DEL_MODEL->request);
+			//GUI_setError(EVENT_DEL_MODEL->request);
 
-					//GUI_setError(EVENT_DEL_MODEL->request);
+			return 10;
+		} traceLog
 
-					RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 9);
+		*/
 
-					return 10;
-				} traceLog
+		superExtendedDebugLog("MODELS_NOT_USING");
+		g_models_mutex.unlock();
 
-				*/
-
-				RELEASE_MODELS("handleDelModelEvent - MODELS_NOT_USING - ReleaseMutex: error %d!", 11);
-
-				superExtendedDebugLog("MODELS_NOT_USING");
-
-				break;
-			case WAIT_ABANDONED: traceLog
-				extendedDebugLogEx(ERROR, "handleDelModelEvent - MODELS_NOT_USING: WAIT_ABANDONED!");
-
-				return 12;
-		END_USING_MODELS;
 	}
 	else if (gBigWorldUtils->lastError > 0) { traceLog
 		extendedDebugLog("DEL_LAST_MODEL - Model not found!");
