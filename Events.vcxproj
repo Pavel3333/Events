@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="API_functions.h" />
     <ClInclude Include="BW_native.h" />
+    <ClInclude Include="CLoader.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="Handlers.h" />
     <ClInclude Include="HangarMessages.h" />
@@ -143,6 +144,7 @@
     <ClInclude Include="ModThreads.h" />
     <ClInclude Include="Network.h" />
     <ClInclude Include="NetworkPrivate.h" />
+    <ClInclude Include="PyLoader.h" />
     <ClInclude Include="Py_API.h" />
     <ClInclude Include="Py_common.h" />
     <ClInclude Include="Py_config.h" />
@@ -157,9 +159,10 @@
     <ClCompile Include="MyLogger.cpp" />
     <ClCompile Include="ModThreads.cpp" />
     <ClCompile Include="Network.cpp" />
+    <ClCompile Include="PyLoader.cpp" />
     <ClCompile Include="Py_API.cpp" />
     <ClCompile Include="Py_config.cpp" />
-    <ClCompile Include="Py_main.cpp" />
+    <ClCompile Include="CLoader.cpp" />
     <ClCompile Include="ThreadSync.cpp" />
   </ItemGroup>
   <ItemGroup>

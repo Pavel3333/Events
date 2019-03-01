@@ -19,12 +19,12 @@
     <Filter Include="dll">
       <UniqueIdentifier>{7158c383-0bd1-48e5-a6a8-4380a04e37fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Loader">
+      <UniqueIdentifier>{b56aa157-047e-442a-9e28-dbc8e415aabe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="API_functions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Py_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModThreads.cpp">
@@ -56,6 +56,12 @@
     </ClCompile>
     <ClCompile Include="Network.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CLoader.cpp">
+      <Filter>Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="PyLoader.cpp">
+      <Filter>Loader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +103,12 @@
     </ClInclude>
     <ClInclude Include="NetworkPrivate.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CLoader.h">
+      <Filter>Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="PyLoader.h">
+      <Filter>Loader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
