@@ -1,15 +1,27 @@
+/**
+ * CLIENT-SERVER PART
+ */
+
 #include "NetworkPrivate.h"
+#include "MyLogger.h"
+#include "curl/curl.h"
+#include <string_view>
+#include <mutex>
 
-//------------------------------------------CLIENT-SERVER PART---------------------------------------------------
 
-CURL *  curl_handle = NULL;
+INIT_LOCAL_MSG_BUFFER;
 
-unsigned char response_buffer[NET_BUFFER_SIZE + 1];
-size_t response_size = NULL;
+static std::mutex g_parse_mutex;
 
-uint32_t curl_init() {
-	if (curl_global_init(CURL_GLOBAL_ALL))
-	{
+static CURL* curl_handle = nullptr;
+
+static char response_buffer[NET_BUFFER_SIZE];
+static size_t response_size = 0;
+
+
+uint32_t curl_init()
+{
+	if (curl_global_init(CURL_GLOBAL_ALL)) {
 		return 1;
 	}
 
@@ -22,14 +34,19 @@ uint32_t curl_init() {
 	return 0;
 }
 
-void curl_clean() {
-	curl_easy_cleanup(curl_handle);
 
+// переименовать в fini для консистенции с curl_init() ?
+void curl_clean()
+{
+	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
+	curl_handle = nullptr;
 }
 
+
 //writing response from server into array ptr and return size of response
-static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data) {
+static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data)
+{
 	if (data == NULL || response_size + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
 
 	memcpy(&data[response_size], ptr, size*nmemb);// appending data into the end
@@ -37,37 +54,44 @@ static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data) {
 	return size * nmemb;
 }
 
-static uint8_t send_to_server(char* data, uint16_t length) {
+
+static uint8_t send_to_server(std::string_view request)
+{
 	if (!curl_handle) {
 		return 1;
 	}
 
-	memset(response_buffer, NULL, NET_BUFFER_SIZE); // filling buffer by NULL
-	response_size = NULL;
+	// оверхед: зачем занулять байты, если мы знаем размер ответа?
+	std::fill_n(response_buffer, NET_BUFFER_SIZE, '\0');
+	response_size = 0;
 
-	char user_agent[] = "NY_Event";
-	char url[] = "http://api.pavel3333.ru/events/index.php";
-
-	struct curl_httppost *formpost = NULL;
-	struct curl_httppost *lastptr = NULL;
+	curl_httppost* formpost = nullptr;
+	curl_httppost* lastptr = nullptr;
 
 	curl_formadd(&formpost, &lastptr,
-		CURLFORM_COPYNAME, "response",
-		CURLFORM_PTRCONTENTS, data,
-		CURLFORM_CONTENTSLENGTH, length,
+		CURLFORM_COPYNAME, "response", // почему тут слово response(ответ)?
+		CURLFORM_PTRCONTENTS, request.data(),
+		CURLFORM_CONTENTSLENGTH, request.length(),
 		CURLFORM_END);
 
-	//setting user agent
+	// setting user agent
+	const char* user_agent = "NY_Event";
 	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, user_agent);
+
 	// setting url
+	const char* url = "http://api.pavel3333.ru/events/index.php";
 	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-	//setting POST form
+
+	// setting POST form
 	curl_easy_setopt(curl_handle, CURLOPT_HTTPPOST, formpost);
-	//setting function for write data
+
+	// setting function for write data
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
-	//setting buffer
+
+	// setting buffer
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, response_buffer);
-	//setting max buffer size
+
+	// setting max buffer size
 	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, NET_BUFFER_SIZE);
 
 	// requesting
@@ -78,16 +102,14 @@ static uint8_t send_to_server(char* data, uint16_t length) {
 
 uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del)
 {
-	char* request_raw = nullptr;
-	uint16_t size = 0;
+	std::string_view request_raw;
 
-	//Код наполнения токена по типу события
+	// Код наполнения токена по типу события
 
 	switch (eventID) {
 		case EVENT_ID::IN_HANGAR:
 		case EVENT_ID::IN_BATTLE_GET_FULL:
 		case EVENT_ID::IN_BATTLE_GET_SYNC: {
-			size = 7;
 			ReqMain req;
 
 			req.mod_id   = MODS_ID::NY_EVENT; //mod
@@ -95,7 +117,8 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 			req.id       = id;
 			req.event_id = eventID;           //код события
 
-			request_raw = (char*)&req;
+			request_raw = std::string_view(
+				reinterpret_cast<char*>(&req), sizeof(ReqMain));
 			break;
 		}
 		case EVENT_ID::DEL_LAST_MODEL: {
@@ -103,48 +126,58 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 				return 24;
 			}
 
-			size = 20;
 			ReqMain_DelModel req;
 
-			req.mod_id   = MODS_ID::NY_EVENT; //mod
-			req.map_id   = map_id;            //map ID
-			req.id       = id;
-			req.event_id = eventID; //код события
-			req.model_id = modelID; //код модели
-			memcpy(req.coords_del, coords_del, 12);
+			req.mod_id   = MODS_ID::NY_EVENT; // mod
+			req.map_id   = map_id;            // map ID
+			req.id       = id;                // id игрока
+			req.event_id = eventID;           // код события
+			req.model_id = modelID;           // код модели
+			std::copy_n(coords_del, 3, req.coords_del);
 
-			request_raw = (char*)&req;
+			request_raw = std::string_view(
+				reinterpret_cast<char*>(&req), sizeof(ReqMain_DelModel));
 			break;
 		}
 	}
 
 	//-------------------------------------
 
-	if (request_raw == nullptr) {
+	if (request_raw.empty()) {
 		return 1;
 	}
 
-	// точно ли нужно?
-	request_raw[size] = '\0';
-
-	uint8_t code = send_to_server(request_raw, size);
+	uint8_t code = send_to_server(request_raw);
 
 	if (code || !response_size) { //get token
 		return 2;
 	}
 
-	return NULL;
+	return 0;
 }
 
+
+uint8_t parse_event_safe(EVENT_ID eventID)
+{
+	g_parse_mutex.lock();
+	uint8_t res = parse_event(eventID);
+	g_parse_mutex.unlock();
+
+	if (res) {
+		writeDebugDataToFile(PARSING, response_buffer, response_size);
+	}
+	return res;
+}
+
+
+// очень большая функция: разбить на несколько
 uint8_t parse_event(EVENT_ID eventID)
 {
-	INIT_LOCAL_MSG_BUFFER;
-
 	//инициализация переменных для каждого события
 
 	//EVENT_ID::IN_HANGAR
 
-	uint16_t length = NULL;
+	uint16_t* length = nullptr;
 	uint32_t offset = NULL;
 
 	//EVENT_ID::IN_BATTLE_GET_FULL
@@ -164,9 +197,10 @@ uint8_t parse_event(EVENT_ID eventID)
 	switch (eventID) {
 		case EVENT_ID::IN_HANGAR:          //запрос из ангара       
 			if (response_size == 3) {
-				memcpy(&length, response_buffer, 2); //смотрим длину данных
-
-				if (length == response_size) {
+				length = reinterpret_cast<uint16_t*>(response_buffer);
+				
+				//смотрим длину данных
+				if (*length == response_size) {
 					return response_buffer[2];
 				}
 
@@ -181,9 +215,9 @@ uint8_t parse_event(EVENT_ID eventID)
 				return 3;
 			}
 
-			memcpy(&length, response_buffer, 2);
+			length = reinterpret_cast<uint16_t*>(response_buffer);
 
-			if (length != response_size) {
+			if (*length != response_size) {
 				return 4;
 			}
 
@@ -319,9 +353,9 @@ uint8_t parse_event(EVENT_ID eventID)
 				return 9;
 			}
 
-			memcpy(&length, response_buffer, 2);
+			length = reinterpret_cast<uint16_t*>(response_buffer);
 
-			if (length != response_size) {
+			if (*length != response_size) {
 				return 10;
 			}
 
@@ -472,69 +506,48 @@ uint8_t parse_event(EVENT_ID eventID)
 
 			return 14;
 
-			break;
 		case EVENT_ID::DEL_LAST_MODEL:     // удаление ближайшей модели
-			if (!response_size) {
+			if (!response_size)
 				return 15;
-			}
 
-			memcpy(&length, response_buffer, 2);
-
-			if (length != response_size) {
+			length = reinterpret_cast<uint16_t*>(response_buffer);
+			if (*length != response_size)
 				return 16;
-			}
-
-			offset += 2;
 
 			if (response_size == 3) { //код ошибки
-				uint8_t error_code = response_buffer[offset];
+				uint8_t error_code = response_buffer[2];
 
-				if (error_code < 10) {
-					if (error_code == 7) {
-						current_map.stageID = STAGE_ID::WAITING;
-					}
-					else if (error_code == 8) {
-						current_map.stageID = STAGE_ID::END_BY_TIME;
-					}
-					else if (error_code == 9) {
-						current_map.stageID = STAGE_ID::END_BY_COUNT;
-					}
-
-					return error_code;
+				switch (error_code) {
+				case 7:
+					current_map.stageID = STAGE_ID::WAITING;
+					break;
+				case 8:
+					current_map.stageID = STAGE_ID::END_BY_TIME;
+					break;
+				case 9:
+					current_map.stageID = STAGE_ID::END_BY_COUNT;
+					break;
 				}
 
 				return error_code;
 			}
-			else if (response_size >= 9) {
-				/*
-				Всё прошло успешно.
-				Первый байт - ноль для проверки,
-				второй байт - 0/1 (СТАРТ / соревнование идет),
-				остальные четыре байта - оставшееся время
-				*/
+			else if (response_size == 9) {
+				RspMain* rsp = reinterpret_cast<RspMain*>(response_buffer + 2);
 
-				if (response_buffer[offset] != 0) {
+				// Первый байт - ноль для проверки
+				if (rsp->zero_byte != 0)
 					return 17;
-				}
 
-				current_map.stageID = (STAGE_ID)response_buffer[offset + 1];
+				// второй байт - 0/1 (СТАРТ / соревнование идет)
+				current_map.stageID = rsp->stage_id;
+				
+				// остальные четыре байта - оставшееся время
+				current_map.time_preparing = rsp->time_preparing;
 
-				memcpy(&(current_map.time_preparing), response_buffer + offset + 2, 4);
-
-				offset += 6;
-
-				if (response_buffer[offset] == NULL) return NULL;
-
-				return 18;
+				// успех
+				return 0;
 			}
-
 			return 19;
-
-			break;
-		default:
-			return 20;
-
-			break;
 	}
 
 	return 21;

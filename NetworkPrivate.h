@@ -5,16 +5,11 @@
 #pragma pack(push)
 #pragma pack(1)
 
-// придумать имена структурам:
-
 struct ReqMain {
     MODS_ID mod_id;    // id мода
     uint8_t map_id;    // id карты
     uint32_t id;       // id игрока
     EVENT_ID event_id; // код события
-
-	// пока так
-	char _zero;
 };
 
 struct ReqMain_DelModel {
@@ -24,9 +19,6 @@ struct ReqMain_DelModel {
     EVENT_ID event_id;   // код события
     MODEL_ID model_id;   // код модели
     float coords_del[3]; // координаты модели, которую следует убрать
-
-	// пока так
-	char _zero;
 };
 
 struct RspMain {
@@ -45,13 +37,12 @@ struct RspModelSect {
     uint16_t models_count_sect; // число моделей в секции
 };
 
-
 #pragma pack(pop)
 
 
 // проверка на корректность
-static_assert( sizeof(ReqMain)          == 8  );
-static_assert( sizeof(ReqMain_DelModel) == 21 );
+static_assert( sizeof(ReqMain)          == 7  );
+static_assert( sizeof(ReqMain_DelModel) == 20 );
 static_assert( sizeof(RspMain)          == 6  );
 static_assert( sizeof(RspModelsHeader)  == 3  );
 static_assert( sizeof(RspModelSect)     == 3  );

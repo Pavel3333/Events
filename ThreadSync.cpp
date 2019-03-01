@@ -178,21 +178,11 @@ bool createEventsAndMutexes() { traceLog
 }
 
 
-uint32_t parse_event_threadsafe(EVENT_ID eventID) {
-	uint32_t result = NULL;
-
-	EnterCriticalSection(&CS_PARSING_NOT_USING);
-
-	result = parse_event(eventID);
-
-	if (result) {
-		writeDebugDataToFile(PARSING, (char*)response_buffer, response_size);
-	}
-
-	LeaveCriticalSection(&CS_PARSING_NOT_USING);
-
-	return result;
+uint32_t parse_event_threadsafe(EVENT_ID eventID)
+{
+	return parse_event_safe(eventID);
 }
+
 
 uint32_t send_token_threadsafe(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del) {
 	uint32_t result = NULL;
