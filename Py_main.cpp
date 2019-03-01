@@ -594,7 +594,6 @@ PyMODINIT_FUNC initevent(void)
 	INIT_LOCAL_MSG_BUFFER;
 
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
-	InitializeCriticalSection(&CS_PARSING_NOT_USING);
 	
 	//BigWorldUtils creating
 

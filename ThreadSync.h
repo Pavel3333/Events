@@ -40,7 +40,6 @@ extern HANDLE M_MODELS_NOT_USING;
 //Критические секции
 
 extern CRITICAL_SECTION CS_NETWORK_NOT_USING;
-extern CRITICAL_SECTION CS_PARSING_NOT_USING;
 
 //---------------------
 
