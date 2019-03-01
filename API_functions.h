@@ -23,7 +23,7 @@
 		return code;                                   \
 	} traceLog
 
-#define MOD_VERSION "v1.0.0.3 (" __TIMESTAMP__ ")"
+#define MOD_VERSION "v1.0.0.4 (" __TIMESTAMP__ ")"
 
 #define NET_BUFFER_SIZE 16384
 #define MARKERS_SIZE 12

@@ -40,7 +40,7 @@ char* MESSAGES[MESSAGES_COUNT] {
 	"\\c%s;Streamer mode"
 };
 
-uint16_t SCORE[SECTIONS_COUNT] { 11, 7, 9, 1, 5, 3, 13, 17, 15, 100 };
+uint16_t SCORE[SECTIONS_COUNT] { 22, 14, 18, 6666, 10, 6, 26, 34, 30, 100 };
 
 char* MODEL_NAMES[SECTIONS_COUNT] {
 	"ball",
