@@ -3,7 +3,6 @@
 #include "Handlers.h"
 #include "Py_config.h"
 #include <cstdlib>
-#include <direct.h>
 #include "MyLogger.h"
 
 
@@ -453,6 +452,9 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 //Py loaders
 
 static PyObject* event_start_py(PyObject *self, PyObject *args) { traceLog
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
+	
 	request = event_start();
 
 	if (!request) {
@@ -468,6 +470,9 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(1);
 	} traceLog
 
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
+
 	INIT_LOCAL_MSG_BUFFER;
 
 	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog
@@ -480,10 +485,16 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
 };
 
 static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
+
 	return PyInt_FromSize_t(first_check);
 };
 
 static PyObject* event_check_py(PyObject *self, PyObject *args) { traceLog
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
+
 	uint8_t res = event_check();
 
 	if (res) { traceLog
@@ -496,6 +507,9 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
 	if (!isInited) { traceLog
 		return PyInt_FromSize_t(1);
 	} traceLog
+
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
 
 	PyObject* template_ = NULL;
 	PyObject* apply     = NULL;
@@ -517,6 +531,9 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	if (!isInited || first_check || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog
 		Py_RETURN_NONE;
 	} //traceLog
+
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
 
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted_Space = NULL;
@@ -575,10 +592,6 @@ static struct PyMethodDef event_methods[] =
 	{ NULL, NULL, 0, NULL }
 };
 
-PyDoc_STRVAR(event_methods__doc__,
-	"Trajectory Mod module"
-);
-
 //---------------------------INITIALIZATION--------------------------
 
 PyMODINIT_FUNC initevent(void)
@@ -624,9 +637,7 @@ PyMODINIT_FUNC initevent(void)
 
 	//инициализация модуля
 
-	event_module = Py_InitModule3("event",
-		event_methods,
-		event_methods__doc__);
+	event_module = Py_InitModule("event", event_methods);
 
 	if (!event_module) {
 		goto freeHangarMessages;
@@ -701,11 +712,10 @@ PyMODINIT_FUNC initevent(void)
 	} traceLog
 
 	if (!m_g_gui) { traceLog
-		// переделать на WinAPI: CreateDirectory?
-		_mkdir("mods/configs");
-		_mkdir("mods/configs/pavel3333");
-		_mkdir("mods/configs/pavel3333/NY_Event");
-		_mkdir("mods/configs/pavel3333/NY_Event/i18n");
+		CreateDirectoryA("mods/configs", NULL);
+		CreateDirectoryA("mods/configs/pavel3333", NULL);
+		CreateDirectoryA("mods/configs/pavel3333/NY_Event", NULL);
+		CreateDirectoryA("mods/configs/pavel3333/NY_Event/i18n", NULL);
 
 		if (!read_data(true) || !read_data(false)) { traceLog
 			goto freeHangarMessages;
