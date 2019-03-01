@@ -40,13 +40,6 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
 	Py_RETURN_NONE;
 };
 
-static PyObject* event_err_code(PyObject *self, PyObject *args) { traceLog
-	UNREFERENCED_PARAMETER(self);
-	UNREFERENCED_PARAMETER(args);
-
-	return PyInt_FromSize_t(first_check);
-};
-
 static PyObject* event_check_py(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
 	UNREFERENCED_PARAMETER(args);
@@ -83,7 +76,7 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
 	else Py_RETURN_NONE;
 };
 
-static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) { //traceLog
+static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLog
 	if (!isInited || first_check || !databaseID || !mapID || !spaceKey || isStreamer) { traceLog
 		Py_RETURN_NONE;
 	} //traceLog
@@ -92,16 +85,16 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 	UNREFERENCED_PARAMETER(args);
 
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
-	PyObject* isKeyGetted_Space = NULL;
+	PyObject* isKeyGetted = NULL;
 
 	if (m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		PyObject_CallMethodObjArgs_increfed(isKeyGetted_Space_tmp, m_g_gui, __get_key, spaceKey, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, m_g_gui, __get_key, spaceKey, NULL);
 
 		Py_DECREF(__get_key);
 
-		isKeyGetted_Space = isKeyGetted_Space_tmp;
+		isKeyGetted = isKeyGetted_tmp;
 	}
 	else {
 		PyObject* key = PyObject_GetAttrString(event_, "key");
@@ -112,14 +105,14 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 
 		PyObject* ____contains__ = PyString_FromString("__contains__");
 
-		PyObject_CallMethodObjArgs_increfed(isKeyGetted_Space_tmp, spaceKey, ____contains__, key, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, spaceKey, ____contains__, key, NULL);
 
 		Py_DECREF(____contains__);
 
-		isKeyGetted_Space = isKeyGetted_Space_tmp;
+		isKeyGetted = isKeyGetted_tmp;
 	} traceLog
 
-	if (isKeyGetted_Space == Py_True) { traceLog
+	if (isKeyGetted == Py_True) { traceLog
 		request = makeEventInThread(EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) { traceLog
@@ -131,7 +124,7 @@ static PyObject* event_inject_handle_key_event(PyObject *self, PyObject *args) {
 		} traceLog
 	} //traceLog
 
-	Py_XDECREF(isKeyGetted_Space);
+	Py_XDECREF(isKeyGetted);
 
 	Py_RETURN_NONE;
 };
@@ -141,9 +134,8 @@ static struct PyMethodDef event_methods[] =
 	{ "b",             event_check_py,                METH_VARARGS, ":P" }, //check
 	{ "c",             event_start_py,                METH_NOARGS,  ":P" }, //start
 	{ "d",             event_fini_py,                 METH_NOARGS,  ":P" }, //fini
-	{ "e",             event_err_code,                METH_NOARGS,  ":P" }, //get_error_code
 	{ "g",             event_init_py,                 METH_VARARGS, ":P" }, //init
-	{ "event_handler", event_inject_handle_key_event, METH_VARARGS, ":P" }, //inject_handle_key_event
+	{ "event_handler", event_keyHandler_py,           METH_VARARGS, ":P" }, //keyHandler
 	{ "omc",           event_onModelCreated,          METH_VARARGS, ":P" }, //onModelCreated
 	{ NULL, NULL, 0, NULL }
 };
