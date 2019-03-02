@@ -111,7 +111,7 @@ void GUI_setText(char* msg, float time_f) {
 	}
 
 	if (delLabelCBID) {
-		gBigWorldUtils->cancelCallback(delLabelCBID);
+		BigWorldUtils::cancelCallback(delLabelCBID);
 		delLabelCBID = 0;
 
 		if (!GUI_setAttr("delLabelCBID", Py_None)) {

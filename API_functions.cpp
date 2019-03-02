@@ -1,10 +1,6 @@
 ﻿#include "API_functions.h"
-
 #include <cmath>
-#include <filesystem>
-#include "MyLogger.h"
 
-#pragma comment(lib,"libcurl.lib")
 
 map      current_map;
 map_sync sync_map;
@@ -67,7 +63,9 @@ const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSect
 	return nullptr;
 }
 
-float getDist2Points(const float point1[3], const float point2[3]) {
+// эту функцию можно заоптимизировать
+float getDist2Points(const float point1[3], const float point2[3])
+{
 	if (!point1 || !point2) {
 		return -1.0;
 	}
@@ -82,11 +80,18 @@ float getDist2Points(const float point1[3], const float point2[3]) {
 //-----------------
 
 //generate random bytes
-void generate_random_bytes(unsigned char* out, size_t length) {
-	unsigned char ret = NULL;
-	for (uint_fast32_t i = NULL; i < length; i++) {
+void generate_random_bytes(unsigned char* out, size_t length)
+{
+	srand(static_cast<uint32_t>(time(nullptr)));
+	unsigned char ret = 0;
+
+	for (size_t i = 0; i < length; i++) {
 		ret = rand() % 256;
-		while (ret == '"' || ret == '\t' || ret == '\n') ret = rand() % 256;
+
+		while (ret == '"' || ret == '\t' || ret == '\n')
+			ret = rand() % 256;
+
 		out[i] = ret;
 	}
 }
+

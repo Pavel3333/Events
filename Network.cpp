@@ -95,6 +95,10 @@ static uint8_t send_to_server(std::string_view request)
 	// requesting
 	CURLcode res = curl_easy_perform(curl_handle);
 
+	if (res != CURLcode::CURLE_OK) {
+		debugLogEx(ERROR, "curl error code: %d", res);
+	}
+
 	return res;
 }
 

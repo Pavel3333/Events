@@ -260,7 +260,7 @@ PyObject* event_light(float coords[3]) {
 
 	superExtendedDebugLog("light creating...");
 
-	PyObject* Light = PyObject_CallMethod(gBigWorldUtils->m_BigWorld, "PyOmniLight", nullptr);
+	PyObject* Light = PyObject_CallMethod(BigWorldUtils::m_BigWorld, "PyOmniLight", nullptr);
 	if (!Light) { traceLog
 		superExtendedDebugLog("PyOmniLight creating FAILED");
 		return NULL;
