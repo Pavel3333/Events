@@ -1,5 +1,6 @@
 ﻿#include "BW_native.h"
 #include "MyLogger.h"
+#include "Py_common.h"
 
 
 INIT_LOCAL_MSG_BUFFER;
@@ -93,7 +94,7 @@ MyErr BigWorldUtils::callback_p(long& callbackID, PyObject* func, float delay)
 		return_err -1;
 	}
 
-	PyObject* res = PyObject_CallFunction(m_callback, "fO", delay, func);
+	PyObject_CallFunction_increfed(res, m_callback, "fO", delay, func);
 	if (!res) {
 		debugLogEx(ERROR, "Error with BigWorld.callback(%f, func)", delay);
 		return_err -2;
@@ -108,7 +109,7 @@ MyErr BigWorldUtils::callback_p(long& callbackID, PyObject* func, float delay)
 // BigWorld.cancelCallback() private implementation
 MyErr BigWorldUtils::cancelCallback_p(long callbackID)
 {
-	PyObject* res = PyObject_CallFunction(m_cancelCallback, "l", callbackID);
+	PyObject_CallFunction_increfed(res, m_cancelCallback, "l", callbackID);
 	if (!res) {
 		debugLogEx(ERROR, "Error with BigWorld.cancelCallback(%d)", callbackID);
 		return_err -1;
