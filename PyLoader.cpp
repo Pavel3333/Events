@@ -87,10 +87,10 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted = NULL;
 
-	if (gPyConfig->m_g_gui) { //traceLog
+	if (PyConfig::m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, gPyConfig->m_g_gui, __get_key, keyDelLastModel, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, PyConfig::m_g_gui, __get_key, keyDelLastModel, NULL);
 
 		Py_DECREF(__get_key);
 
@@ -164,11 +164,8 @@ PyMODINIT_FUNC initevent(void)
 		goto freeHangarMessages;
 	}
 
-	debugLog("Config init...");
-
-	gPyConfig = new PyConfig();
-	if (!gPyConfig->inited) {
-		debugLogEx(ERROR, "initevent - init PyConfig: error %d!", gPyConfig->lastError);
+	if (auto ok = PyConfig::init(); !ok) {
+		debugLogEx(ERROR, "initevent - init PyConfig: error %d!", ok);
 		goto freePyConfig;
 	}
 
@@ -182,7 +179,7 @@ PyMODINIT_FUNC initevent(void)
 		goto freePyConfig;
 	}
 
-	if (PyModule_AddObject(event_module, "l", gPyConfig->g_config)) {
+	if (PyModule_AddObject(event_module, "l", PyConfig::g_config)) {
 		goto freePyConfig;
 	}
 
@@ -264,8 +261,7 @@ PyMODINIT_FUNC initevent(void)
 	return;
 
 freePyConfig:
-	delete gPyConfig;
-	gPyConfig = nullptr;;
+	PyConfig::fini();
 
 freeHangarMessages:
 	delete HangarMessages;

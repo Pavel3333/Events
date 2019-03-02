@@ -6,39 +6,42 @@
 #include "MyLogger.h"
 #include "python2.7/structmember.h"
 
+INIT_LOCAL_MSG_BUFFER;
 
+
+// Инициализация полей статичного класса
+bool          PyConfig::inited   = false;
+Config        PyConfig::config   = Config();
+ConfigObject* PyConfig::g_self   = nullptr;
+PyTypeObject* PyConfig::Config_p = nullptr;
+PyObject*     PyConfig::m_g_gui  = nullptr;
+PyObject*     PyConfig::g_config = nullptr;
+
+
+// что это и зачем?
+// почему METH_OLDARGS ?
 static PyMemberDef config_members[9] = {
-	{ "ids",        T_STRING, offsetof(ConfigObject, ids),        NULL },
-	{ "author",     T_STRING, offsetof(ConfigObject, author),     NULL },
-	{ "patch",      T_STRING, offsetof(ConfigObject, patch),      NULL },
-	{ "version",    T_STRING, offsetof(ConfigObject, version),    NULL },
-	{ "version_id", T_SHORT,  offsetof(ConfigObject, version_id), NULL },
-	{ "buttons",    T_OBJECT, offsetof(ConfigObject, buttons),    NULL },
-	{ "data",       T_OBJECT, offsetof(ConfigObject, data),       NULL },
-	{ "i18n",       T_OBJECT, offsetof(ConfigObject, i18n),       NULL },
+	{ "ids",        T_STRING, offsetof(ConfigObject, ids),        METH_OLDARGS },
+	{ "author",     T_STRING, offsetof(ConfigObject, author),     METH_OLDARGS },
+	{ "patch",      T_STRING, offsetof(ConfigObject, patch),      METH_OLDARGS },
+	{ "version",    T_STRING, offsetof(ConfigObject, version),    METH_OLDARGS },
+	{ "version_id", T_SHORT,  offsetof(ConfigObject, version_id), METH_OLDARGS },
+	{ "buttons",    T_OBJECT, offsetof(ConfigObject, buttons),    METH_OLDARGS },
+	{ "data",       T_OBJECT, offsetof(ConfigObject, data),       METH_OLDARGS },
+	{ "i18n",       T_OBJECT, offsetof(ConfigObject, i18n),       METH_OLDARGS },
 	{ NULL }
 };
 
-PyConfig::PyConfig()
+
+int PyConfig::init()
 {
+	debugLog("Config init...");
+
 	config.i18n.version = config.version_id;
 	config.data.version = config.version_id;
 
-	lastError = init();
-}
 
-PyConfig::~PyConfig()
-{
-	if (!inited) return;
-
-	Py_XDECREF(g_config);
-
-	delete Config_p;
-	Config_p = nullptr;
-}
-
-uint8_t PyConfig::init()
-{
+	// нужна ли эта штука вообще?
 	Config_p = new PyTypeObject { //TODO: fix me
 		PyVarObject_HEAD_INIT(NULL, 0)
 		"event.Config",					  /*tp_name*/
@@ -47,7 +50,7 @@ uint8_t PyConfig::init()
 										  /* Methods to implement standard operations */
 
 		NULL,
-		(destructor)(this->Config_dealloc),
+		(destructor)(Config_dealloc),
 		NULL,
 		NULL,
 		NULL,
@@ -105,7 +108,7 @@ uint8_t PyConfig::init()
 		NULL,
 		NULL,//(initproc)Config_init,
 		NULL,
-		this->Config_new
+		Config_new
 	};
 
 	if (PyType_Ready(Config_p)) {
@@ -185,7 +188,22 @@ uint8_t PyConfig::init()
 	} traceLog
 
 	inited = true;
+
+	return 0;
 }
+
+
+void PyConfig::fini()
+{
+	if (!inited)
+		return;
+
+	Py_XDECREF(g_config);
+
+	delete Config_p;
+	Config_p = nullptr;
+}
+
 
 PyObject* PyConfig::init_data()
 {

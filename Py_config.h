@@ -1,6 +1,5 @@
 #pragma once
 #include "API_functions.h"
-#include <atomic>
 
 #define KEY_DEL_LAST_MODEL 256 //Keys.KEY_LEFTMOUSE
 
@@ -18,37 +17,25 @@ struct ConfigObject {
 
 class PyConfig {
 public:
-	std::atomic_bool inited = false;
+	static bool inited;
+	static Config config;
+	static ConfigObject* g_self;
+	static PyTypeObject* Config_p;
+	static PyObject* m_g_gui;
+	static PyObject* g_config;
 
-	Config config = Config();
-
-	ConfigObject* g_self = nullptr;
-
-	PyTypeObject* Config_p = nullptr;
-
-	PyObject* m_g_gui = nullptr;
-
-	PyObject* g_config = nullptr;
-
-	int   lastError = 0;
-	char* lastErrorStr = nullptr;
-
-	PyConfig();
-	~PyConfig();
+	static int init();
+	static void fini();
 
 private:
-	uint8_t init();
+	static PyObject* init_data();
+	static PyObject* init_i18n();
 
-	PyObject* init_data();
-	PyObject* init_i18n();
+	static PyObject* Config_new(PyTypeObject*, PyObject*, PyObject*);
+	static void Config_dealloc(ConfigObject*);
 
-	PyObject* Config_new(PyTypeObject*, PyObject*, PyObject*);
-	void Config_dealloc(ConfigObject*);
+	static PyObject* getMessagesList();
 
-	PyObject* getMessagesList();
-
-	bool write_data(char*, PyObject*);
-	bool read_data(bool);
+	static bool write_data(char*, PyObject*);
+	static bool read_data(bool);
 };
-
-extern PyConfig* gPyConfig;
