@@ -7,10 +7,6 @@
 #include <cstdlib>
 #include "MyLogger.h"
 
-
-INIT_LOCAL_MSG_BUFFER;
-
-
 static PyObject* event_start_py(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
 	UNREFERENCED_PARAMETER(args);
@@ -23,7 +19,7 @@ static PyObject* event_start_py(PyObject *self, PyObject *args) { traceLog
 	else {
 		return PyInt_FromSize_t(request);
 	}
-}
+};
 
 static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
 	if (!EVENT_BATTLE_ENDED) { traceLog
@@ -33,6 +29,8 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
 	UNREFERENCED_PARAMETER(args);
 
+	INIT_LOCAL_MSG_BUFFER;
+
 	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog
 		debugLogEx(ERROR, "EVENT_BATTLE_ENDED not setted!");
 
@@ -40,7 +38,7 @@ static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
 	} traceLog
 
 	Py_RETURN_NONE;
-}
+};
 
 static PyObject* event_check_py(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
@@ -52,7 +50,7 @@ static PyObject* event_check_py(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(res);
 	}
 	else Py_RETURN_NONE;
-}
+};
 
 static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
 	if (!isInited) { traceLog
@@ -76,7 +74,7 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(res);
 	}
 	else Py_RETURN_NONE;
-}
+};
 
 static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLog
 	if (!isInited || first_check || !databaseID || !mapID || !keyDelLastModel || isStreamer) { traceLog
@@ -92,7 +90,7 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 	if (PyConfig::m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		auto isKeyGetted_tmp = PyObject_CallMethodObjArgs(PyConfig::m_g_gui, __get_key, keyDelLastModel, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, PyConfig::m_g_gui, __get_key, keyDelLastModel, NULL);
 
 		Py_DECREF(__get_key);
 
@@ -107,7 +105,7 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 
 		PyObject* ____contains__ = PyString_FromString("__contains__");
 
-		auto isKeyGetted_tmp = PyObject_CallMethodObjArgs(keyDelLastModel, ____contains__, key, NULL);
+		PyObject_CallMethodObjArgs_increfed(isKeyGetted_tmp, keyDelLastModel, ____contains__, key, NULL);
 
 		Py_DECREF(____contains__);
 
@@ -118,6 +116,7 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 		request = makeEventInThread(EVENT_ID::DEL_LAST_MODEL);
 
 		if (request) { traceLog
+			INIT_LOCAL_MSG_BUFFER;
 
 			debugLogEx(ERROR, "making DEL_LAST_MODEL: error %d", request);
 
@@ -128,7 +127,7 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 	Py_XDECREF(isKeyGetted);
 
 	Py_RETURN_NONE;
-}
+};
 
 static struct PyMethodDef event_methods[] =
 {
@@ -145,26 +144,34 @@ static struct PyMethodDef event_methods[] =
 
 PyMODINIT_FUNC initevent(void)
 {
-	// РїРѕС‡РµРјСѓ СЌС‚Рѕ Р·РґРµСЃСЊ?
+	INIT_LOCAL_MSG_BUFFER;
+
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	
+	//BigWorldUtils creating
+
 	gBigWorldUtils = new BigWorldUtils();
 	if (!gBigWorldUtils->inited) {
 		debugLogEx(ERROR, "initevent - init BigWorldUtils: error %d!", gBigWorldUtils->lastError);
 		goto freeBigWorldUtils;
 	}
 
-	if (auto err = HangarMessages::init()) {
-		debugLogEx(ERROR, "initevent - init HangarMessages: error %d!", err);
+	//HangarMessages creating
+
+	HangarMessages = new HangarMessagesC();
+	if (!HangarMessages->inited) {
+		debugLogEx(ERROR, "initevent - init HangarMessages: error %d!", HangarMessages->lastError);
 		goto freeHangarMessages;
 	}
 
-	if (auto err = PyConfig::init()) {
-		debugLogEx(ERROR, "initevent - init PyConfig: error %d!", err);
+	if (auto ok = PyConfig::init(); !ok) {
+		debugLogEx(ERROR, "initevent - init PyConfig: error %d!", ok);
 		goto freePyConfig;
 	}
 
-	//РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РјРѕРґСѓР»СЏ
+	debugLog("Config init OK");
+
+	//инициализация модуля
 
 	event_module = Py_InitModule("event", event_methods);
 
@@ -176,7 +183,7 @@ PyMODINIT_FUNC initevent(void)
 		goto freePyConfig;
 	}
 
-	//РїРѕР»СѓС‡РµРЅРёРµ СѓРєР°Р·Р°С‚РµР»СЏ РЅР° РјРµС‚РѕРґ РјРѕРґСѓР»СЏ onModelCreated
+	//получение указателя на метод модуля onModelCreated
 
 	onModelCreatedPyMeth = PyObject_GetAttrString(event_module, "omc");
 
@@ -192,7 +199,7 @@ PyMODINIT_FUNC initevent(void)
 		PyList_SET_ITEM(keyDelLastModel, 0, PyInt_FromSize_t(KEY_DEL_LAST_MODEL));
 	}
 
-	//Р·Р°РіСЂСѓР·РєР° modGUI
+	//загрузка modGUI
 
 	debugLog("Mod_GUI module loading...");
 
@@ -214,7 +221,7 @@ PyMODINIT_FUNC initevent(void)
 
 	debugLog("Mod_GUI class loaded OK!");
 	
-	//РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ curl
+	//инициализация curl
 
 	uint32_t curl_init_result = curl_init();
 
@@ -235,7 +242,7 @@ PyMODINIT_FUNC initevent(void)
 		handlerThreadID = NULL;
 	} traceLog
 
-	//СЃРѕР·РґР°РµРј РІС‚РѕСЂРѕР№ РїРѕС‚РѕРє
+	//создаем второй поток
 
 	hHandlerThread = CreateThread( 
 		NULL,                                   // default security attributes
@@ -257,7 +264,8 @@ freePyConfig:
 	PyConfig::fini();
 
 freeHangarMessages:
-	HangarMessages::fini();
+	delete HangarMessages;
+	HangarMessages = nullptr;;
 
 freeBigWorldUtils:
 	delete gBigWorldUtils;

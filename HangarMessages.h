@@ -1,21 +1,23 @@
 #pragma once
-#include "API_functions.h"
 
+#include "Py_common.h"
 
-class HangarMessages {
+class HangarMessagesC {
 public:
-	static bool inited;
-	static bool showed;
+	bool inited;
 
-	static PyObject* m_SM_TYPE;
-	static PyObject* m_pushMessage;
+	bool showed;
 
-	static MyErr init();
-	static void fini();
-	
-	static MyErr showMessage(PyObject*);
+	PyObject* m_SM_TYPE;
+	PyObject* m_pushMessage;
 
+	uint8_t lastError;
+public:
+	HangarMessagesC();
+	~HangarMessagesC();
+
+	void showMessage(PyObject*);
 private:
-	static int init_p();
-	static int showMessage_p(PyObject*);
+	uint8_t init_p();
+	uint8_t showMessage_p(PyObject*);
 };

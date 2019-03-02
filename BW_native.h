@@ -1,10 +1,12 @@
 ﻿#pragma once
-#include "API_functions.h"
+
+#include <atomic>
+#include "Py_common.h"
 
 
 class BigWorldUtils {
 public:
-	bool inited = false;
+	std::atomic_bool inited = false;
 
 	PyObject* m_BigWorld       = nullptr;
 	PyObject* m_Model          = nullptr;

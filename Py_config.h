@@ -1,7 +1,5 @@
 #pragma once
 #include "API_functions.h"
-#include <filesystem>
-
 
 #define KEY_DEL_LAST_MODEL 256 //Keys.KEY_LEFTMOUSE
 
@@ -26,7 +24,7 @@ public:
 	static PyObject* m_g_gui;
 	static PyObject* g_config;
 
-	static MyErr init();
+	static int init();
 	static void fini();
 
 private:
@@ -38,6 +36,6 @@ private:
 
 	static PyObject* getMessagesList();
 
-	static bool write_data(std::filesystem::path, PyObject*);
+	static bool write_data(char*, PyObject*);
 	static bool read_data(bool);
 };

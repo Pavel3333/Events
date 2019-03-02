@@ -92,6 +92,9 @@
     <ClInclude Include="HangarMessages.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Py_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="MyLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>

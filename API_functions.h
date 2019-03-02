@@ -8,15 +8,6 @@
 #include "python2.7/Python.h"
 
 
-// Код ошибки
-enum [[nodiscard]] MyErr : int {
-	OK = 0 // ошибки нет
-};
-
-#define return_err return (MyErr)
-#define return_ok return (MyErr::OK)
-
-
 #define MOD_VERSION "v1.0.0.4 (" __TIMESTAMP__ ")"
 
 #define NET_BUFFER_SIZE 16384
@@ -152,3 +143,5 @@ extern map_sync sync_map;
 float getDist2Points(const float[3], const float[3]);
 
 const std::vector<float*>* findModelsByID(std::vector<ModelsSection>&, uint8_t);
+
+bool file_exists(const char*);
