@@ -508,7 +508,6 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 uint8_t parse_event_DEL_LAST_MODEL()
 {
 	uint16_t* length = nullptr;
-	uint32_t offset = NULL;
 
 	if (!response_size)
 		return 15;

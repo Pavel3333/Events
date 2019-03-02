@@ -31,9 +31,6 @@ extern uint32_t request;
 extern uint8_t  mapID;
 extern uint32_t databaseID;
 
-//extern BW_NativeC*      BW_Native;
-extern HangarMessagesC* HangarMessages;
-
 extern bool isModelsAlreadyInited;
 
 extern bool isTimerStarted;

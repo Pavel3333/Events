@@ -126,10 +126,8 @@ DWORD handlerThread() {
 	
 	Py_BLOCK_THREADS;
 
-	HangarMessages->showMessage(PyConfig::g_self->i18n);
-
-	if (HangarMessages->lastError) {
-		extendedDebugLogEx(WARNING, "showMessage: error %d", HangarMessages->lastError);
+	if (auto err = HangarMessages::showMessage(PyConfig::g_self->i18n)) {
+		extendedDebugLogEx(WARNING, "showMessage: error %d", err);
 	}
 
 	Py_UNBLOCK_THREADS;
@@ -260,7 +258,7 @@ end_EVENT_BATTLE_ENDED:
 		
 		hBattleTimerThread  = NULL;
 		battleTimerThreadID = NULL;
-	} traceLog
+	}
 
 	//освобождаем ивенты
 
@@ -419,7 +417,7 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		Py_INCREF(template_);
 		Py_INCREF(apply);
 
-		PyObject_CallMethod_increfed(result, PyConfig::m_g_gui, "register", "sOOO", PyConfig::g_self->ids, template_, PyConfig::g_self->data, apply);
+		PyObject* result = PyObject_CallMethod(PyConfig::m_g_gui, "register", "sOOO", PyConfig::g_self->ids, template_, PyConfig::g_self->data, apply);
 
 		Py_XDECREF(result);
 		Py_DECREF(apply);
