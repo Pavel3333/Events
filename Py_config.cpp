@@ -1,15 +1,14 @@
 ﻿#include "Py_config.h"
-
 #include "BW_native.h"
-#include "Py_common.h"
-#include <fstream>
 #include "MyLogger.h"
 #include "python2.7/structmember.h"
+#include <fstream>
+
 
 INIT_LOCAL_MSG_BUFFER;
 
 
-// Инициализация полей статичного класса
+// Инициализация
 bool          PyConfig::inited   = false;
 Config        PyConfig::config   = Config();
 ConfigObject* PyConfig::g_self   = nullptr;
@@ -33,7 +32,7 @@ static PyMemberDef config_members[9] = {
 };
 
 
-int PyConfig::init()
+MyErr PyConfig::init()
 {
 	debugLog("Config init...");
 
@@ -112,7 +111,7 @@ int PyConfig::init()
 	};
 
 	if (PyType_Ready(Config_p)) {
-		return 1;
+		return_err 1;
 	}
 
 	Py_INCREF(Config_p);
@@ -124,7 +123,7 @@ int PyConfig::init()
 	Py_DECREF(Config_p);
 
 	if (!g_config || !g_self) {
-		return 2;
+		return_err 2;
 	}
 
 	//загрузка g_gui
@@ -146,27 +145,27 @@ int PyConfig::init()
 		Py_DECREF(mod_mods_gui);
 
 		if (!m_g_gui) { traceLog
-			return 3;
-		} traceLog
+			return_err 3;
+		}
 
 		debugLog("mod_mods_gui loaded OK!");
-	} traceLog
+	}
 
-	if (!m_g_gui) { traceLog
+	if (!m_g_gui) {
 		CreateDirectoryA("mods/configs", NULL);
 		CreateDirectoryA("mods/configs/pavel3333", NULL);
 		CreateDirectoryA("mods/configs/pavel3333/NY_Event", NULL);
 		CreateDirectoryA("mods/configs/pavel3333/NY_Event/i18n", NULL);
 
 		if (!read_data(true) || !read_data(false)) { traceLog
-			return 4;
+			return_err 4;
 		} traceLog
 	}
 	else {
-		PyObject_CallMethod_increfed(data_i18n, m_g_gui, "register_data", "sOOs", g_self->ids, g_self->data, g_self->i18n, "pavel3333");
+		PyObject* data_i18n = PyObject_CallMethod(m_g_gui, "register_data", "sOOs", g_self->ids, g_self->data, g_self->i18n, "pavel3333");
 
 		if (!data_i18n) { traceLog
-			return 5;
+			return_err 5;
 		} traceLog
 
 		PyObject* old = g_self->data;
@@ -185,11 +184,13 @@ int PyConfig::init()
 
 		Py_DECREF(old);
 		Py_DECREF(data_i18n);
-	} traceLog
+	}
 
 	inited = true;
 
-	return 0;
+	debugLog("Config init OK");
+
+	return MyErr::OK;
 }
 
 
@@ -229,7 +230,7 @@ PyObject* PyConfig::init_data()
 	}
 
 	return data;
-};
+}
 
 PyObject* PyConfig::init_i18n()
 {
@@ -248,7 +249,8 @@ PyObject* PyConfig::init_i18n()
 
 	PyObject* UI_description = PyString_FromString("NY_Event Mod");
 
-	PyObject* empty_tooltip = PyString_FromStringAndSize("", NULL);
+	// зачем это?
+	//PyObject* empty_tooltip = PyString_FromString("");
 
 	PyObject* UI_message_thx     = PyString_FromString("NY_Event: Successfully loaded.");
 	PyObject* UI_message_thx_2   = PyString_FromString("Official site");
@@ -280,44 +282,28 @@ PyObject* PyConfig::getMessagesList()
 {
 	PyObject* messagesList = PyList_New(MESSAGES_COUNT);
 
-	for (uint8_t i = NULL; i < MESSAGES_COUNT; i++) {
+	for (uint8_t i = 0; i < MESSAGES_COUNT; i++) {
 		PyList_SET_ITEM(messagesList, i, PyString_FromString(MESSAGES[i]));
 	}
 
 	return messagesList;
-};
+}
 
-bool PyConfig::write_data(char* data_path, PyObject* data_p) { traceLog
+bool PyConfig::write_data(std::filesystem::path data_path, PyObject* data_p)
+{
+	traceLog
 
-	PyObject* arg2 = Py_False;
-	Py_INCREF(arg2);
+	// Это нужно потестировать
+	PyObject* dumpsFunc = PyObject_GetAttrString(gBigWorldUtils->m_json, "dumps");
+	PyObject* args = PyTuple_Pack(1, data_p);
+	PyObject* kwargs = PyDict_New();
+	PyDict_SetItemString(kwargs, "indent", PyInt_FromSize_t(4));
 
-	PyObject* arg3 = Py_True;
-	Py_INCREF(arg3);
+	PyObject* data_json_s = PyObject_Call(dumpsFunc, args, kwargs);
 
-	PyObject* arg4 = Py_True;
-	Py_INCREF(arg4);
-
-	PyObject* arg5 = Py_True;
-	Py_INCREF(arg5);
-
-	PyObject* arg6 = Py_None;
-	Py_INCREF(arg6);
-
-	PyObject* indent = PyInt_FromSize_t(4);
-	Py_INCREF(indent);
-
-	PyObject* __dumps = PyString_FromString("dumps");
-
-	PyObject_CallMethodObjArgs_increfed(data_json_s, gBigWorldUtils->m_json, __dumps, data_p, arg2, arg3, arg4, arg5, arg6, indent, NULL);
-
-	Py_DECREF(__dumps);
-	Py_DECREF(arg2);
-	Py_DECREF(arg3);
-	Py_DECREF(arg4);
-	Py_DECREF(arg5);
-	Py_DECREF(arg6);
-	Py_DECREF(indent);
+	Py_CLEAR(args);
+	Py_CLEAR(kwargs);
+	Py_XDECREF(dumpsFunc);
 
 	if (!data_json_s) { traceLog
 		return false;
@@ -325,6 +311,7 @@ bool PyConfig::write_data(char* data_path, PyObject* data_p) { traceLog
 
 	size_t data_size = PyObject_Length(data_json_s);
 
+	// странно открываешь файл на запись
 	std::ofstream data_w(data_path);
 
 	data_w.write(PyString_AS_STRING(data_json_s), data_size);
@@ -336,9 +323,13 @@ bool PyConfig::write_data(char* data_path, PyObject* data_p) { traceLog
 	return true;
 }
 
-bool PyConfig::read_data(bool isData) { traceLog
-	char* data_path;
+bool PyConfig::read_data(bool isData)
+{
+	traceLog
+	
+	std::filesystem::path data_path;
 	PyObject* data_src;
+	
 	if (isData) { traceLog
 		data_path = "mods/configs/pavel3333/NY_Event/NY_Event.json";
 		data_src = g_self->data;
@@ -369,7 +360,7 @@ bool PyConfig::read_data(bool isData) { traceLog
 
 		data.close();
 
-		PyObject_CallMethod_increfed(data_json_s, gBigWorldUtils->m_json, "loads", "s", data_s);
+		auto data_json_s = PyObject_CallMethod(gBigWorldUtils->m_json, "loads", "s", data_s);
 
 		delete[] data_s;
 
@@ -396,6 +387,9 @@ bool PyConfig::read_data(bool isData) { traceLog
 
 PyObject* PyConfig::Config_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
+	(void)args;
+	(void)kwds;
+
 	g_self = (ConfigObject*)type->tp_alloc(type, 0);
 
 	if (g_self) {
@@ -481,6 +475,3 @@ void PyConfig::Config_dealloc(ConfigObject* self)
 
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
-
-// instance
-PyConfig* gPyConfig = nullptr;

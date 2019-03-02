@@ -306,16 +306,16 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 
 				model_sect.models.resize(models_count_sect);
 
-				for (uint16_t i = NULL; i < models_count_sect; i++) {
+				for (uint16_t j = NULL; j < models_count_sect; j++) {
 					float* coords = new float[3];
 
-					for (uint8_t j = NULL; j < 3; j++) {
-						memcpy(&coords[j], response_buffer + offset, 4);
+					for (uint8_t k = NULL; k < 3; k++) {
+						memcpy(&coords[k], response_buffer + offset, 4);
 
 						offset += 4;
 					}
 
-					model_sect.models[i] = coords;
+					model_sect.models[j] = coords;
 				}
 
 				model_sect.isInitialised = true;
@@ -476,13 +476,13 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 					model_sect.models.resize(models_count_sect);
 
-					for (uint16_t i = 0; i < models_count_sect; i++) {
+					for (uint16_t j = 0; j < models_count_sect; j++) {
 						float* coords = new float[3];
 
 						memcpy(coords, response_buffer + offset, 12);
 						offset += 12;
 
-						model_sect.models[i] = coords;
+						model_sect.models[j] = coords;
 					}
 
 					model_sect.isInitialised = true;
@@ -508,7 +508,6 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 uint8_t parse_event_DEL_LAST_MODEL()
 {
 	uint16_t* length = nullptr;
-	uint32_t offset = NULL;
 
 	if (!response_size)
 		return 15;

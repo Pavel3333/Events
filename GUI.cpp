@@ -36,7 +36,7 @@ void GUI_setWarning(uint8_t warningCode) {
 		return;
 	}
 
-	PyObject_CallMethod_increfed(res, modGUI, "setWarning", "b", warningCode);
+	auto res = PyObject_CallMethod(modGUI, "setWarning", "b", warningCode);
 
 	Py_XDECREF(res);
 #endif
@@ -48,7 +48,7 @@ void GUI_setError(uint8_t errorCode) {
 		return;
 	}
 
-	PyObject_CallMethod_increfed(res, modGUI, "setError", "b", errorCode);
+	auto res = PyObject_CallMethod(modGUI, "setError", "b", errorCode);
 
 	Py_XDECREF(res);
 #endif
@@ -59,7 +59,7 @@ void GUI_setVisible(bool visible) {
 		return;
 	}
 
-	PyObject_CallMethod_increfed(res, modGUI, "setVisible", "b", visible);
+	auto res = PyObject_CallMethod(modGUI, "setVisible", "b", visible);
 
 	Py_XDECREF(res);
 }
@@ -69,7 +69,7 @@ void GUI_setTimerVisible(bool visible) {
 		return;
 	}
 
-	PyObject_CallMethod_increfed(res, modGUI, "setTimerVisible", "b", visible);
+	auto res = PyObject_CallMethod(modGUI, "setTimerVisible", "b", visible);
 
 	Py_XDECREF(res);
 }
@@ -83,7 +83,7 @@ void GUI_setTime(uint32_t time_preparing) {
 
 	sprintf_s(new_time, 30, "Time: %02d:%02d", time_preparing / 60, time_preparing % 60);
 
-	PyObject_CallMethod_increfed(res, modGUI, "setTime", "s", new_time);
+	auto res = PyObject_CallMethod(modGUI, "setTime", "s", new_time);
 
 	Py_XDECREF(res);
 }
@@ -93,7 +93,7 @@ void GUI_setText(char* msg, float time_f) {
 		return;
 	}
 
-	PyObject_CallMethod_increfed(res, modGUI, "setText", "s", msg);
+	auto res = PyObject_CallMethod(modGUI, "setText", "s", msg);
 
 	Py_XDECREF(res);
 
@@ -120,19 +120,19 @@ void GUI_setText(char* msg, float time_f) {
 	}
 
 	if (time_f) {
-		PyObject_CallMethod_increfed(res2, modGUI, "clearTextCB", "f", time_f);
+		auto res2 = PyObject_CallMethod(modGUI, "clearTextCB", "f", time_f);
 
 		Py_XDECREF(res2);
 
-		PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
+		delLabelCBID_p = GUI_getAttr("delLabelCBID");
 
 		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = NULL;
 		else delLabelCBID = PyInt_AsLong(delLabelCBID_p);
 	}
 }
 
-void GUI_setMsg(uint8_t msgID, float time_f, uint8_t scoreID) {
-	if (!isInited || !modGUI || msgID >= MESSAGES_COUNT || scoreID >= SECTIONS_COUNT) {
+void GUI_setMsg(uint8_t msg_ID, float time_f, uint8_t score_ID) {
+	if (!isInited || !modGUI || msg_ID >= MESSAGES_COUNT || score_ID >= SECTIONS_COUNT) {
 		return;
 	}
 
@@ -152,7 +152,7 @@ void GUI_setMsg(uint8_t msgID, float time_f, uint8_t scoreID) {
 
 	//находим сообщение из списка
 
-	PyObject* msg_p = PyList_GetItem(messagesList, msgID);
+	PyObject* msg_p = PyList_GetItem(messagesList, msg_ID);
 
 	if (!msg_p) {
 		return;
@@ -168,11 +168,11 @@ void GUI_setMsg(uint8_t msgID, float time_f, uint8_t scoreID) {
 
 	char new_msg[255];
 
-	if (msgID == STAGE_ID::GET_SCORE) { // если это - сообщение о том, что получили баллы
-		sprintf_s(new_msg, 255, msg, COLOURS[msgID], SCORE[scoreID]);
+	if (msg_ID == STAGE_ID::GET_SCORE) { // если это - сообщение о том, что получили баллы
+		sprintf_s(new_msg, 255, msg, COLOURS[msg_ID], SCORE[score_ID]);
 	}
 	else {
-		sprintf_s(new_msg, 255, msg, COLOURS[msgID]);
+		sprintf_s(new_msg, 255, msg, COLOURS[msg_ID]);
 	}
 
 	GUI_setText(new_msg, time_f);
@@ -186,7 +186,7 @@ void GUI_clearText()
 		return;
 	}
 
-	PyObject_CallMethod_increfed(res, modGUI, "clearText", nullptr);
+	auto res = PyObject_CallMethod(modGUI, "clearText", nullptr);
 
 	Py_XDECREF(res);
 

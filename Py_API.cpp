@@ -20,8 +20,6 @@ uint32_t request     = 100;
 uint8_t  mapID      = NULL;
 uint32_t databaseID = NULL;
 
-HangarMessagesC* HangarMessages = nullptr;
-
 bool isInited = false;
 
 bool battleEnded = true;
@@ -104,7 +102,7 @@ void clearModelsSections() { traceLog
 
 		it_sect_sync->models.~vector();
 
-		it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //óäàëÿåì ñåêöèþ èç âåêòîðà ñåêöèé ñèíõðîíèçàöèè
+		it_sect_sync = sync_map.modelsSects_deleting.erase(it_sect_sync); //ÑƒÐ´Ð°Ð»ÑÐµÐ¼ ÑÐµÐºÑ†Ð¸ÑŽ Ð¸Ð· Ð²ÐµÐºÑ‚Ð¾Ñ€Ð° ÑÐµÐºÑ†Ð¸Ð¹ ÑÐ¸Ð½Ñ…Ñ€Ð¾Ð½Ð¸Ð·Ð°Ñ†Ð¸Ð¸
 	} traceLog
 
 	sync_map.modelsSects_deleting.~vector();
@@ -395,7 +393,7 @@ bool setModelPosition(PyObject* Model, const float coords_f[3])
 PyObject* event_model(char* path, float coords[3], bool isAsync)
 {
 	if (!isInited || battleEnded) { traceLog
-		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //ñîçäàòü ìîäåëü íåâîçìîæíî, óáàâëÿåì ñ÷åò÷èê ÷èñëà ìîäåëåé, êîòîðûå äîëæíû áûòü ñîçäàíû
+		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //ÑÐ¾Ð·Ð´Ð°Ñ‚ÑŒ Ð¼Ð¾Ð´ÐµÐ»ÑŒ Ð½ÐµÐ²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾, ÑƒÐ±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑ‡ÐµÑ‚Ñ‡Ð¸Ðº Ñ‡Ð¸ÑÐ»Ð° Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð´Ð¾Ð»Ð¶Ð½Ñ‹ Ð±Ñ‹Ñ‚ÑŒ ÑÐ¾Ð·Ð´Ð°Ð½Ñ‹
 
 		return NULL;
 	}
@@ -406,22 +404,22 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 		if (coords == nullptr) { traceLog
 			extendedDebugLogEx(WARNING, "event_model - coords is NULL!");
 
-			if (allModelsCreated > NULL) allModelsCreated--; //ñîçäàòü ìîäåëü íåâîçìîæíî, óáàâëÿåì ñ÷åò÷èê ÷èñëà ìîäåëåé, êîòîðûå äîëæíû áûòü ñîçäàíû
+			if (allModelsCreated > NULL) allModelsCreated--; //ÑÐ¾Ð·Ð´Ð°Ñ‚ÑŒ Ð¼Ð¾Ð´ÐµÐ»ÑŒ Ð½ÐµÐ²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾, ÑƒÐ±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑ‡ÐµÑ‚Ñ‡Ð¸Ðº Ñ‡Ð¸ÑÐ»Ð° Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð´Ð¾Ð»Ð¶Ð½Ñ‹ Ð±Ñ‹Ñ‚ÑŒ ÑÐ¾Ð·Ð´Ð°Ð½Ñ‹
 
 			return NULL;
 		}
 
-		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //ïåðåäàåì óêàçàòåëü íà 3 êîîðäèíàòû
+		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //Ð¿ÐµÑ€ÐµÐ´Ð°ÐµÐ¼ ÑƒÐºÐ°Ð·Ð°Ñ‚ÐµÐ»ÑŒ Ð½Ð° 3 ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚Ñ‹
 
 		PyObject_CallFunctionObjArgs_increfed(partialized, gBigWorldUtils->m_partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		if (!partialized) { traceLog
-			if (allModelsCreated > NULL) allModelsCreated--; //ñîçäàòü ìîäåëü íåâîçìîæíî, óáàâëÿåì ñ÷åò÷èê ÷èñëà ìîäåëåé, êîòîðûå äîëæíû áûòü ñîçäàíû
+			if (allModelsCreated > NULL) allModelsCreated--; //ÑÐ¾Ð·Ð´Ð°Ñ‚ÑŒ Ð¼Ð¾Ð´ÐµÐ»ÑŒ Ð½ÐµÐ²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾, ÑƒÐ±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑ‡ÐµÑ‚Ñ‡Ð¸Ðº Ñ‡Ð¸ÑÐ»Ð° Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð´Ð¾Ð»Ð¶Ð½Ñ‹ Ð±Ñ‹Ñ‚ÑŒ ÑÐ¾Ð·Ð´Ð°Ð½Ñ‹
 
 			return NULL;
 		}
 
-		PyObject_CallFunctionObjArgs_increfed(Model, gBigWorldUtils->m_fetchModel, PyString_FromString(path), partialized, NULL); //çàïóñêàåì àñèíõðîííîå äîáàâëåíèå ìîäåëè
+		PyObject_CallFunctionObjArgs_increfed(Model, gBigWorldUtils->m_fetchModel, PyString_FromString(path), partialized, NULL); //Ð·Ð°Ð¿ÑƒÑÐºÐ°ÐµÐ¼ Ð°ÑÐ¸Ð½Ñ…Ñ€Ð¾Ð½Ð½Ð¾Ðµ Ð´Ð¾Ð±Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¼Ð¾Ð´ÐµÐ»Ð¸
 
 		Py_XDECREF(Model);
 
@@ -435,7 +433,7 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 	}
 
 	if (coords != nullptr) { traceLog
-		if (!setModelPosition(Model, coords)) { traceLog //ñòàâèì íà íóæíóþ ïîçèöèþ
+		if (!setModelPosition(Model, coords)) { traceLog //ÑÑ‚Ð°Ð²Ð¸Ð¼ Ð½Ð° Ð½ÑƒÐ¶Ð½ÑƒÑŽ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸ÑŽ
 			return NULL;
 		}
 	}
@@ -443,12 +441,15 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 	superExtendedDebugLog("model creating OK!");
 
 	return Model;
-};
+}
 
-PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //ïðèíèìàåò àðãóìåíòû: óêàçàòåëü íà êîîðäèíàòû è ñàìó ìîäåëü
+PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //Ð¿Ñ€Ð¸Ð½Ð¸Ð¼Ð°ÐµÑ‚ Ð°Ñ€Ð³ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹: ÑƒÐºÐ°Ð·Ð°Ñ‚ÐµÐ»ÑŒ Ð½Ð° ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚Ñ‹ Ð¸ ÑÐ°Ð¼Ñƒ Ð¼Ð¾Ð´ÐµÐ»ÑŒ
 	if (!isInited || battleEnded || models.size() >= allModelsCreated) { traceLog
 		Py_RETURN_NONE;
 	}
+
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
 
 	if (!EVENT_ALL_MODELS_CREATED->hEvent) { traceLog
 		extendedDebugLogEx(ERROR, "AMCEvent or createModelsPyMeth event is NULL!");
@@ -456,7 +457,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //ïðèí
 		Py_RETURN_NONE;
 	}
 
-	//ðàáî÷àÿ ÷àñòü
+	//Ñ€Ð°Ð±Ð¾Ñ‡Ð°Ñ Ñ‡Ð°ÑÑ‚ÑŒ
 
 	PyObject* coords_pointer = NULL;
 	PyObject* Model = NULL;
@@ -488,7 +489,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //ïðèí
 
 	float* coords_f = (float*)(coords_vptr);
 
-	if (!setModelPosition(Model, coords_f)) { traceLog //ñòàâèì íà íóæíóþ ïîçèöèþ
+	if (!setModelPosition(Model, coords_f)) { traceLog //ÑÑ‚Ð°Ð²Ð¸Ð¼ Ð½Ð° Ð½ÑƒÐ¶Ð½ÑƒÑŽ Ð¿Ð¾Ð·Ð¸Ñ†Ð¸ÑŽ
 		Py_RETURN_NONE;
 	}
 
@@ -508,8 +509,8 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //ïðèí
 	models.push_back(newModel);
 	//lights.push_back(newLight);
 
-	if (models.size() >= allModelsCreated) { traceLog               //åñëè ÷èñëî ñîçäàííûõ ìîäåëåé - ñòîëüêî æå èëè áîëüøå, ÷åì íàäî
-		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent)) { traceLog //ñèãíàëèì î òîì, ÷òî âñå ìîäåëè áûëè óñïåøíî ñîçäàíû
+	if (models.size() >= allModelsCreated) { traceLog               //ÐµÑÐ»Ð¸ Ñ‡Ð¸ÑÐ»Ð¾ ÑÐ¾Ð·Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹ - ÑÑ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¶Ðµ Ð¸Ð»Ð¸ Ð±Ð¾Ð»ÑŒÑˆÐµ, Ñ‡ÐµÐ¼ Ð½Ð°Ð´Ð¾
+		if (!SetEvent(EVENT_ALL_MODELS_CREATED->hEvent)) { traceLog //ÑÐ¸Ð³Ð½Ð°Ð»Ð¸Ð¼ Ð¾ Ñ‚Ð¾Ð¼, Ñ‡Ñ‚Ð¾ Ð²ÑÐµ Ð¼Ð¾Ð´ÐµÐ»Ð¸ Ð±Ñ‹Ð»Ð¸ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ ÑÐ¾Ð·Ð´Ð°Ð½Ñ‹
 			extendedDebugLogEx(ERROR, "event_onModelCreated: AMCEvent event not setted!");
 
 			Py_RETURN_NONE;
@@ -531,7 +532,7 @@ uint8_t create_models() { traceLog
 	g_models_mutex.lock();
 	superExtendedDebugLog("MODELS_USING");
 
-	for (auto it = current_map.modelsSects.begin(); //ïåðâûé ïðîõîä - ïîëó÷àåì ÷èñëî âñåõ ñîçäàííûõ ìîäåëåé
+	for (auto it = current_map.modelsSects.begin(); //Ð¿ÐµÑ€Ð²Ñ‹Ð¹ Ð¿Ñ€Ð¾Ñ…Ð¾Ð´ - Ð¿Ð¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ñ‡Ð¸ÑÐ»Ð¾ Ð²ÑÐµÑ… ÑÐ¾Ð·Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹
 		it != current_map.modelsSects.end();
 		it++) {
 
@@ -556,7 +557,7 @@ uint8_t create_models() { traceLog
 		}
 	} traceLog
 
-	for (auto it = current_map.modelsSects.cbegin(); //âòîðîé ïðîõîä - ñîçäàåì ìîäåëè
+	for (auto it = current_map.modelsSects.cbegin(); //Ð²Ñ‚Ð¾Ñ€Ð¾Ð¹ Ð¿Ñ€Ð¾Ñ…Ð¾Ð´ - ÑÐ¾Ð·Ð´Ð°ÐµÐ¼ Ð¼Ð¾Ð´ÐµÐ»Ð¸
 		it != current_map.modelsSects.cend();
 		it++) {
 		if (!it->isInitialised || it->models.empty()) { traceLog
@@ -674,9 +675,8 @@ uint8_t set_visible(bool isVisible) {
 	return NULL;
 };
 
-uint8_t del_models() {
-	INIT_LOCAL_MSG_BUFFER;
-	
+uint8_t del_models()
+{
 	traceLog
 	if (!isInited || first_check || battleEnded) { traceLog
 		return 1;

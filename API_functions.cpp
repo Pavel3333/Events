@@ -67,11 +67,6 @@ const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSect
 	return nullptr;
 }
 
-bool file_exists(const char *fname)
-{
-	return std::filesystem::exists(fname);
-}
-
 float getDist2Points(const float point1[3], const float point2[3]) {
 	if (!point1 || !point2) {
 		return -1.0;
