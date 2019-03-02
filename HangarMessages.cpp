@@ -2,7 +2,7 @@
 #include "MyLogger.h"
 
 
-// Инициализация
+// Инициализация полей статичного класса
 bool      HangarMessages::inited        = false;
 bool      HangarMessages::showed        = false;
 PyObject* HangarMessages::m_SM_TYPE     = nullptr;
@@ -11,7 +11,7 @@ PyObject* HangarMessages::m_pushMessage = nullptr;
 
 MyErr HangarMessages::init()
 {
-	return init_p();
+	return_err init_p();
 }
 
 
@@ -34,13 +34,13 @@ MyErr HangarMessages::showMessage(PyObject* i18n)
 	if (!inited)
 		return_err 1;
 
-	return showMessage_p(i18n);
+	return_err showMessage_p(i18n);
 }
 
 
 //private methods
 
-MyErr HangarMessages::init_p()
+int HangarMessages::init_p()
 {
 	//загрузка SM_TYPE и pushMessage
 
@@ -73,7 +73,7 @@ MyErr HangarMessages::init_p()
 }
 
 
-MyErr HangarMessages::showMessage_p(PyObject* i18n)
+int HangarMessages::showMessage_p(PyObject* i18n)
 {
 	if (!first_check && showed)
 		return_ok;

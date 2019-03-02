@@ -294,7 +294,7 @@ bool PyConfig::write_data(std::filesystem::path data_path, PyObject* data_p)
 	traceLog
 
 	// Это нужно потестировать
-	PyObject* dumpsFunc = PyObject_GetAttrString(BigWorldUtils::m_json, "dumps");
+	PyObject* dumpsFunc = PyObject_GetAttrString(gBigWorldUtils->m_json, "dumps");
 	PyObject* args = PyTuple_Pack(1, data_p);
 	PyObject* kwargs = PyDict_New();
 	PyDict_SetItemString(kwargs, "indent", PyInt_FromSize_t(4));
@@ -360,7 +360,7 @@ bool PyConfig::read_data(bool isData)
 
 		data.close();
 
-		auto data_json_s = PyObject_CallMethod(BigWorldUtils::m_json, "loads", "s", data_s);
+		auto data_json_s = PyObject_CallMethod(gBigWorldUtils->m_json, "loads", "s", data_s);
 
 		delete[] data_s;
 

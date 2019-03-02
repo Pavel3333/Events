@@ -148,8 +148,9 @@ PyMODINIT_FUNC initevent(void)
 	// почему это здесь?
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	
-	if (auto err = BigWorldUtils::init()) {
-		debugLogEx(ERROR, "initevent - init BigWorldUtils: error %d!", err);
+	gBigWorldUtils = new BigWorldUtils();
+	if (!gBigWorldUtils->inited) {
+		debugLogEx(ERROR, "initevent - init BigWorldUtils: error %d!", gBigWorldUtils->lastError);
 		goto freeBigWorldUtils;
 	}
 
@@ -259,5 +260,6 @@ freeHangarMessages:
 	HangarMessages::fini();
 
 freeBigWorldUtils:
-	BigWorldUtils::fini();
+	delete gBigWorldUtils;
+	gBigWorldUtils = nullptr;
 }

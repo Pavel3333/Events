@@ -16,6 +16,6 @@ public:
 	static MyErr showMessage(PyObject*);
 
 private:
-	static MyErr init_p();
-	static MyErr showMessage_p(PyObject*);
+	static int init_p();
+	static int showMessage_p(PyObject*);
 };

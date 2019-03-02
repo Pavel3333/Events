@@ -3,41 +3,48 @@
 
 
 class BigWorldUtils {
-	static bool inited;
-
 public:
-	static PyObject* m_BigWorld;
-	static PyObject* m_Model;
-	static PyObject* m_fetchModel;
-	static PyObject* m_addModel;
-	static PyObject* m_delModel;
-	static PyObject* m_callback;
-	static PyObject* m_cancelCallback;
-	static PyObject* m_g_appLoader;
-	static PyObject* m_partial;
-	static PyObject* m_json;
+	bool inited = false;
 
-	static MyErr init();
-	static void fini();
+	PyObject* m_BigWorld       = nullptr;
+	PyObject* m_Model          = nullptr;
+	PyObject* m_fetchModel     = nullptr;
+	PyObject* m_addModel       = nullptr;
+	PyObject* m_delModel       = nullptr;
+	PyObject* m_callback       = nullptr;
+	PyObject* m_cancelCallback = nullptr;
+	PyObject* m_g_appLoader    = nullptr;
+	PyObject* m_partial        = nullptr;
+	PyObject* m_json           = nullptr;
+
+	int   lastError    = 0;
+	char* lastErrorStr = nullptr;
+
+	BigWorldUtils();
+	~BigWorldUtils();
 
 	// BigWorld.callback()
 	// Registers a callback function to be called after a certain time, but not before the next tick
-	static MyErr callback(long&, PyObject*, float delay = 1.0);
+	void callback(long*, PyObject*, float delay = 1.0);
 
 	// BigWorld.cancelCallback()
 	// Cancels a previously registered callback
-	static MyErr cancelCallback(long);
+	void cancelCallback(long);
 
-	static MyErr getMapID(uint8_t&);
-	static MyErr getDBID(uint32_t&);
-	static MyErr getLastModelCoords(float, MODEL_ID*, float**);
+	void getMapID(uint8_t*);
+	void getDBID(uint32_t*);
+	void getLastModelCoords(float, MODEL_ID*, float**);
 
 private:
-	static PyObject* getPlayer_p();
+	void init();
 
-	static MyErr callback_p(long&, PyObject*, float);
-	static MyErr cancelCallback_p(long);
-	static MyErr getMapID_p(uint8_t&);
-	static MyErr getDBID_p(uint32_t&);
-	static MyErr getLastModelCoords_p(float, MODEL_ID*, float**);
+	PyObject* getPlayer_p() const;
+
+	int callback_p(long*, PyObject*, float);
+	int cancelCallback_p(long);
+	int getMapID_p(uint8_t*);
+	int getDBID_p(uint32_t*);
+	int getLastModelCoords_p(float, MODEL_ID*, float**);
 };
+
+extern BigWorldUtils* gBigWorldUtils;

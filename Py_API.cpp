@@ -260,7 +260,7 @@ PyObject* event_light(float coords[3]) {
 
 	superExtendedDebugLog("light creating...");
 
-	PyObject* Light = PyObject_CallMethod(BigWorldUtils::m_BigWorld, "PyOmniLight", nullptr);
+	PyObject* Light = PyObject_CallMethod(gBigWorldUtils->m_BigWorld, "PyOmniLight", nullptr);
 	if (!Light) { traceLog
 		superExtendedDebugLog("PyOmniLight creating FAILED");
 		return NULL;
@@ -411,7 +411,7 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
-		auto partialized = PyObject_CallFunctionObjArgs(BigWorldUtils::m_partial, onModelCreatedPyMeth, coords_p, nullptr);
+		auto partialized = PyObject_CallFunctionObjArgs(gBigWorldUtils->m_partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		if (!partialized) { traceLog
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
@@ -419,14 +419,14 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 			return NULL;
 		}
 
-		auto Model = PyObject_CallFunctionObjArgs(BigWorldUtils::m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+		auto Model = PyObject_CallFunctionObjArgs(gBigWorldUtils->m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
 
 		Py_XDECREF(Model);
 
 		return NULL;
 	}
 
-	auto Model = PyObject_CallFunction(BigWorldUtils::m_Model, "s", path);
+	auto Model = PyObject_CallFunction(gBigWorldUtils->m_Model, "s", path, nullptr);
 
 	if (!Model) { traceLog
 		return NULL;
@@ -609,7 +609,7 @@ uint8_t init_models()
 			continue;
 		}
 
-		auto result = PyObject_CallFunctionObjArgs(BigWorldUtils::m_addModel, models[i]->model, NULL);
+		auto result = PyObject_CallFunctionObjArgs(gBigWorldUtils->m_addModel, models[i]->model, NULL);
 
 		if (result) {
 			Py_DECREF(result);
@@ -709,7 +709,7 @@ uint8_t del_models()
 			continue;
 		}
 
-		auto result = PyObject_CallFunctionObjArgs(BigWorldUtils::m_delModel, (*it_model)->model, NULL);
+		auto result = PyObject_CallFunctionObjArgs(gBigWorldUtils->m_delModel, (*it_model)->model, NULL);
 
 		if (result) {
 			Py_DECREF(result);

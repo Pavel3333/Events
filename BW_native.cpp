@@ -5,22 +5,34 @@
 INIT_LOCAL_MSG_BUFFER;
 
 
-bool BigWorldUtils::inited                = false;
-PyObject* BigWorldUtils::m_BigWorld       = nullptr;
-PyObject* BigWorldUtils::m_Model          = nullptr;
-PyObject* BigWorldUtils::m_fetchModel     = nullptr;
-PyObject* BigWorldUtils::m_addModel       = nullptr;
-PyObject* BigWorldUtils::m_delModel       = nullptr;
-PyObject* BigWorldUtils::m_callback       = nullptr;
-PyObject* BigWorldUtils::m_cancelCallback = nullptr;
-PyObject* BigWorldUtils::m_g_appLoader    = nullptr;
-PyObject* BigWorldUtils::m_partial        = nullptr;
-PyObject* BigWorldUtils::m_json           = nullptr;
+// constructor
+BigWorldUtils::BigWorldUtils()
+{
+	init();
+}
 
+// destructor
+BigWorldUtils::~BigWorldUtils()
+{
+	if (!inited) return;
+
+	Py_XDECREF(m_json);
+	Py_XDECREF(m_partial);
+	Py_XDECREF(m_g_appLoader);
+	Py_XDECREF(m_cancelCallback);
+	Py_XDECREF(m_callback);
+	Py_XDECREF(m_delModel);
+	Py_XDECREF(m_addModel);
+	Py_XDECREF(m_fetchModel);
+	Py_XDECREF(m_Model);
+}
+
+
+// private methods
 
 
 // initialization
-MyErr BigWorldUtils::init()
+void BigWorldUtils::init()
 {
 	// получение BigWorld
 	m_BigWorld = PyImport_AddModule("BigWorld");
@@ -57,96 +69,76 @@ MyErr BigWorldUtils::init()
 	m_json = PyImport_ImportModule("json");
 
 	inited = true;
-
-	return_ok;
 }
-
-
-void BigWorldUtils::fini()
-{
-	if (!inited)
-		return;
-
-	Py_XDECREF(m_json);
-	Py_XDECREF(m_partial);
-	Py_XDECREF(m_g_appLoader);
-	Py_XDECREF(m_cancelCallback);
-	Py_XDECREF(m_callback);
-	Py_XDECREF(m_delModel);
-	Py_XDECREF(m_addModel);
-	Py_XDECREF(m_fetchModel);
-	Py_XDECREF(m_Model);
-}
-
 
 // BigWorld.player() private impementation
-PyObject* BigWorldUtils::getPlayer_p()
+PyObject* BigWorldUtils::getPlayer_p() const
 {
 	return PyObject_CallMethod(m_BigWorld, "player", nullptr);
 }
 
 // BigWorld.callback() private implementation
-MyErr BigWorldUtils::callback_p(long& callbackID, PyObject* func, float delay)
+int BigWorldUtils::callback_p(long* callbackID, PyObject* func, float delay)
 {
 	if (!func) {
-		debugLogEx(ERROR, "Error: func argument is NULL");
-		return_err -1;
+		lastErrorStr = "Error: func argument is NULL";
+		return -1;
 	}
 
 	PyObject* res = PyObject_CallFunction(m_callback, "fO", delay, func);
 	if (!res) {
-		debugLogEx(ERROR, "Error with BigWorld.callback(%f, func)", delay);
-		return_err -2;
+		lastErrorStr = "Error with BigWorld.callback(delay, func)";
+		return -2;
 	}
 
-	callbackID = PyInt_AS_LONG(res);
+	*callbackID = PyInt_AS_LONG(res);
 	Py_DECREF(res);
 
-	return_ok;
+	return 0;
 }
 
 // BigWorld.cancelCallback() private implementation
-MyErr BigWorldUtils::cancelCallback_p(long callbackID)
+int BigWorldUtils::cancelCallback_p(long callbackID)
 {
 	PyObject* res = PyObject_CallFunction(m_cancelCallback, "l", callbackID);
 	if (!res) {
-		debugLogEx(ERROR, "Error with BigWorld.cancelCallback(%d)", callbackID);
-		return_err -1;
+		lastErrorStr = "Error with BigWorld.cancelCallback(callbackID)";
+		return -1;
 	}
 
 	Py_DECREF(res);
 
-	return_ok;
+	return 0;
 }
 
 // BigWorld.player().arena.arenaType.geometryName private implementation
-MyErr BigWorldUtils::getMapID_p(uint8_t& mapID)
+int BigWorldUtils::getMapID_p(uint8_t* mapID)
 {
 	PyObject* player = getPlayer_p();
 	if (!player) {
-		debugLogEx(ERROR, "Error getting BigWorld.player()");
-		return_err -1;
+		lastErrorStr = "Error getting BigWorld.player()";
+		return -1;
 	}
 
 	PyObject* arena = PyObject_GetAttrString(player, "arena");
 	Py_DECREF(player);
 	if (!arena) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().arena");
-		return_err -2;
+		lastErrorStr = "Error getting BigWorld.player().arena";
+		return -2;
 	}
 
 	PyObject* arenaType = PyObject_GetAttrString(arena, "arenaType");
 	Py_DECREF(arena);
 	if (!arenaType) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().arena.arenaType");
-		return_err -3;
+		lastErrorStr = "Error getting BigWorld.player().arena.arenaType";
+		return -3;
 	}
 
 	PyObject* map_PS = PyObject_GetAttrString(arenaType, "geometryName");
 	Py_DECREF(arenaType);
 	if (!map_PS) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().arena.arenaType.geometryName");
-		return_err -4;
+		lastErrorStr = "Error getting BigWorld.player().arena.arenaType.geometryName";
+		return -4;
 	}
 
 	char* map_s = _strdup(PyString_AS_STRING(map_PS));
@@ -155,68 +147,70 @@ MyErr BigWorldUtils::getMapID_p(uint8_t& mapID)
 	if (map_s[2] == '_') map_s[2] = '\0';
 	map_s[3] = '\0';
 
-	mapID = atoi(map_s);
+	*mapID = atoi(map_s);
 	delete map_s;
 
-	return_ok;
+	return 0;
 }
 
 // BigWorld.player().databaseID private implementation
-MyErr BigWorldUtils::getDBID_p(uint32_t& DBID)
+int BigWorldUtils::getDBID_p(uint32_t* DBID)
 {
 	PyObject* player = getPlayer_p();
 	if (!player) {
-		debugLogEx(ERROR, "Error getting BigWorld.player()");
-		return_err -1;
+		lastErrorStr = "Error getting BigWorld.player()";
+		debugLogEx(ERROR, "%s", lastErrorStr);
+		return -1;
 	}
 
 	PyObject* databaseID = PyObject_GetAttrString(player, "databaseID");
 	Py_DECREF(player);
 	if (!databaseID) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().databaseID");
-		return_err -2;
+		lastErrorStr = "Error getting BigWorld.player().databaseID";
+		debugLogEx(ERROR, "%s", lastErrorStr);
+		return -2;
 	}
 
-	DBID = PyInt_AS_LONG(databaseID);
+	*DBID = PyInt_AS_LONG(databaseID);
 	Py_DECREF(databaseID);
 
-	return_ok;
+	return 0;
 }
 
-MyErr BigWorldUtils::getLastModelCoords_p(float dist_equal, MODEL_ID* modelID, float** coords)
+int BigWorldUtils::getLastModelCoords_p(float dist_equal, MODEL_ID* modelID, float** coords)
 {
 	PyObject* player = getPlayer_p();
 	if (!player) {
-		debugLogEx(ERROR, "Error getting BigWorld.player()");
-		return_err -1;
+		lastErrorStr = "Error getting BigWorld.player()";
+		return -1;
 	}
 
 	PyObject* vehicle = PyObject_GetAttrString(player, "vehicle");
 	Py_DECREF(player);
 	if (!vehicle) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().vehicle");
-		return_err -2;
+		lastErrorStr = "Error getting BigWorld.player().vehicle";
+		return -2;
 	}
 
 	PyObject* model_p = PyObject_GetAttrString(vehicle, "model");
 	Py_DECREF(vehicle);
 	if (!model_p) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().vehicle.model");
-		return_err -3;
+		lastErrorStr = "Error getting BigWorld.player().vehicle.model";
+		return -3;
 	}
 
 	PyObject* position_Vec3 = PyObject_GetAttrString(model_p, "position");
 	Py_DECREF(model_p);
 	if (!position_Vec3) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().vehicle.model.position");
-		return_err -4;
+		lastErrorStr = "Error getting BigWorld.player().vehicle.model.position";
+		return -4;
 	}
 
 	PyObject* position = PyObject_CallMethod(position_Vec3, "tuple", nullptr);
 	Py_DECREF(position_Vec3);
 	if (!position) {
-		debugLogEx(ERROR, "Error getting BigWorld.player().vehicle.model.position.tuple()");
-		return_err -5;
+		lastErrorStr = "Error getting BigWorld.player().vehicle.model.position.tuple()";
+		return -5;
 	}
 
 	float coords_pos[3];
@@ -260,59 +254,58 @@ MyErr BigWorldUtils::getLastModelCoords_p(float dist_equal, MODEL_ID* modelID, f
 	if (dist == -1.0 || modelTypeLast == MODEL_ID::UNKNOWN || coords_res == nullptr) { traceLog //модели с такой координатой не найдено
 		extendedDebugLogEx(WARNING, "getLastModelCoords - model not found!");
 
-	return_err 1;
+		return 1;
 	} traceLog
 
 	if (dist > dist_equal) { traceLog
-		return_err 2;
+		return 2;
 	} traceLog
 
 	*modelID = modelTypeLast;
 	*coords = coords_res;
 
-	return_ok;
+	return 0;
 }
 
 
 // public methods
 
 
-MyErr BigWorldUtils::callback(long& callbackID, PyObject* func, float delay)
+void BigWorldUtils::callback(long* callbackID, PyObject* func, float delay)
 {
-	if (!inited)
-		return_err -1;
+	if (!inited) return;
 
-	return callback_p(callbackID, func, delay);
+	lastError = callback_p(callbackID, func, delay);
 }
 
-MyErr BigWorldUtils::cancelCallback(long callbackID)
+void BigWorldUtils::cancelCallback(long callbackID)
 {
-	if (!inited)
-		return_err -1;
+	if (!inited) return;
 
-	return cancelCallback_p(callbackID);
+	lastError = cancelCallback_p(callbackID);
 }
 
-MyErr BigWorldUtils::getMapID(uint8_t& mapID)
+void BigWorldUtils::getMapID(uint8_t* mapID)
 {
-	if (!inited)
-		return_err -1;
+	if (!inited) return;
 
-	return getMapID_p(mapID);
+	lastError = getMapID_p(mapID);
 }
 
-MyErr BigWorldUtils::getDBID(uint32_t& DBID)
+void BigWorldUtils::getDBID(uint32_t* DBID)
 {
-	if (!inited)
-		return_err -1;
+	if (!inited) return;
 
-	return getDBID_p(DBID);
+	lastError = getDBID_p(DBID);
 }
 
-MyErr BigWorldUtils::getLastModelCoords(float dist_equal, MODEL_ID* modelID, float** coords)
+void BigWorldUtils::getLastModelCoords(float dist_equal, MODEL_ID* modelID, float** coords)
 {
-	if (!inited)
-		return_err -1;
+	if (!inited) return;
 
-	return getLastModelCoords_p(dist_equal, modelID, coords);
+	lastError = getLastModelCoords_p(dist_equal, modelID, coords);
 }
+
+
+// instance
+BigWorldUtils* gBigWorldUtils = nullptr;

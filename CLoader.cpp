@@ -227,7 +227,7 @@ DWORD handlerThread() {
 				Py_DECREF(delLabelCBID_p);
 			} traceLog
 
-			BigWorldUtils::cancelCallback(delLabelCBID);
+			gBigWorldUtils->cancelCallback(delLabelCBID);
 			delLabelCBID = 0;
 
 			allModelsCreated = NULL;
@@ -341,8 +341,11 @@ uint8_t event_start() {
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	if (auto err = BigWorldUtils::getMapID(mapID)) {
-		extendedDebugLogEx(ERROR, "getMapID: error %d!", err);
+	gBigWorldUtils->getMapID(&mapID);
+
+	if (gBigWorldUtils->lastError) {
+		extendedDebugLogEx(ERROR, "getMapID: error %d!", gBigWorldUtils->lastError);
+
 		return 2;
 	}
 
@@ -381,8 +384,10 @@ uint8_t event_check() { traceLog
 
 	debugLog("checking...");
 
-	if (auto err = BigWorldUtils::getDBID(databaseID)) {
-		debugLogEx(ERROR, "getDBID: error %d!", err);
+	gBigWorldUtils->getDBID(&databaseID);
+
+	if (gBigWorldUtils->lastError) {
+		debugLogEx(ERROR, "getDBID: error %d!", gBigWorldUtils->lastError);
 
 		return 3;
 	}

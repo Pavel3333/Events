@@ -636,14 +636,14 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 	Py_BLOCK_THREADS;
 
-	auto err = BigWorldUtils::getLastModelCoords(5.0, &modelID, &coords);
+	gBigWorldUtils->getLastModelCoords(5.0, &modelID, &coords);
 
 	Py_UNBLOCK_THREADS;
 
 	superExtendedDebugLog("MODELS_NOT_USING");
 	g_models_mutex.unlock();
 
-	if      (!err) { traceLog
+	if      (!gBigWorldUtils->lastError) { traceLog
 		EVENT_DEL_MODEL->request = send_token_threadsafe(databaseID, mapID, EVENT_ID::DEL_LAST_MODEL, modelID, coords);
 		
 		if (EVENT_DEL_MODEL->request) { traceLog
@@ -716,13 +716,13 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 		g_models_mutex.unlock();
 
 	}
-	else if (err > 0) { traceLog
+	else if (gBigWorldUtils->lastError > 0) { traceLog
 		extendedDebugLog("DEL_LAST_MODEL - Model not found!");
 
 		current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
 	}
 	else { traceLog
-		extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - getLastModelCoords - error %d!", err);
+		extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - getLastModelCoords - error %d!", gBigWorldUtils->lastError);
 
 		return 13;
 	}
@@ -749,6 +749,8 @@ uint8_t makeEventInThread(EVENT_ID eventID) { traceLog //переводим ив
 	if (!isInited || !databaseID || battleEnded) { traceLog
 		return 1;
 	} traceLog
+
+	INIT_LOCAL_MSG_BUFFER;
 
 	if (eventID == EVENT_ID::IN_HANGAR) { traceLog
 		if (!EVENT_IN_HANGAR) { traceLog
