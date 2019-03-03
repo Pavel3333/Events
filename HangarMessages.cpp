@@ -30,7 +30,6 @@ void HangarMessages::fini()
 }
 
 
-// зачем передавть PyObject* i18n, если его можно получить через PyConfig:: ?
 MyErr HangarMessages::showMessage()
 {
 	if (!inited)
@@ -181,10 +180,34 @@ MyErr HangarMessages::showMessage_p()
 
 	Py_XDECREF(res);
 
-	Py_DECREF(GameGreeting);
-
 	if (!first_check) showed = true;
 	else              showed = false;
+
+	//вывод сообщения со ссылкой на ютуб-канал
+
+	PyObject* UI_message_channel = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_message_channel");
+
+	if (!UI_message_channel) {
+		Py_DECREF(GameGreeting);
+
+		return_err 7;
+	}
+
+	text = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\"><a href=\"event:https://www.youtube.com/c/RAINNVOD\">%s</a></font>", UI_message_channel);
+
+	Py_DECREF(UI_message_channel);
+
+	if (!text) {
+		Py_DECREF(GameGreeting);
+
+		return_err 8;
+	}
+
+	PyObject_CallFunctionObjArgs_increfed(res2, m_pushMessage, text, GameGreeting, NULL);
+
+	Py_DECREF(text);
+	Py_XDECREF(res2);
+	Py_DECREF(GameGreeting);
 
 	return_ok;
 }
