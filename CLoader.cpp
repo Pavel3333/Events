@@ -126,7 +126,7 @@ DWORD handlerThread() {
 	
 	Py_BLOCK_THREADS;
 
-	if (auto err = HangarMessages::showMessage(PyConfig::g_self->i18n)) {
+	if (auto err = HangarMessages::showMessage()) {
 		extendedDebugLogEx(WARNING, "showMessage: error %d", err);
 	}
 

@@ -13,9 +13,9 @@ public:
 	static MyErr init();
 	static void fini();
 	
-	static MyErr showMessage(PyObject*);
+	static MyErr showMessage();
 
 private:
 	static MyErr init_p();
-	static MyErr showMessage_p(PyObject*);
+	static MyErr showMessage_p();
 };

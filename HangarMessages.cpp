@@ -1,6 +1,7 @@
 #include "HangarMessages.h"
 #include "MyLogger.h"
 #include "Py_common.h"
+#include "Py_config.h"
 
 
 // Инициализация
@@ -30,12 +31,12 @@ void HangarMessages::fini()
 
 
 // зачем передавть PyObject* i18n, если его можно получить через PyConfig:: ?
-MyErr HangarMessages::showMessage(PyObject* i18n)
+MyErr HangarMessages::showMessage()
 {
 	if (!inited)
 		return_err 1;
 
-	return showMessage_p(i18n);
+	return showMessage_p();
 }
 
 
@@ -74,7 +75,7 @@ MyErr HangarMessages::init_p()
 }
 
 
-MyErr HangarMessages::showMessage_p(PyObject* i18n)
+MyErr HangarMessages::showMessage_p()
 {
 	if (!first_check && showed)
 		return_ok;
@@ -88,8 +89,8 @@ MyErr HangarMessages::showMessage_p(PyObject* i18n)
 	PyObject* text = nullptr;
 
 	if (!first_check) {
-		PyObject* thx_1 = PyDict_GetItemString(i18n, "UI_message_thx");
-		PyObject* thx_2 = PyDict_GetItemString(i18n, "UI_message_thx_2");
+		PyObject* thx_1 = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_message_thx");
+		PyObject* thx_2 = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_message_thx_2");
 
 		if (!thx_1 || !thx_2) {
 			Py_XDECREF(thx_2);
@@ -120,7 +121,7 @@ MyErr HangarMessages::showMessage_p(PyObject* i18n)
 	else if (first_check == 2 || first_check == 3 || first_check == 6) {
 		PyObject* __UI_err = PyString_FromFormat("UI_err_%d", first_check);
 
-		PyObject* UI_err = PyObject_GetItem(i18n, __UI_err);
+		PyObject* UI_err = PyObject_GetItem(PyConfig::g_self->i18n, __UI_err);
 
 		Py_DECREF(__UI_err);
 
@@ -145,7 +146,7 @@ MyErr HangarMessages::showMessage_p(PyObject* i18n)
 		Py_DECREF(UI_err);
 	}
 	else {
-		PyObject* UI_description = PyDict_GetItemString(i18n, "UI_description");
+		PyObject* UI_description = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_description");
 
 		if (!UI_description) {
 			Py_DECREF(GameGreeting);
