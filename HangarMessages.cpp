@@ -206,9 +206,9 @@ MyErr HangarMessages::showMessage_p()
 		return_err 11;
 	}
 
-	PyObject_CallFunctionObjArgs_increfed(res2, m_pushMessage, text, GameGreeting, NULL);
+	PyObject_CallFunctionObjArgs_increfed(res2, m_pushMessage, youtubeText, GameGreeting, NULL);
 
-	Py_DECREF(text);
+	Py_DECREF(youtubeText);
 	Py_XDECREF(res2);
 	Py_DECREF(GameGreeting);
 
