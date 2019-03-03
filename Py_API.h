@@ -41,7 +41,7 @@ extern std::vector<ModModel*> models;
 
 void clearModelsSections();
 
-uint8_t delModelPy(float*);
+MyErr delModelPy(float*);
 
 uint8_t delModelCoords(MODEL_ID, float*);
 

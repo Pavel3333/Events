@@ -175,7 +175,6 @@ uint8_t parse_event_safe(EVENT_ID eventID)
 uint8_t parse_event_IN_HANGAR()
 {
 	uint16_t* length = nullptr;
-	uint32_t offset = NULL;
 
 	if (response_size == 3) {
 		length = reinterpret_cast<uint16_t*>(response_buffer);

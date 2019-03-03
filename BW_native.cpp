@@ -109,10 +109,13 @@ MyErr BigWorldUtils::callback_p(long& callbackID, PyObject* func, float delay)
 // BigWorld.cancelCallback() private implementation
 MyErr BigWorldUtils::cancelCallback_p(long callbackID)
 {
+	if(!callbackID) 
+		return_err -1;
+
 	PyObject_CallFunction_increfed(res, m_cancelCallback, "l", callbackID);
 	if (!res) {
 		debugLogEx(ERROR, "Error with BigWorld.cancelCallback(%d)", callbackID);
-		return_err -1;
+		return_err -2;
 	}
 
 	Py_DECREF(res);

@@ -17,5 +17,7 @@ public:
 
 private:
 	static MyErr init_p();
+	static MyErr showCheckMessage_p(PyObject*);
+	static MyErr showYoutubeMessage_p(PyObject*);
 	static MyErr showMessage_p();
 };

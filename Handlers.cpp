@@ -237,10 +237,8 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 						continue;
 					}
 
-					EVENT_START_TIMER->request = delModelPy(*it_model);
-
-					if (EVENT_START_TIMER->request) { traceLog
-						extendedDebugLogEx(WARNING, "handleBattleEvent - delModelPy - Error code %d", EVENT_START_TIMER->request);
+					if (auto err = delModelPy(*it_model)) { traceLog
+						extendedDebugLogEx(WARNING, "handleBattleEvent - delModelPy - Error code %d", err);
 
 						//GUI_setError(EVENT_START_TIMER->request);
 
@@ -682,17 +680,17 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 		Py_BLOCK_THREADS;
 
-		EVENT_DEL_MODEL->request = delModelPy(coords);
+		auto err = delModelPy(coords);
 
 		Py_UNBLOCK_THREADS;
 
-		if (EVENT_DEL_MODEL->request) { traceLog
-			extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - delModelPy - Error code %d", EVENT_DEL_MODEL->request);
+		if (err) { traceLog
+			extendedDebugLogEx(WARNING, "DEL_LAST_MODEL - delModelPy: error %d", err);
 
-			//GUI_setError(EVENT_DEL_MODEL->request);
-
-			return 8;
+			//GUI_setWarning(err);
 		} traceLog
+
+		
 
 		scoreID = (int8_t)modelID;
 		current_map.stageID = STAGE_ID::GET_SCORE;

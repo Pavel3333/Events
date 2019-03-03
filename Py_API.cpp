@@ -108,13 +108,13 @@ void clearModelsSections() { traceLog
 	sync_map.modelsSects_deleting.~vector();
 }
 
-uint8_t delModelPy(float* coords) { traceLog
+MyErr delModelPy(float* coords) { traceLog
 	INIT_LOCAL_MSG_BUFFER;
 	
 	if (coords == nullptr) { traceLog
 		extendedDebugLogEx(WARNING, "delModelPy - coords is NULL!");
 
-		return 1;
+		return_err 1;
 	} traceLog
 
 	std::vector<ModModel*>::iterator it_model = models.begin();
@@ -152,17 +152,15 @@ uint8_t delModelPy(float* coords) { traceLog
 
 			PyObject* py_visible = PyBool_FromLong(false);
 
-			PyObject* __visible = PyString_FromString("visible");
-
-			if (!PyObject_SetAttr((*it_model)->model, __visible, py_visible)) { traceLog
+			if (!PyObject_SetAttrString((*it_model)->model, "visible", py_visible)) { traceLog
 				Py_DECREF(py_visible);
 
-				return NULL;
+				return_ok;
 			}
 
 			Py_DECREF(py_visible);
 
-			return 3;
+			return_err 2;
 
 			/*PyObject* __delModel = PyString_FromString("delModel");
 
@@ -191,7 +189,7 @@ uint8_t delModelPy(float* coords) { traceLog
 		it_model++;
 	} traceLog
 
-	return 2;
+	return_err 3;
 }
 
 uint8_t delModelCoords(MODEL_ID ID, float* coords)

@@ -224,11 +224,12 @@ DWORD handlerThread() {
 			}
 			else { traceLog
 				delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
-
+				
 				Py_DECREF(delLabelCBID_p);
+
+				BigWorldUtils::cancelCallback(delLabelCBID);
 			} traceLog
 
-			BigWorldUtils::cancelCallback(delLabelCBID);
 			delLabelCBID = 0;
 
 			allModelsCreated = NULL;

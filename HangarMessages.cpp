@@ -73,17 +73,10 @@ MyErr HangarMessages::init_p()
 	return_ok;
 }
 
-
-MyErr HangarMessages::showMessage_p()
+MyErr HangarMessages::showCheckMessage_p(PyObject* GameGreeting)
 {
-	if (!first_check && showed)
+	if (!first_check && showed) 
 		return_ok;
-
-	PyObject* GameGreeting = PyObject_GetAttrString(m_SM_TYPE, "GameGreeting");
-
-	if (!GameGreeting) {
-		return_err 1;
-	}
 
 	PyObject* text = nullptr;
 
@@ -95,9 +88,7 @@ MyErr HangarMessages::showMessage_p()
 			Py_XDECREF(thx_2);
 			Py_XDECREF(thx_1);
 
-			Py_DECREF(GameGreeting);
-
-			return_err 2;
+			return_err 1;
 		}
 
 		const char* thx_1_c = PyString_AsString(thx_1);
@@ -106,11 +97,8 @@ MyErr HangarMessages::showMessage_p()
 		Py_DECREF(thx_2);
 		Py_DECREF(thx_1);
 
-		if (!thx_1_c || !thx_2_c) {
-			Py_DECREF(GameGreeting);
-
-			return_err 3;
-		}
+		if (!thx_1_c || !thx_2_c) 
+			return_err 2;
 
 		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\">%s<br><a href=\"event:https://pavel3333.ru/\">%s</a></font>", thx_1_c, thx_2_c);
 	}
@@ -121,51 +109,36 @@ MyErr HangarMessages::showMessage_p()
 
 		Py_DECREF(__UI_err);
 
-		if (!UI_err) {
-			Py_DECREF(GameGreeting);
-
-			return_err 4;
-		}
+		if (!UI_err) 
+			return_err 3;
 
 		char* UI_err_c = PyString_AsString(UI_err);
 
 		Py_DECREF(UI_err);
 
-		if (!UI_err_c) {
-			Py_DECREF(GameGreeting);
-
-			return_err 5;
-		}
+		if (!UI_err_c)
+			return_err 4;
 
 		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s</font>", UI_err_c);
 	}
 	else {
 		PyObject* UI_description = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_description");
 
-		if (!UI_description) {
-			Py_DECREF(GameGreeting);
-
-			return_err 6;
-		}
+		if (!UI_description)
+			return_err 5;
 
 		char* UI_description_c = PyString_AsString(UI_description);
 
 		Py_DECREF(UI_description);
 
-		if (!UI_description_c) {
-			Py_DECREF(GameGreeting);
-
-			return_err 7;
-		}
+		if (!UI_description_c)
+			return_err 6;
 
 		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s: Error %d</font>", UI_description_c, (uint32_t)first_check);
 	}
 
-	if (!text) {
-		Py_DECREF(GameGreeting);
-
-		return_err 8;
-	}
+	if (!text)
+		return_err 7;
 
 	PyObject_CallFunctionObjArgs_increfed(res, m_pushMessage, text, GameGreeting, NULL);
 
@@ -173,33 +146,50 @@ MyErr HangarMessages::showMessage_p()
 
 	Py_XDECREF(res);
 
-	Py_DECREF(GameGreeting);
-
 	if (!first_check) showed = true;
 	else              showed = false;
 
+	return_ok;
+}
+
+MyErr HangarMessages::showYoutubeMessage_p(PyObject* GameGreeting)
+{
 	//вывод сообщения со ссылкой на ютуб-канал
 
 	PyObject* UI_message_channel = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_message_channel");
 
-	if (!UI_message_channel)  return_err 9;
+	if (!UI_message_channel)  return_err 8;
 
 	char* UI_message_channel_c = PyString_AsString(UI_message_channel);
 
 	Py_DECREF(UI_message_channel);
 
-	if (!UI_message_channel_c) return_err 10;
+	if (!UI_message_channel_c) return_err 9;
 
 	PyObject* youtubeText = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\"><a href=\"event:https://www.youtube.com/c/RAINNVOD\">%s</a></font>", UI_message_channel_c);
 
-	if (!youtubeText) return_err 11;
-
-	Py_INCREF(GameGreeting);
+	if (!youtubeText) return_err 10;
 
 	PyObject_CallFunctionObjArgs_increfed(res2, m_pushMessage, youtubeText, GameGreeting, NULL);
 
 	Py_DECREF(youtubeText);
 	Py_XDECREF(res2);
+
+	return_ok;
+}
+
+MyErr HangarMessages::showMessage_p()
+{
+	PyObject* GameGreeting = PyObject_GetAttrString(m_SM_TYPE, "GameGreeting");
+
+	if (!GameGreeting) {
+		return_err 1;
+	}
+
+	showCheckMessage_p(GameGreeting);
+
+	showYoutubeMessage_p(GameGreeting);
+
 	Py_DECREF(GameGreeting);
 
 	return_ok;
