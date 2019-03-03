@@ -420,23 +420,14 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 	} traceLog
 
 	if (!PyConfig::m_g_gui && PyCallable_Check(byteify)) { traceLog
-		Py_INCREF(byteify);
-
-		PyObject* args1 = PyTuple_New(1);
-		PyTuple_SET_ITEM(args1, NULL, PyConfig::g_self->i18n);
-
-		PyObject* result = PyObject_CallObject(byteify, args1);
+		PyObject_CallFunctionObjArgs_increfed(result, byteify, PyConfig::g_self->i18n);
 
 		if (result) { traceLog
-			PyObject* old = PyConfig::g_self->i18n;
+			PyDict_Clear(PyConfig::g_self->i18n);
+			Py_DECREF(PyConfig::g_self->i18n);
 
 			PyConfig::g_self->i18n = result;
-
-			PyDict_Clear(old);
-			Py_DECREF(old);
 		} traceLog
-
-		Py_DECREF(byteify);
 	} traceLog
 
 	return NULL;

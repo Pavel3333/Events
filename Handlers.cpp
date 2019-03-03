@@ -478,7 +478,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 					Py_BLOCK_THREADS;
 
-					if (auto err = HangarMessages::showMessage(PyConfig::g_self->i18n)) {
+					if (auto err = HangarMessages::showMessage()) {
 						extendedDebugLogEx(WARNING, "handleInHangarEvent - showMessage: error %d", err);
 					}
 

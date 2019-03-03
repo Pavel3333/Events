@@ -411,7 +411,7 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
-		PyObject_CallFunctionObjArgs_increfed(partialized, gBigWorldUtils->m_partial, onModelCreatedPyMeth, coords_p, NULL);
+		PyObject_CallFunctionObjArgs_increfed(partialized, BigWorldUtils::m_partial, onModelCreatedPyMeth, coords_p, NULL);
 
 		if (!partialized) { traceLog
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
@@ -419,14 +419,14 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 			return NULL;
 		}
 
-		PyObject_CallFunctionObjArgs_increfed(Model, gBigWorldUtils->m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+		PyObject_CallFunctionObjArgs_increfed(Model, BigWorldUtils::m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
 
 		Py_XDECREF(Model);
 
 		return NULL;
 	}
 
-	PyObject_CallFunctionObjArgs_increfed(Model, gBigWorldUtils->m_Model, PyString_FromString(path), NULL);
+	PyObject_CallFunctionObjArgs_increfed(Model, BigWorldUtils::m_Model, PyString_FromString(path), NULL);
 
 	if (!Model) { traceLog
 		return NULL;
@@ -612,7 +612,7 @@ uint8_t init_models()
 			continue;
 		}
 
-		PyObject_CallFunctionObjArgs_increfed(result, gBigWorldUtils->m_addModel, models[i]->model, NULL);
+		PyObject_CallFunctionObjArgs_increfed(result, BigWorldUtils::m_addModel, models[i]->model, NULL);
 
 		if (result) {
 			Py_DECREF(result);
@@ -712,7 +712,7 @@ uint8_t del_models()
 			continue;
 		}
 
-		PyObject_CallFunctionObjArgs_increfed(result, gBigWorldUtils->m_delModel, (*it_model)->model, NULL);
+		PyObject_CallFunctionObjArgs_increfed(result, BigWorldUtils::m_delModel, (*it_model)->model, NULL);
 
 		if (result) {
 			Py_DECREF(result);
