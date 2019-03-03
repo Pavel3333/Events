@@ -4,6 +4,7 @@
 
 #include "Handlers.h"
 #include "Py_config.h"
+#include "Py_common.h"
 #include <cstdlib>
 #include "MyLogger.h"
 
@@ -420,7 +421,9 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 	} traceLog
 
 	if (!PyConfig::m_g_gui && PyCallable_Check(byteify)) { traceLog
-		PyObject_CallFunctionObjArgs_increfed(result, byteify, PyConfig::g_self->i18n);
+		PyObject* args = PyTuple_Pack(1, PyConfig::g_self->i18n);
+		
+		PyObject_CallObject_increfed(result, byteify, args);
 
 		if (result) { traceLog
 			PyDict_Clear(PyConfig::g_self->i18n);

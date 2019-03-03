@@ -146,6 +146,7 @@
     <ClInclude Include="NetworkPrivate.h" />
     <ClInclude Include="PyLoader.h" />
     <ClInclude Include="Py_API.h" />
+    <ClInclude Include="Py_common.h" />
     <ClInclude Include="Py_config.h" />
     <ClInclude Include="ThreadSync.h" />
   </ItemGroup>

@@ -293,11 +293,11 @@ bool PyConfig::write_data(std::filesystem::path data_path, PyObject* data_p)
 {
 	traceLog
 
-	// Это нужно потестировать
 	PyObject* dumpsFunc = PyObject_GetAttrString(BigWorldUtils::m_json, "dumps");
 	PyObject* args = PyTuple_Pack(1, data_p);
 	PyObject* kwargs = PyDict_New();
-	PyDict_SetItemString(kwargs, "indent", PyInt_FromSize_t(4));
+	PyDict_SetItemString(kwargs, "indent",    PyInt_FromSize_t(4));
+	PyDict_SetItemString(kwargs, "sort_keys", PyBool_FromLong(1));
 
 	PyObject* data_json_s = PyObject_Call(dumpsFunc, args, kwargs);
 
