@@ -680,16 +680,16 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 		Py_BLOCK_THREADS;
 
-		auto err = delModelPy(coords);
+		auto err_ = delModelPy(coords);
 
 		Py_UNBLOCK_THREADS;
 
-		if (err) { traceLog
-			extendedDebugLogEx(WARNING, "DEL_LAST_MODEL - delModelPy: error %d", err);
+		if (err_) { traceLog
+			extendedDebugLogEx(WARNING, "DEL_LAST_MODEL - delModelPy: error %d", err_);
 
 			//GUI_setWarning(err);
 
-			current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS;
+			current_map.stageID = STAGE_ID::ITEMS_NOT_EXISTS;
 		}
 		else {
 			scoreID = (int8_t)modelID;
