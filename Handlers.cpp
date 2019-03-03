@@ -688,27 +688,28 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 			extendedDebugLogEx(WARNING, "DEL_LAST_MODEL - delModelPy: error %d", err);
 
 			//GUI_setWarning(err);
+
+			current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS;
+		}
+		else {
+			scoreID = (int8_t)modelID;
+			current_map.stageID = STAGE_ID::GET_SCORE;
+
+			delete[] coords;
+
+			/*
+			EVENT_DEL_MODEL->request = delModelCoords(modelID, coords);
+
+			if (EVENT_DEL_MODEL->request) { traceLog
+				extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - delModelCoords - Error code %d", EVENT_DEL_MODEL->request);
+
+				//GUI_setError(EVENT_DEL_MODEL->request);
+
+				return 10;
+			} traceLog
+
+			*/
 		} traceLog
-
-		
-
-		scoreID = (int8_t)modelID;
-		current_map.stageID = STAGE_ID::GET_SCORE;
-
-		delete[] coords;
-
-		/*
-		EVENT_DEL_MODEL->request = delModelCoords(modelID, coords);
-
-		if (EVENT_DEL_MODEL->request) { traceLog
-			extendedDebugLogEx(ERROR, "DEL_LAST_MODEL - delModelCoords - Error code %d", EVENT_DEL_MODEL->request);
-
-			//GUI_setError(EVENT_DEL_MODEL->request);
-
-			return 10;
-		} traceLog
-
-		*/
 
 		superExtendedDebugLog("MODELS_NOT_USING");
 		g_models_mutex.unlock();
