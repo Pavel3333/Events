@@ -173,6 +173,8 @@ MyErr HangarMessages::showMessage_p()
 
 	Py_XDECREF(res);
 
+	Py_DECREF(GameGreeting);
+
 	if (!first_check) showed = true;
 	else              showed = false;
 
@@ -180,31 +182,19 @@ MyErr HangarMessages::showMessage_p()
 
 	PyObject* UI_message_channel = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_message_channel");
 
-	if (!UI_message_channel) {
-		Py_DECREF(GameGreeting);
-
-		return_err 9;
-	}
+	if (!UI_message_channel)  return_err 9;
 
 	char* UI_message_channel_c = PyString_AsString(UI_message_channel);
 
 	Py_DECREF(UI_message_channel);
 
-	if (!UI_message_channel_c) {
-		Py_DECREF(GameGreeting);
-
-		return_err 10;
-	}
+	if (!UI_message_channel_c) return_err 10;
 
 	PyObject* youtubeText = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\"><a href=\"event:https://www.youtube.com/c/RAINNVOD\">%s</a></font>", UI_message_channel_c);
 
-	Py_DECREF(UI_message_channel);
+	if (!youtubeText) return_err 11;
 
-	if (!youtubeText) {
-		Py_DECREF(GameGreeting);
-
-		return_err 11;
-	}
+	Py_INCREF(GameGreeting);
 
 	PyObject_CallFunctionObjArgs_increfed(res2, m_pushMessage, youtubeText, GameGreeting, NULL);
 
