@@ -1,13 +1,11 @@
 #pragma once
 #include "API_functions.h"
-#include <filesystem>
-
 
 #define KEY_DEL_LAST_MODEL 256 //Keys.KEY_LEFTMOUSE
 
 struct ConfigObject {
 	PyObject_HEAD
-		char* ids;
+	char* ids;
 	char* patch;
 	char* author;
 	char* version;
@@ -19,25 +17,18 @@ struct ConfigObject {
 
 class PyConfig {
 public:
-	static bool inited;
-	static Config config;
-	static ConfigObject* g_self;
-	static PyTypeObject* Config_p;
 	static PyObject* m_g_gui;
-	static PyObject* g_config;
+	static ConfigObject* g_self;
 
-	static MyErr init();
-	static void fini();
-
-private:
-	static PyObject* init_data();
-	static PyObject* init_i18n();
+	static Config config;
 
 	static PyObject* Config_new(PyTypeObject*, PyObject*, PyObject*);
 	static void Config_dealloc(ConfigObject*);
-
+private:
 	static PyObject* getMessagesList();
-
-	static bool write_data(std::filesystem::path, PyObject*);
-	static bool read_data(bool);
+	static void init_config();
+	static PyObject* init_data();
+	static PyObject* init_i18n();
 };
+
+extern PyTypeObject Config_p;
