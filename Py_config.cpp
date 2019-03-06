@@ -1,5 +1,6 @@
 ﻿#include "Py_config.h"
 #include "MyLogger.h"
+#include "fstream"
 #include "python2.7/structmember.h"
 
 
@@ -15,10 +16,15 @@ static PyMemberDef config_members[9] = {
 	{ NULL }
 };
 
+bool PyConfig::inited = nullptr;
+
 PyObject* PyConfig::m_g_gui    = nullptr;
 ConfigObject* PyConfig::g_self = nullptr;
+PyObject* PyConfig::g_config   = nullptr;
 
 Config PyConfig::config        = Config();
+
+INIT_LOCAL_MSG_BUFFER;
 
 PyObject* PyConfig::getMessagesList() {
 	PyObject* messagesList = PyList_New(MESSAGES_COUNT);
@@ -33,6 +39,106 @@ PyObject* PyConfig::getMessagesList() {
 void PyConfig::init_config() {
 	config.i18n.version = config.version_id;
 	config.data.version = config.version_id;
+}
+
+MyErr PyConfig::init()
+{
+	debugLog("Config init...");
+
+	config.i18n.version = config.version_id;
+	config.data.version = config.version_id;
+
+	if (PyType_Ready(&Config_p)) {
+		return_err 1;
+	}
+
+	Py_INCREF(&Config_p);
+
+	//загрузка конфига мода
+
+	g_config = PyObject_CallObject((PyObject*)(&Config_p), NULL);
+
+	////Py_DECREF(&Config_p);
+
+	if (!g_config || !g_self) {
+		return_err 2;
+	}
+
+	//загрузка g_gui
+
+	INIT_LOCAL_MSG_BUFFER;
+
+	debugLog("g_gui module loading...");
+
+	PyObject* mod_mods_gui = PyImport_ImportModule("gui.mods.mod_mods_gui");
+
+	if (!mod_mods_gui) { traceLog
+		PyErr_Clear();
+
+		debugLog("mod_mods_gui is NULL!");
+	}
+	else {
+		m_g_gui = PyObject_GetAttrString(mod_mods_gui, "g_gui");
+
+		Py_DECREF(mod_mods_gui);
+
+		if (!m_g_gui) { traceLog
+			return_err 3;
+		}
+
+		debugLog("mod_mods_gui loaded OK!");
+	}
+
+	if (!m_g_gui) {
+		CreateDirectoryA("mods/configs", NULL);
+		CreateDirectoryA("mods/configs/pavel3333", NULL);
+		CreateDirectoryA("mods/configs/pavel3333/NY_Event", NULL);
+		CreateDirectoryA("mods/configs/pavel3333/NY_Event/i18n", NULL);
+
+		if (!read_data(true) || !read_data(false)) { traceLog
+			return_err 4;
+		} traceLog
+	}
+	else {
+		PyObject* data_i18n = PyObject_CallMethod(m_g_gui, "register_data", "sOOs", g_self->ids, g_self->data, g_self->i18n, "pavel3333");
+
+		if (!data_i18n) { traceLog
+			return_err 5;
+		} traceLog
+
+		PyObject* old = g_self->data;
+
+		g_self->data = PyTuple_GET_ITEM(data_i18n, NULL);
+
+		PyDict_Clear(old);
+
+		Py_DECREF(old);
+
+		old = g_self->i18n;
+
+		g_self->i18n = PyTuple_GET_ITEM(data_i18n, 1);
+
+		PyDict_Clear(old);
+
+		Py_DECREF(old);
+		Py_DECREF(data_i18n);
+	}
+
+	inited = true;
+
+	debugLog("Config init OK");
+
+	return MyErr::OK;
+}
+
+
+void PyConfig::fini()
+{
+	if (!inited)
+		return;
+
+	Py_XDECREF(g_config);
+	g_config = nullptr;
 }
 
 PyObject* PyConfig::init_data() {
@@ -104,8 +210,109 @@ PyObject* PyConfig::init_i18n() {
 	return i18n;
 }
 
+bool PyConfig::write_data(std::filesystem::path data_path, PyObject* data_p)
+{
+	traceLog
+
+	PyObject* dumpsFunc = PyObject_GetAttrString(BigWorldUtils::m_json, "dumps");
+	PyObject* args = PyTuple_Pack(1, data_p);
+	PyObject* kwargs = PyDict_New();
+	PyDict_SetItemString(kwargs, "indent",    PyInt_FromSize_t(4));
+	PyDict_SetItemString(kwargs, "sort_keys", PyBool_FromLong(1));
+
+	PyObject* data_json_s = PyObject_Call(dumpsFunc, args, kwargs);
+
+	Py_CLEAR(args);
+	Py_CLEAR(kwargs);
+	Py_XDECREF(dumpsFunc);
+
+	if (!data_json_s) { traceLog
+		return false;
+	} traceLog
+
+	size_t data_size = PyObject_Length(data_json_s);
+
+	// странно открываешь файл на запись
+	std::ofstream data_w(data_path);
+
+	data_w.write(PyString_AS_STRING(data_json_s), data_size);
+
+	data_w.close();
+
+	Py_DECREF(data_json_s);
+
+	return true;
+}
+
+bool PyConfig::read_data(bool isData)
+{
+	traceLog
+	
+	std::filesystem::path data_path;
+	PyObject* data_src;
+	
+	if (isData) { traceLog
+		data_path = "mods/configs/pavel3333/NY_Event/NY_Event.json";
+		data_src = g_self->data;
+	}
+	else {
+		data_src = g_self->i18n;
+		data_path = "mods/configs/pavel3333/NY_Event/i18n/ru.json";
+	} traceLog
+
+	std::ifstream data(data_path, std::ios::binary);
+
+	if (!data.is_open()) { traceLog
+		data.close();
+		if (!write_data(data_path, data_src)) { traceLog
+			return false;
+		} traceLog
+	}
+	else {
+		data.seekg(0, std::ios::end);
+		size_t size = (size_t)data.tellg(); //getting file size
+		data.seekg(0);
+
+		char* data_s = new char[size + 1];
+
+		while (!data.eof()) {
+			data.read(data_s, size);
+		} traceLog
+
+		data.close();
+
+		auto data_json_s = PyObject_CallMethod(BigWorldUtils::m_json, "loads", "s", data_s);
+
+		delete[] data_s;
+
+		if (!data_json_s) { traceLog
+			PyErr_Clear();
+
+			if (!write_data(data_path, data_src)) { traceLog
+				return false;
+			} traceLog
+
+			return true;
+		} traceLog
+
+		PyObject* old = data_src;
+		if (isData) g_self->data = data_json_s;
+		else g_self->i18n = data_json_s;
+
+		PyDict_Clear(old);
+		Py_DECREF(old);
+	} traceLog
+
+	return true;
+}
+
+
 PyObject* PyConfig::Config_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
+	UNREFERENCED_PARAMETER(type);
+	UNREFERENCED_PARAMETER(args);
+	UNREFERENCED_PARAMETER(kwds);
+
 	init_config();
 
 	g_self = (ConfigObject*)type->tp_alloc(type, 0);

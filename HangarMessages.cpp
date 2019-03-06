@@ -187,7 +187,6 @@ MyErr HangarMessages::showMessage_p()
 	}
 
 	showCheckMessage_p(GameGreeting);
-
 	showYoutubeMessage_p(GameGreeting);
 
 	Py_DECREF(GameGreeting);
