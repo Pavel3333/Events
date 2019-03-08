@@ -22,6 +22,9 @@
     <Filter Include="Loader">
       <UniqueIdentifier>{b56aa157-047e-442a-9e28-dbc8e415aabe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{20289efc-2ecc-4f7d-9564-a4a2f0675c83}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="API_functions.cpp">
@@ -34,9 +37,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BW_native.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Py_config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Py_API.cpp">
@@ -63,12 +63,15 @@
     <ClCompile Include="PyLoader.cpp">
       <Filter>Loader</Filter>
     </ClCompile>
+    <ClCompile Include="CConfig.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Py_config.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="API_functions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Py_config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ModThreads.h">
@@ -109,6 +112,12 @@
     </ClInclude>
     <ClInclude Include="Py_common.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CConfig.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Py_config.h">
+      <Filter>Config</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

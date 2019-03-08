@@ -17,11 +17,6 @@ enum [[nodiscard]] MyErr : int {
 #define return_ok return (MyErr::OK)
 
 
-#define MOD_VERSION "v1.0.0.4 (" __TIMESTAMP__ ")"
-
-#define NET_BUFFER_SIZE 16384
-#define MARKERS_SIZE 12
-
 #define ID_SIZE 4
 #define DWNLD_TOKEN_SIZE 252
 
@@ -102,25 +97,6 @@ struct map_sync {
 
 	std::vector<ModelsSection> modelsSects_creating;
 	std::vector<ModelsSection> modelsSects_deleting;
-};
-
-struct data_c {
-	uint16_t version = 0; //version_id
-	bool enabled = true;
-};
-
-struct i18n_c {
-	uint16_t version = 0; //version_id
-};
-
-struct Config {
-	char* ids = "NY_Event";
-	char* author = "by Pavel3333 & RAINN VOD (thx SkepticalFox)";
-	char* version = MOD_VERSION;
-	char* patch = "1.4.0.1";
-	uint16_t version_id = 100;
-	data_c data;
-	i18n_c i18n;
 };
 
 extern uint16_t SCORE[SECTIONS_COUNT];

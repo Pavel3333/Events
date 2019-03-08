@@ -25,8 +25,6 @@ public:
 	static ConfigObject* g_self;
 	static PyObject* g_config;
 
-	static Config config;
-
 	static MyErr init();
 	static void fini();
 
@@ -34,7 +32,6 @@ public:
 	static void Config_dealloc(ConfigObject*);
 private:
 	static PyObject* getMessagesList();
-	static void init_config();
 	static PyObject* init_data();
 	static PyObject* init_i18n();
 	static bool write_data(std::filesystem::path, PyObject*);

@@ -159,7 +159,7 @@ MyErr BigWorldUtils::getMapID_p(uint8_t& mapID)
 	if (map_s[2] == '_') map_s[2] = '\0';
 	map_s[3] = '\0';
 
-	mapID = atoi(map_s);
+	mapID = static_cast<uint8_t>(atoi(map_s));
 	delete map_s;
 
 	return_ok;

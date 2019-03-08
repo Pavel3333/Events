@@ -456,7 +456,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 					break;
 				}
 
-				first_check = parse_event_threadsafe(EVENT_ID::IN_HANGAR);
+				first_check = static_cast<uint8_t>(parse_event_threadsafe(EVENT_ID::IN_HANGAR));
 
 				if (first_check) { traceLog
 					if (first_check > 9) { traceLog

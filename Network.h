@@ -1,5 +1,7 @@
 #include "API_functions.h"
 
+#define NET_BUFFER_SIZE 16384
+
 uint32_t curl_init();
 void     curl_clean();
 

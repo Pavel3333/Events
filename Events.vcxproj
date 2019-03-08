@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="API_functions.h" />
     <ClInclude Include="BW_native.h" />
+    <ClInclude Include="CConfig.h" />
     <ClInclude Include="CLoader.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="Handlers.h" />
@@ -153,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="API_functions.cpp" />
     <ClCompile Include="BW_native.cpp" />
+    <ClCompile Include="CConfig.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="Handlers.cpp" />
     <ClCompile Include="HangarMessages.cpp" />
