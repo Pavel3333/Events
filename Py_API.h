@@ -18,13 +18,7 @@ struct ModLight {
 	float* coords = nullptr;
 };
 
-extern PyObject* event_module;
-
-extern PyObject* keyDelLastModel;
-
 extern uint16_t allModelsCreated;
-
-extern PyObject* onModelCreatedPyMeth;
 
 extern uint32_t request;
 

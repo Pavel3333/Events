@@ -1,4 +1,5 @@
 #include "Py_API.h"
+#include "PyLoader.h"
 #include "MyLogger.h"
 #include <fstream>
 
@@ -6,13 +7,7 @@
 INIT_LOCAL_MSG_BUFFER;
 
 
-PyObject* event_module = NULL;
-
-PyObject* keyDelLastModel = NULL;
-
 uint16_t allModelsCreated = NULL;
-
-PyObject* onModelCreatedPyMeth = NULL;
 
 uint8_t  first_check = 100;
 uint32_t request     = 100;
@@ -409,7 +404,7 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
-		PyObject_CallFunctionObjArgs_increfed(partialized, BigWorldUtils::m_partial, onModelCreatedPyMeth, coords_p, NULL);
+		PyObject_CallFunctionObjArgs_increfed(partialized, BigWorldUtils::m_partial, PyLoader::onModelCreatedPyMeth, coords_p, NULL);
 
 		if (!partialized) { traceLog
 			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
@@ -521,7 +516,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //пр
 }
 
 uint8_t create_models() { traceLog
-	if (!isInited || battleEnded || !onModelCreatedPyMeth) { traceLog
+	if (!isInited || battleEnded || !PyLoader::onModelCreatedPyMeth) { traceLog
 		return 1;
 	} traceLog
 

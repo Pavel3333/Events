@@ -21,6 +21,8 @@ static size_t response_size = 0;
 
 MyErr curl_init()
 {
+	//инициализация curl
+
 	if (curl_global_init(CURL_GLOBAL_ALL)) {
 		return_err 1;
 	}
@@ -98,7 +100,7 @@ static uint8_t send_to_server(std::string_view request)
 		debugLogEx(ERROR, "curl error code: %d", res);
 	}
 
-	return res;
+	return static_cast<uint8_t>(res);
 }
 
 uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del)

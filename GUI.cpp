@@ -55,7 +55,7 @@ void GUI::fini()
 
 
 PyObject* GUI::getAttr(char* attribute) {
-	if (!modGUI) {
+	if (!inited) {
 		return nullptr;
 	}
 
@@ -63,61 +63,63 @@ PyObject* GUI::getAttr(char* attribute) {
 }
 
 bool GUI::setAttr(char* attribute, PyObject* value) {
-	if (!modGUI) {
+	if (!inited)
 		return false;
-	}
 
 	return PyObject_SetAttrString(modGUI, attribute, value);
 }
 
-void GUI::setWarning(uint8_t warningCode) {
+MyErr GUI::setWarning(uint8_t warningCode) {
 #if debug_log && extended_debug_log
-	if (!isInited || !modGUI) {
-		return;
-	}
+	if (!inited)
+		return_err 1;
 
 	auto res = PyObject_CallMethod(modGUI, "setWarning", "b", warningCode);
 
 	Py_XDECREF(res);
 #endif
+
+	return_ok;
 }
 
-void GUI::setError(uint8_t errorCode) {
+MyErr GUI::setError(uint8_t errorCode) {
 #if debug_log && extended_debug_log
-	if (!isInited || !modGUI) {
-		return;
-	}
+	if (!inited)
+		return_err 1;
 
 	auto res = PyObject_CallMethod(modGUI, "setError", "b", errorCode);
 
 	Py_XDECREF(res);
 #endif
+
+	return_ok;
 }
 
-void GUI::setVisible(bool visible) {
-	if (!isInited || !modGUI) {
-		return;
-	}
+MyErr GUI::setVisible(bool visible) {
+	if (!inited)
+		return_err 1;
 
 	auto res = PyObject_CallMethod(modGUI, "setVisible", "b", visible);
 
 	Py_XDECREF(res);
+
+	return_ok;
 }
 
-void GUI::setTimerVisible(bool visible) {
-	if (!isInited || !modGUI) {
-		return;
-	}
+MyErr GUI::setTimerVisible(bool visible) {
+	if (!inited)
+		return_err 1;
 
 	auto res = PyObject_CallMethod(modGUI, "setTimerVisible", "b", visible);
 
 	Py_XDECREF(res);
+
+	return_ok;
 }
 
-void GUI::setTime(uint32_t time_preparing) {
-	if (!isInited || !modGUI) {
-		return;
-	}
+MyErr GUI::setTime(uint32_t time_preparing) {
+	if (!inited)
+		return_err 1;
 
 	char new_time[30];
 
@@ -126,12 +128,13 @@ void GUI::setTime(uint32_t time_preparing) {
 	auto res = PyObject_CallMethod(modGUI, "setTime", "s", new_time);
 
 	Py_XDECREF(res);
+
+	return_ok;
 }
 
-void GUI::setText(char* msg, float time_f) {
-	if (!isInited || !modGUI) {
-		return;
-	}
+MyErr GUI::setText(char* msg, float time_f) {
+	if (!inited)
+		return_err 1;
 
 	auto res = PyObject_CallMethod(modGUI, "setText", "s", msg);
 
@@ -169,24 +172,23 @@ void GUI::setText(char* msg, float time_f) {
 		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = NULL;
 		else delLabelCBID = PyInt_AsLong(delLabelCBID_p);
 	}
+
+	return_ok;
 }
 
-void GUI::setMsg(uint8_t msg_ID, float time_f, uint8_t score_ID) {
-	if (!isInited || !modGUI || msg_ID >= MESSAGES_COUNT || score_ID >= SECTIONS_COUNT) {
-		return;
-	}
+MyErr GUI::setMsg(uint8_t msg_ID, float time_f, uint8_t score_ID) {
+	if (!inited || msg_ID >= MESSAGES_COUNT || score_ID >= SECTIONS_COUNT)
+		return_err 1;
 
-	if (lastStageID == current_map.stageID && lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) {
-		return;
-	}
+	if (lastStageID == current_map.stageID && lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS)
+		return_err 2;
 
 	// получить из словаря локализации нужную строку
 
 	PyObject* messagesList = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_messages");
 
-	if (!messagesList) {
-		return;
-	}
+	if (!messagesList)
+		return_err 3;
 
 	//----------------------------------------------
 
@@ -194,37 +196,34 @@ void GUI::setMsg(uint8_t msg_ID, float time_f, uint8_t score_ID) {
 
 	PyObject* msg_p = PyList_GetItem(messagesList, msg_ID);
 
-	if (!msg_p) {
-		return;
-	}
+	if (!msg_p)
+		return_err 4;
 
 	char* msg = PyString_AsString(msg_p);
 
-	if (!msg) {
-		return;
-	}
+	if (!msg)
+		return_err 5;
 
 	//---------------------------
 
 	char new_msg[255];
 
-	if (msg_ID == STAGE_ID::GET_SCORE) { // если это - сообщение о том, что получили баллы
+	if (msg_ID == STAGE_ID::GET_SCORE) // если это - сообщение о том, что получили баллы
 		sprintf_s(new_msg, 255, msg, COLOURS[msg_ID], SCORE[score_ID]);
-	}
-	else {
+	else
 		sprintf_s(new_msg, 255, msg, COLOURS[msg_ID]);
-	}
 
 	setText(new_msg, time_f);
 
 	lastStageID = current_map.stageID;
+
+	return_ok;
 }
 
-void GUI::clearText()
+MyErr GUI::clearText()
 {
-	if (!isInited || !modGUI) {
-		return;
-	}
+	if (!inited)
+		return_err 1;
 
 	auto res = PyObject_CallMethod(modGUI, "clearText", nullptr);
 
@@ -233,4 +232,6 @@ void GUI::clearText()
 	lastStageID = STAGE_ID::COMPETITION;
 
 	delLabelCBID = 0;
+
+	return_ok;
 }

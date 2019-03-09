@@ -10,10 +10,69 @@
 
 INIT_LOCAL_MSG_BUFFER;
 
+// Инициализация
 
-static PyObject* event_start_py(PyObject *self, PyObject *args) { traceLog
+bool PyLoader::inited = false;
+
+PyObject* PyLoader::py_module            = nullptr;
+PyObject* PyLoader::keyDelLastModel      = nullptr;
+PyObject* PyLoader::onModelCreatedPyMeth = nullptr;
+
+//public methods
+
+MyErr PyLoader::init()
+{
+	//инициализация модуля
+
+	py_module = Py_InitModule("event", event_methods);
+
+	if (!py_module)
+		return_err 1;
+
+	if (PyModule_AddObject(py_module, "l", PyConfig::g_config)) {
+		return_err 2;
+	}
+
+	//получение указателя на метод onModelCreated
+
+	onModelCreatedPyMeth = PyObject_GetAttrString(py_module, "omc");
+
+	if (!onModelCreatedPyMeth) {
+		return_err 3;
+	}
+
+	//DelLastModel key
+
+	keyDelLastModel = PyList_New(1);
+
+	if (keyDelLastModel) {
+		PyList_SET_ITEM(keyDelLastModel, 0, PyInt_FromSize_t(KEY_DEL_LAST_MODEL));
+	}
+
+	inited = true;
+
+	return_ok;
+}
+
+void  PyLoader::fini()
+{
+	if (!inited)
+		return;
+
+	Py_XDECREF(onModelCreatedPyMeth);
+	Py_XDECREF(keyDelLastModel);
+
+	onModelCreatedPyMeth = nullptr;
+	keyDelLastModel      = nullptr;
+}
+
+
+PyObject* PyLoader::start(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
 	UNREFERENCED_PARAMETER(args);
+
+	if (!inited)
+		return PyInt_FromSize_t(5);
 	
 	request = event_start();
 
@@ -25,26 +84,32 @@ static PyObject* event_start_py(PyObject *self, PyObject *args) { traceLog
 	}
 }
 
-static PyObject* event_fini_py(PyObject *self, PyObject *args) { traceLog
-	if (!EVENT_BATTLE_ENDED) { traceLog
-		return PyInt_FromSize_t(1);
-	} traceLog
-
+PyObject* PyLoader::fini(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
 	UNREFERENCED_PARAMETER(args);
+
+	if (!inited)
+		return PyInt_FromSize_t(1);
+
+	if (!EVENT_BATTLE_ENDED) { traceLog
+		return PyInt_FromSize_t(2);
+	} traceLog
 
 	if (!SetEvent(EVENT_BATTLE_ENDED->hEvent)) { traceLog
 		debugLogEx(ERROR, "EVENT_BATTLE_ENDED not setted!");
 
-		return PyInt_FromSize_t(2);
+		return PyInt_FromSize_t(3);
 	} traceLog
 
 	Py_RETURN_NONE;
 }
 
-static PyObject* event_check_py(PyObject *self, PyObject *args) { traceLog
+PyObject* PyLoader::check(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
 	UNREFERENCED_PARAMETER(args);
+
+	if (!inited)
+		return PyInt_FromSize_t(5);
 
 	uint8_t res = event_check();
 
@@ -54,13 +119,16 @@ static PyObject* event_check_py(PyObject *self, PyObject *args) { traceLog
 	else Py_RETURN_NONE;
 }
 
-static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
-	if (!isInited) { traceLog
-		return PyInt_FromSize_t(1);
-	} traceLog
-
+PyObject* PyLoader::initCfg(PyObject *self, PyObject *args) { traceLog
 	UNREFERENCED_PARAMETER(self);
 	UNREFERENCED_PARAMETER(args);
+
+	if (!inited)
+		return PyInt_FromSize_t(1);
+
+	if (!isInited) { traceLog
+		return PyInt_FromSize_t(2);
+	} traceLog
 
 	PyObject* template_ = NULL;
 	PyObject* apply     = NULL;
@@ -78,13 +146,16 @@ static PyObject* event_init_py(PyObject *self, PyObject *args) { traceLog
 	else Py_RETURN_NONE;
 }
 
-static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLog
+PyObject* PyLoader::keyHandler(PyObject *self, PyObject *args) { //traceLog
+	UNREFERENCED_PARAMETER(self);
+	UNREFERENCED_PARAMETER(args);
+
+	if (!inited)
+		Py_RETURN_NONE;
+
 	if (!isInited || first_check || !databaseID || !mapID || !keyDelLastModel || isStreamer) { traceLog
 		Py_RETURN_NONE;
 	} //traceLog
-
-	UNREFERENCED_PARAMETER(self);
-	UNREFERENCED_PARAMETER(args);
 
 	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
 	PyObject* isKeyGetted = NULL;
@@ -130,18 +201,18 @@ static PyObject* event_keyHandler_py(PyObject *self, PyObject *args) { //traceLo
 	Py_RETURN_NONE;
 }
 
-static struct PyMethodDef event_methods[] =
+struct PyMethodDef PyLoader::event_methods[] =
 {
-	{ "b",             event_check_py,                METH_VARARGS, ":P" }, //check
-	{ "c",             event_start_py,                METH_NOARGS,  ":P" }, //start
-	{ "d",             event_fini_py,                 METH_NOARGS,  ":P" }, //fini
-	{ "g",             event_init_py,                 METH_VARARGS, ":P" }, //init
-	{ "event_handler", event_keyHandler_py,           METH_VARARGS, ":P" }, //keyHandler
-	{ "omc",           event_onModelCreated,          METH_VARARGS, ":P" }, //onModelCreated
+	{ "b",             PyLoader::check,                METH_VARARGS, ":P" }, //check
+	{ "c",             PyLoader::start,                METH_NOARGS,  ":P" }, //start
+	{ "d",             PyLoader::fini,                 METH_NOARGS,  ":P" }, //fini
+	{ "g",             PyLoader::initCfg,              METH_VARARGS, ":P" },
+	{ "event_handler", PyLoader::keyHandler,           METH_VARARGS, ":P" }, //keyHandler
+	{ "omc",           event_onModelCreated,           METH_VARARGS, ":P" }, //onModelCreated
 	{ NULL, NULL, 0, NULL }
 };
 
-//---------------------------INITIALIZATION--------------------------
+//точка входа в библиотеку
 
 PyMODINIT_FUNC initevent(void)
 {
@@ -168,40 +239,15 @@ PyMODINIT_FUNC initevent(void)
 		goto freeGUI;
 	}
 
-	//инициализация модуля
-
-	event_module = Py_InitModule("event", event_methods);
-
-	if (!event_module) {
-		goto freeGUI;
+	if (auto err = PyLoader::init()) {
+		debugLogEx(ERROR, "initevent - init PyLoader: error %d!", err);
+		goto freePyLoader;
 	}
-
-	if (PyModule_AddObject(event_module, "l", PyConfig::g_config)) {
-		goto freeGUI;
-	}
-
-	//получение указателя на метод модуля onModelCreated
-
-	onModelCreatedPyMeth = PyObject_GetAttrString(event_module, "omc");
-
-	if (!onModelCreatedPyMeth) {
-		goto freeGUI;
-	}
-
-	//DelLastModel key
-
-	keyDelLastModel = PyList_New(1);
-
-	if (keyDelLastModel) {
-		PyList_SET_ITEM(keyDelLastModel, 0, PyInt_FromSize_t(KEY_DEL_LAST_MODEL));
-	}
-	
-	//инициализация curl
 
 	if (auto err = curl_init()) { traceLog
 		debugLogEx(ERROR, "initevent - curl_init: error %d", err);
 
-		goto freeGUI;
+		goto freePyLoader;
 	} traceLog
 
 	isInited = true;
@@ -228,10 +274,13 @@ PyMODINIT_FUNC initevent(void)
 	if (!hHandlerThread) { traceLog
 		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
 
-		goto freeGUI;
+		goto freePyLoader;
 	} traceLog
 
 	return;
+
+freePyLoader:
+	PyLoader::fini();
 
 freeGUI:
 	GUI::fini();
