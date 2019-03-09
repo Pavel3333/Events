@@ -6,15 +6,55 @@
 
 INIT_LOCAL_MSG_BUFFER;
 
+// Инициализация
 
-long delLabelCBID = 0;
+bool GUI::inited = false;
 
-PyObject* modGUI = nullptr;
+long GUI::delLabelCBID = 0;
+
+PyObject* GUI::modGUI = nullptr;
 
 
-//GUI methods
+// public methods
 
-PyObject* GUI_getAttr(char* attribute) {
+MyErr GUI::init()
+{
+	//загрузка modGUI
+
+	debugLog("Mod_GUI module loading...");
+
+	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
+
+	if (!mGUI_module)
+		return_err 1;
+
+	debugLog("Mod_GUI class loading...");
+
+	modGUI = PyObject_CallMethod(mGUI_module, "Mod_GUI", NULL);
+
+	Py_DECREF(mGUI_module);
+
+	if (!modGUI)
+		return_err 2;
+
+	debugLog("Mod_GUI class loaded OK!");
+
+	inited = true;
+
+	return_ok;
+}
+
+void GUI::fini()
+{
+	if (!inited)
+		return;
+
+	Py_XDECREF(modGUI);
+	modGUI = nullptr;
+}
+
+
+PyObject* GUI::getAttr(char* attribute) {
 	if (!modGUI) {
 		return nullptr;
 	}
@@ -22,7 +62,7 @@ PyObject* GUI_getAttr(char* attribute) {
 	return PyObject_GetAttrString(modGUI, attribute);
 }
 
-bool GUI_setAttr(char* attribute, PyObject* value) {
+bool GUI::setAttr(char* attribute, PyObject* value) {
 	if (!modGUI) {
 		return false;
 	}
@@ -30,7 +70,7 @@ bool GUI_setAttr(char* attribute, PyObject* value) {
 	return PyObject_SetAttrString(modGUI, attribute, value);
 }
 
-void GUI_setWarning(uint8_t warningCode) {
+void GUI::setWarning(uint8_t warningCode) {
 #if debug_log && extended_debug_log
 	if (!isInited || !modGUI) {
 		return;
@@ -42,7 +82,7 @@ void GUI_setWarning(uint8_t warningCode) {
 #endif
 }
 
-void GUI_setError(uint8_t errorCode) {
+void GUI::setError(uint8_t errorCode) {
 #if debug_log && extended_debug_log
 	if (!isInited || !modGUI) {
 		return;
@@ -54,7 +94,7 @@ void GUI_setError(uint8_t errorCode) {
 #endif
 }
 
-void GUI_setVisible(bool visible) {
+void GUI::setVisible(bool visible) {
 	if (!isInited || !modGUI) {
 		return;
 	}
@@ -64,7 +104,7 @@ void GUI_setVisible(bool visible) {
 	Py_XDECREF(res);
 }
 
-void GUI_setTimerVisible(bool visible) {
+void GUI::setTimerVisible(bool visible) {
 	if (!isInited || !modGUI) {
 		return;
 	}
@@ -74,7 +114,7 @@ void GUI_setTimerVisible(bool visible) {
 	Py_XDECREF(res);
 }
 
-void GUI_setTime(uint32_t time_preparing) {
+void GUI::setTime(uint32_t time_preparing) {
 	if (!isInited || !modGUI) {
 		return;
 	}
@@ -88,7 +128,7 @@ void GUI_setTime(uint32_t time_preparing) {
 	Py_XDECREF(res);
 }
 
-void GUI_setText(char* msg, float time_f) {
+void GUI::setText(char* msg, float time_f) {
 	if (!isInited || !modGUI) {
 		return;
 	}
@@ -97,7 +137,7 @@ void GUI_setText(char* msg, float time_f) {
 
 	Py_XDECREF(res);
 
-	PyObject* delLabelCBID_p = GUI_getAttr("delLabelCBID");
+	PyObject* delLabelCBID_p = getAttr("delLabelCBID");
 
 	if (!delLabelCBID_p || delLabelCBID_p == Py_None) {
 		delLabelCBID = 0;
@@ -114,7 +154,7 @@ void GUI_setText(char* msg, float time_f) {
 		BigWorldUtils::cancelCallback(delLabelCBID);
 		delLabelCBID = 0;
 
-		if (!GUI_setAttr("delLabelCBID", Py_None)) {
+		if (!setAttr("delLabelCBID", Py_None)) {
 			extendedDebugLogEx(WARNING, "GUI_setText - failed to set delLabelCBID");
 		}
 	}
@@ -124,14 +164,14 @@ void GUI_setText(char* msg, float time_f) {
 
 		Py_XDECREF(res2);
 
-		delLabelCBID_p = GUI_getAttr("delLabelCBID");
+		delLabelCBID_p = getAttr("delLabelCBID");
 
 		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = NULL;
 		else delLabelCBID = PyInt_AsLong(delLabelCBID_p);
 	}
 }
 
-void GUI_setMsg(uint8_t msg_ID, float time_f, uint8_t score_ID) {
+void GUI::setMsg(uint8_t msg_ID, float time_f, uint8_t score_ID) {
 	if (!isInited || !modGUI || msg_ID >= MESSAGES_COUNT || score_ID >= SECTIONS_COUNT) {
 		return;
 	}
@@ -175,12 +215,12 @@ void GUI_setMsg(uint8_t msg_ID, float time_f, uint8_t score_ID) {
 		sprintf_s(new_msg, 255, msg, COLOURS[msg_ID]);
 	}
 
-	GUI_setText(new_msg, time_f);
+	setText(new_msg, time_f);
 
 	lastStageID = current_map.stageID;
 }
 
-void GUI_clearText()
+void GUI::clearText()
 {
 	if (!isInited || !modGUI) {
 		return;

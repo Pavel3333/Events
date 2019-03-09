@@ -19,24 +19,23 @@ static char response_buffer[NET_BUFFER_SIZE];
 static size_t response_size = 0;
 
 
-uint32_t curl_init()
+MyErr curl_init()
 {
 	if (curl_global_init(CURL_GLOBAL_ALL)) {
-		return 1;
+		return_err 1;
 	}
 
 	curl_handle = curl_easy_init();
 
 	if (!curl_handle) {
-		return 2;
+		return_err 2;
 	}
 
-	return 0;
+	return_ok;
 }
 
 
-// переименовать в fini для консистенции с curl_init() ?
-void curl_clean()
+void curl_fini()
 {
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();

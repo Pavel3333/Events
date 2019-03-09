@@ -38,7 +38,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 	if (current_map.time_preparing) {
 		Py_BLOCK_THREADS;
 
-		GUI_setTime(current_map.time_preparing); //выводим время
+		GUI::setTime(current_map.time_preparing); //выводим время
 
 		Py_UNBLOCK_THREADS;
 	}
@@ -64,32 +64,32 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 
 	Py_BLOCK_THREADS;
 
-	if (lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) GUI_setMsg(current_map.stageID); //выводим нужное сообщение
+	if (lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) GUI::setMsg(current_map.stageID); //выводим нужное сообщение
 
 	if (current_map.stageID == STAGE_ID::END_BY_TIME || current_map.stageID == STAGE_ID::END_BY_COUNT) { traceLog
 		current_map.time_preparing = NULL;
 
-		GUI_setTime(NULL);
+		GUI::setTime(NULL);
 
 		if (current_map.stageID == STAGE_ID::END_BY_COUNT) { traceLog
-			GUI_setTimerVisible(false);
+			GUI::setTimerVisible(false);
 
 			isTimeVisible = false;
 		} traceLog
 
-		GUI_setMsg(current_map.stageID);
+		GUI::setMsg(current_map.stageID);
 
 		EVENT_START_TIMER->request = handleBattleEndEvent(_save);
 
 		if (EVENT_START_TIMER->request) { traceLog
 			extendedDebugLog("Warning - handle_battle_event - event_fini - Error code %d", EVENT_START_TIMER->request);
 
-			//GUI_setWarning(event_result);
+			//GUI::setWarning(event_result);
 		} traceLog
 	}
 	else {
 		if (!isTimeVisible) { traceLog
-			GUI_setTimerVisible(true);
+			GUI::setTimerVisible(true);
 
 			isTimeVisible = true;
 		} traceLog
@@ -602,8 +602,8 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 	Py_BLOCK_THREADS;
 
 	if (isTimeVisible) { traceLog
-		GUI_setTime(NULL);
-		GUI_setTimerVisible(false);
+		GUI::setTime(NULL);
+		GUI::setTimerVisible(false);
 
 		isTimeVisible = false;
 
@@ -729,12 +729,12 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 	Py_BLOCK_THREADS;
 
 	if (current_map.stageID == STAGE_ID::GET_SCORE && scoreID != -1) { traceLog
-		GUI_setMsg(current_map.stageID, 5.0f, scoreID);
+		GUI::setMsg(current_map.stageID, 5.0f, scoreID);
 
 		scoreID = -1;
 	}
 	else if (current_map.stageID == STAGE_ID::ITEMS_NOT_EXISTS) { traceLog
-		GUI_setMsg(current_map.stageID, 5.0f);
+		GUI::setMsg(current_map.stageID, 5.0f);
 	} traceLog
 
 	Py_UNBLOCK_THREADS;

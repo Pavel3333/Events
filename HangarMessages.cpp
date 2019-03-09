@@ -10,12 +10,12 @@ bool      HangarMessages::showed        = false;
 PyObject* HangarMessages::m_SM_TYPE     = nullptr;
 PyObject* HangarMessages::m_pushMessage = nullptr;
 
+//public methods
 
 MyErr HangarMessages::init()
 {
 	return init_p();
 }
-
 
 void HangarMessages::fini()
 {

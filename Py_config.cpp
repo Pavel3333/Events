@@ -191,7 +191,7 @@ MyErr PyConfig::init()
 
 	debugLog("Config init OK");
 
-	return MyErr::OK;
+	return_ok;
 }
 
 void PyConfig::fini()

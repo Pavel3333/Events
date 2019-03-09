@@ -215,27 +215,27 @@ DWORD handlerThread() {
 
 			current_map.stageID = STAGE_ID::COMPETITION;
 
-			delLabelCBID_p = GUI_getAttr("delLabelCBID");
+			delLabelCBID_p = GUI::getAttr("delLabelCBID");
 
 			if (!delLabelCBID_p || delLabelCBID_p == Py_None) { traceLog
-				delLabelCBID = 0;
+				GUI::delLabelCBID = 0;
 
 				Py_XDECREF(delLabelCBID_p);
 			}
 			else { traceLog
-				delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
+				GUI::delLabelCBID = PyInt_AS_LONG(delLabelCBID_p);
 				
 				Py_DECREF(delLabelCBID_p);
 
-				BigWorldUtils::cancelCallback(delLabelCBID);
+				BigWorldUtils::cancelCallback(GUI::delLabelCBID);
 			} traceLog
 
-			delLabelCBID = 0;
+				GUI::delLabelCBID = 0;
 
 			allModelsCreated = NULL;
 
-			GUI_setVisible(false);
-			GUI_clearText();
+			GUI::setVisible(false);
+			GUI::clearText();
 
 			mapID   = NULL;
 
@@ -358,8 +358,8 @@ uint8_t event_start() {
 
 	battleEnded = false;
 
-	GUI_setTimerVisible(true);
-	GUI_setVisible(true);
+	GUI::setTimerVisible(true);
+	GUI::setVisible(true);
 
 	isTimeVisible = true;
 

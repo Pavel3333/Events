@@ -2,19 +2,26 @@
 
 #include "Py_config.h"
 
+class GUI {
+public:
+	static bool inited;
 
-extern PyObject* modGUI;
+	static PyObject* modGUI;
 
-extern long delLabelCBID;
+	static long delLabelCBID;
 
-PyObject* GUI_getAttr(char*);
-bool      GUI_setAttr(char*, PyObject*);
+	static MyErr init();
+	static void fini();
 
-void GUI_setWarning(uint8_t);
-void GUI_setError(uint8_t);
-void GUI_setVisible(bool);
-void GUI_setTimerVisible(bool);
-void GUI_setTime(uint32_t);
-void GUI_setText(char*, float time_f = 0.0f);
-void GUI_setMsg(uint8_t, float time_f = 0.0f, uint8_t scoreID = 0);
-void GUI_clearText();
+	static PyObject* getAttr(char*);
+	static bool      setAttr(char*, PyObject*);
+
+	static void setWarning(uint8_t);
+	static void setError(uint8_t);
+	static void setVisible(bool);
+	static void setTimerVisible(bool);
+	static void setTime(uint32_t);
+	static void setText(char*, float time_f = 0.0f);
+	static void setMsg(uint8_t, float time_f = 0.0f, uint8_t scoreID = 0);
+	static void clearText();
+};

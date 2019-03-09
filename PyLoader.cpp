@@ -163,16 +163,21 @@ PyMODINIT_FUNC initevent(void)
 		goto freePyConfig;
 	}
 
+	if (auto err = GUI::init()) {
+		debugLogEx(ERROR, "initevent - init GUI: error %d!", err);
+		goto freeGUI;
+	}
+
 	//инициализация модуля
 
 	event_module = Py_InitModule("event", event_methods);
 
 	if (!event_module) {
-		goto freePyConfig;
+		goto freeGUI;
 	}
 
 	if (PyModule_AddObject(event_module, "l", PyConfig::g_config)) {
-		goto freePyConfig;
+		goto freeGUI;
 	}
 
 	//получение указателя на метод модуля onModelCreated
@@ -180,47 +185,23 @@ PyMODINIT_FUNC initevent(void)
 	onModelCreatedPyMeth = PyObject_GetAttrString(event_module, "omc");
 
 	if (!onModelCreatedPyMeth) {
-		goto freePyConfig;
+		goto freeGUI;
 	}
 
-	//Space key
+	//DelLastModel key
 
 	keyDelLastModel = PyList_New(1);
 
 	if (keyDelLastModel) {
 		PyList_SET_ITEM(keyDelLastModel, 0, PyInt_FromSize_t(KEY_DEL_LAST_MODEL));
 	}
-
-	//загрузка modGUI
-
-	debugLog("Mod_GUI module loading...");
-
-	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
-
-	if (!mGUI_module) {
-		goto freePyConfig;
-	}
-
-	debugLog("Mod_GUI class loading...");
-
-	modGUI = PyObject_CallMethod(mGUI_module, "Mod_GUI", NULL);
-
-	Py_DECREF(mGUI_module);
-
-	if (!modGUI) {
-		goto freePyConfig;
-	}
-
-	debugLog("Mod_GUI class loaded OK!");
 	
 	//инициализация curl
 
-	uint32_t curl_init_result = curl_init();
+	if (auto err = curl_init()) { traceLog
+		debugLogEx(ERROR, "initevent - curl_init: error %d", err);
 
-	if (curl_init_result) { traceLog
-		debugLogEx(ERROR, "Initialising CURL handle: error %d", curl_init_result);
-
-		goto freePyConfig;
+		goto freeGUI;
 	} traceLog
 
 	isInited = true;
@@ -247,10 +228,13 @@ PyMODINIT_FUNC initevent(void)
 	if (!hHandlerThread) { traceLog
 		debugLogEx(ERROR, "Handler thread creating: error %d", GetLastError());
 
-		goto freePyConfig;
+		goto freeGUI;
 	} traceLog
 
 	return;
+
+freeGUI:
+	GUI::fini();
 
 freePyConfig:
 	PyConfig::fini();
