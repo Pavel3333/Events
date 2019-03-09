@@ -11,17 +11,17 @@
 
 static std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
 
-static size_t getTime(char* buf, uint16_t size) {
+static size_t getTime(char* buf, const char* fmt, uint16_t size) {
 	using namespace std::chrono;
 	const std::time_t t = system_clock::to_time_t(system_clock::now());
 	std::tm tm;
 	localtime_s(&tm, &t);
 
-	return std::strftime(buf, size, "%H:%M:%S: ", &tm);
+	return std::strftime(buf, size, fmt, &tm);
 }
 
 static size_t timedFmt(char* buf, const char* fmt, va_list args) {
-	size_t len = getTime(buf, MAX_DBG_LINE_SIZE);
+	size_t len = getTime(buf, "%H:%M:%S: ", MAX_DBG_LINE_SIZE);
 
 	vsprintf_s(buf + len, MAX_DBG_LINE_SIZE - len, fmt, args);
 
@@ -33,7 +33,7 @@ void __my_log_write_data_to_file(char* name, char* data, size_t size)
 	char time[64];
 	char filename[MAX_PATH];
 
-	getTime(time, MAX_DBG_TIME_SIZE);
+	getTime(time, "%F_%H_%M_%S", MAX_DBG_TIME_SIZE);
 	
 	sprintf_s(filename, MAX_PATH, "NY_Event_debug_data_%s_%s.txt", name, time);
 
