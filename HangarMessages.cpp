@@ -82,25 +82,19 @@ MyErr HangarMessages::showCheckMessage_p(PyObject* GameGreeting)
 
 	if (!first_check) {
 		PyObject* thx_1 = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_message_thx");
+
+		if(!thx_1)
+			return_err 1;
+
 		PyObject* thx_2 = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_message_thx_2");
 
-		if (!thx_1 || !thx_2) {
-			Py_XDECREF(thx_2);
-			Py_XDECREF(thx_1);
+		if (!thx_2) {
+			Py_DECREF(thx_1);
 
-			return_err 1;
+			return_err 2;
 		}
 
-		const char* thx_1_c = PyString_AsString(thx_1);
-		const char* thx_2_c = PyString_AsString(thx_2);
-
-		Py_DECREF(thx_2);
-		Py_DECREF(thx_1);
-
-		if (!thx_1_c || !thx_2_c) 
-			return_err 2;
-
-		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\">%s<br><a href=\"event:https://pavel3333.ru/\">%s</a></font>", thx_1_c, thx_2_c);
+		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\">%s<br><a href=\"event:https://pavel3333.ru/\">%s</a></font>", PyString_AsString(thx_1), PyString_AsString(thx_2));
 	}
 	else if (first_check == 2 || first_check == 3 || first_check == 6) {
 		PyObject* __UI_err = PyString_FromFormat("UI_err_%d", first_check);
@@ -112,14 +106,7 @@ MyErr HangarMessages::showCheckMessage_p(PyObject* GameGreeting)
 		if (!UI_err) 
 			return_err 3;
 
-		char* UI_err_c = PyString_AsString(UI_err);
-
-		Py_DECREF(UI_err);
-
-		if (!UI_err_c)
-			return_err 4;
-
-		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s</font>", UI_err_c);
+		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s</font>", PyString_AsString(UI_err));
 	}
 	else {
 		PyObject* UI_description = PyDict_GetItemString(PyConfig::g_self->i18n, "UI_description");
@@ -127,14 +114,7 @@ MyErr HangarMessages::showCheckMessage_p(PyObject* GameGreeting)
 		if (!UI_description)
 			return_err 5;
 
-		char* UI_description_c = PyString_AsString(UI_description);
-
-		Py_DECREF(UI_description);
-
-		if (!UI_description_c)
-			return_err 6;
-
-		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s: Error %d</font>", UI_description_c, (uint32_t)first_check);
+		text = PyUnicode_FromFormat("<font size=\"14\" color=\"#ffcc00\">%s: Error %d</font>", PyString_AsString(UI_description), (uint32_t)first_check);
 	}
 
 	if (!text)
@@ -160,20 +140,14 @@ MyErr HangarMessages::showYoutubeMessage_p(PyObject* GameGreeting)
 
 	if (!UI_message_channel)  return_err 8;
 
-	char* UI_message_channel_c = PyString_AsString(UI_message_channel);
-
-	Py_DECREF(UI_message_channel);
-
-	if (!UI_message_channel_c) return_err 9;
-
-	PyObject* youtubeText = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\"><a href=\"event:https://www.youtube.com/c/RAINNVOD\">%s</a></font>", UI_message_channel_c);
+	PyObject* youtubeText = PyUnicode_FromFormat("<font size=\"14\" color=\"#228b22\"><a href=\"event:https://www.youtube.com/c/RAINNVOD\">%s</a></font>", PyString_AsString(UI_message_channel));
 
 	if (!youtubeText) return_err 10;
 
-	PyObject_CallFunctionObjArgs_increfed(res2, m_pushMessage, youtubeText, GameGreeting, NULL);
+	PyObject_CallFunctionObjArgs_increfed(res, m_pushMessage, youtubeText, GameGreeting, NULL);
 
 	Py_DECREF(youtubeText);
-	Py_XDECREF(res2);
+	Py_XDECREF(res);
 
 	return_ok;
 }

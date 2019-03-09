@@ -209,11 +209,11 @@ PyObject* PyConfig::init_data() {
 
 	PyObject* data_version = PyInt_FromSize_t(Config::data.version);
 
-	if (PyDict_SetItem(data_py, PyString_FromString("version"), data_version)) goto end_init_data_2;
+	if (PyDict_SetItemString(data_py, "version", data_version)) goto end_init_data_2;
 
 	PyObject* data_enabled = PyBool_FromLong(Config::data.enabled);
 
-	if (PyDict_SetItem(data_py, PyString_FromString("enabled"), data_enabled)) {
+	if (PyDict_SetItemString(data_py, "enabled", data_enabled)) {
 		Py_DECREF(data_enabled);
 	end_init_data_2:
 		Py_DECREF(data_version);
@@ -231,7 +231,7 @@ PyObject* PyConfig::init_i18n() {
 
 	PyObject* i18n_version = PyInt_FromSize_t(Config::i18n.version);
 
-	if (PyDict_SetItem(i18n_py, PyString_FromString("version"), i18n_version)) goto end_init_i18n_2;
+	if (PyDict_SetItemString(i18n_py, "version", i18n_version)) goto end_init_i18n_2;
 
 	PyObject* UI_description = PyString_FromString("NY_Event Mod");
 
@@ -247,14 +247,14 @@ PyObject* PyConfig::init_i18n() {
 
 	PyObject* UI_messages = getMessagesList();
 
-	if (PyDict_SetItem(i18n_py, PyString_FromString("UI_description"), UI_description)         ||
-		PyDict_SetItem(i18n_py, PyString_FromString("UI_message_thx"), UI_message_thx)         ||
-		PyDict_SetItem(i18n_py, PyString_FromString("UI_message_thx_2"), UI_message_thx_2)     ||
-		PyDict_SetItem(i18n_py, PyString_FromString("UI_message_channel"), UI_message_channel) ||
-		PyDict_SetItem(i18n_py, PyString_FromString("UI_err_2"), UI_err_2)                     ||
-		PyDict_SetItem(i18n_py, PyString_FromString("UI_err_3"), UI_err_3)                     ||
-		PyDict_SetItem(i18n_py, PyString_FromString("UI_err_6"), UI_err_6)                     ||
-		PyDict_SetItem(i18n_py, PyString_FromString("UI_messages"), UI_messages)
+	if (PyDict_SetItemString(i18n_py, "UI_description", UI_description)         ||
+		PyDict_SetItemString(i18n_py, "UI_message_thx", UI_message_thx)         ||
+		PyDict_SetItemString(i18n_py, "UI_message_thx_2", UI_message_thx_2)     ||
+		PyDict_SetItemString(i18n_py, "UI_message_channel", UI_message_channel) ||
+		PyDict_SetItemString(i18n_py, "UI_err_2", UI_err_2)                     ||
+		PyDict_SetItemString(i18n_py, "UI_err_3", UI_err_3)                     ||
+		PyDict_SetItemString(i18n_py, "UI_err_6", UI_err_6)                     ||
+		PyDict_SetItemString(i18n_py, "UI_messages", UI_messages)
 		) { traceLog
 		Py_DECREF(UI_messages);
 		Py_DECREF(UI_err_6);
