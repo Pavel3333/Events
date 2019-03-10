@@ -34,7 +34,7 @@ std::vector<ModModel*> models;
 //std::vector<ModLight*> lights;
 
 void clearModelsSections() { traceLog
-	std::vector<ModelsSection>::iterator it_sect = current_map.modelsSects.begin();
+	std::vector<ModelsFullSection>::iterator it_sect = current_map.modelsSects.begin();
 
 	while (it_sect != current_map.modelsSects.end()) {
 		if (!it_sect->models.empty() && it_sect->isInitialised) {
@@ -73,16 +73,16 @@ void clearModelsSections() { traceLog
 
 	current_map.modelsSects.~vector();
 
-	std::vector<ModelsSection>::iterator it_sect_sync = sync_map.modelsSects_deleting.begin();
+	std::vector<ModelsSyncSection>::iterator it_sect_sync = sync_map.modelsSects_deleting.begin();
 
 	while (it_sect_sync != sync_map.modelsSects_deleting.end()) {
 		if (it_sect_sync->isInitialised) {
-			std::vector<float*>::iterator it_model = it_sect_sync->models.begin();
+			std::vector<ModelSync>::iterator it_model = it_sect_sync->models.begin();
 
 			while (it_model != it_sect_sync->models.end()) {
-				if (*it_model != nullptr) { traceLog
-					delete[] * it_model;
-					*it_model = nullptr;
+				if (it_model->coords != nullptr) { traceLog
+					delete[] it_model->coords;
+					it_model->coords = nullptr;
 				}
 
 				it_model = it_sect_sync->models.erase(it_model);
@@ -198,7 +198,7 @@ uint8_t delModelCoords(MODEL_ID ID, float* coords)
 		return 1;
 	}
 
-	std::vector<ModelsSection>::iterator it_sect = current_map.modelsSects.begin();
+	std::vector<ModelsFullSection>::iterator it_sect = current_map.modelsSects.begin();
 
 	try {
 		while (it_sect != current_map.modelsSects.end()) {

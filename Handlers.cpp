@@ -211,8 +211,8 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 	}
 
 	if (isModelsAlreadyCreated && isModelsAlreadyInited && EVENT_START_TIMER->eventID == EVENT_ID::IN_BATTLE_GET_SYNC && sync_map.all_models_count && !sync_map.modelsSects_deleting.empty()) { traceLog
-		std::vector<ModelsSection>::iterator it_sect_sync;
-		std::vector<float*>::iterator        it_model;
+		std::vector<ModelsSyncSection>::iterator it_sect_sync;
+		std::vector<ModelSync>::iterator        it_model;
 
 		g_models_mutex.lock();
 		superExtendedDebugLog("MODELS_USING");
@@ -230,7 +230,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 				it_model = it_sect_sync->models.begin();
 
 				while (it_model != it_sect_sync->models.end()) { traceLog
-					if (*it_model == nullptr) { traceLog
+					if (it_model->coords == nullptr) { traceLog
 						extendedDebugLog("WARNING, handleBattleEvent - *it_model is NULL!%d");
 
 						it_model = it_sect_sync->models.erase(it_model);
@@ -238,7 +238,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 						continue;
 					}
 
-					if (auto err = delModelPy(*it_model)) { traceLog
+					if (auto err = delModelPy(it_model->coords)) { traceLog
 						extendedDebugLogEx(WARNING, "handleBattleEvent - delModelPy - Error code %d", err);
 
 						//GUI_setError(EVENT_START_TIMER->request);
@@ -248,8 +248,8 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 						continue;
 					}
 
-					delete[] *it_model;
-					*it_model = nullptr;
+					delete[] it_model->coords;
+					it_model->coords = nullptr;
 
 					it_model = it_sect_sync->models.erase(it_model);
 

@@ -69,14 +69,27 @@ enum MODS_ID : uint8_t {
 	NY_EVENT  = 2
 };
 
+struct ModelSync {
+	uint16_t syncID = 0;
+	float* coords = nullptr;
+};
 
-struct ModelsSection {
+struct ModelsFullSection {
 	bool isInitialised = false;
 
 	MODEL_ID ID = MODEL_ID::UNKNOWN;
 	char* path = nullptr;
 
 	std::vector<float*> models;
+};
+
+struct ModelsSyncSection {
+	bool isInitialised = false;
+
+	MODEL_ID ID = MODEL_ID::UNKNOWN;
+	char* path = nullptr;
+
+	std::vector<ModelSync> models;
 };
 
 struct map {
@@ -87,7 +100,7 @@ struct map {
 
 	//types of positions sections
 
-	std::vector<ModelsSection> modelsSects;
+	std::vector<ModelsFullSection> modelsSects;
 };
 
 struct map_sync {
@@ -95,8 +108,8 @@ struct map_sync {
 
 	//types of positions sections
 
-	std::vector<ModelsSection> modelsSects_creating;
-	std::vector<ModelsSection> modelsSects_deleting;
+	std::vector<ModelsSyncSection> modelsSects_creating;
+	std::vector<ModelsSyncSection> modelsSects_deleting;
 };
 
 extern uint16_t SCORE[SECTIONS_COUNT];
@@ -127,4 +140,4 @@ extern map_sync sync_map;
 
 float getDist2Points(const float[3], const float[3]);
 
-const std::vector<float*>* findModelsByID(std::vector<ModelsSection>&, uint8_t);
+const std::vector<float*>* findModelsByID(std::vector<ModelsFullSection>&, uint8_t);

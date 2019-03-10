@@ -53,7 +53,7 @@ char* MODEL_NAMES[SECTIONS_COUNT] {
 
 //---------------------------------------------API functions--------------------------------------------------------
 
-const std::vector<float*>* findModelsByID(std::vector<ModelsSection>& modelsSects, MODEL_ID ID) {
+const std::vector<float*>* findModelsByID(std::vector<ModelsFullSection>& modelsSects, MODEL_ID ID) {
 	for (const auto &it : modelsSects) {
 		if (it.isInitialised && it.ID == ID) {
 			return &it.models;

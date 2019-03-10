@@ -300,7 +300,7 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 
 				//инициализация новой секции моделей
 
-				ModelsSection model_sect{
+				ModelsFullSection model_sect{
 					false,
 					(MODEL_ID)model_type,
 					path_buffer
@@ -348,7 +348,7 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 	uint8_t error_code;
 
-	std::vector<ModelsSection>* sect = nullptr;
+	std::vector<ModelsSyncSection>* sect = nullptr;
 
 	if (!response_size) {
 		return 9;
@@ -470,7 +470,7 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 					//инициализация новой секции моделей
 
-					ModelsSection model_sect{
+					ModelsSyncSection model_sect {
 						false,
 						(MODEL_ID)model_type,
 						path_buffer
@@ -481,12 +481,16 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 					model_sect.models.resize(models_count_sect);
 
 					for (uint16_t j = 0; j < models_count_sect; j++) {
+						memcpy(&(model_sect.models[j].syncID), response_buffer + offset, 2);
+
+						offset += 2;
+
 						float* coords = new float[3];
 
 						memcpy(coords, response_buffer + offset, 12);
 						offset += 12;
 
-						model_sect.models[j] = coords;
+						model_sect.models[j].coords = coords;
 					}
 
 					model_sect.isInitialised = true;
