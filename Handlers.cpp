@@ -49,24 +49,21 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 		return 3;
 	}
 
-	if (
-		current_map.stageID != STAGE_ID::WAITING      &&
-		current_map.stageID != STAGE_ID::START        &&
-		current_map.stageID != STAGE_ID::COMPETITION  &&
-		current_map.stageID != STAGE_ID::END_BY_TIME  &&
-		current_map.stageID != STAGE_ID::END_BY_COUNT &&
-		current_map.stageID != STAGE_ID::STREAMER_MODE
-		) { traceLog
+	switch (current_map.stageID) {
+	case STAGE_ID::GET_SCORE:        traceLog
+	case STAGE_ID::ITEMS_NOT_EXISTS: traceLog
 		extendedDebugLogEx(ERROR, "StageID is not right for this event!");
-		
+
 		return 4;
 	}
 
 	Py_BLOCK_THREADS;
 
-	if (lastStageID != STAGE_ID::GET_SCORE && lastStageID != STAGE_ID::ITEMS_NOT_EXISTS) GUI::setMsg(current_map.stageID); //выводим нужное сообщение
+	GUI::setMsg(current_map.stageID); //выводим нужное сообщение
 
-	if (current_map.stageID == STAGE_ID::END_BY_TIME || current_map.stageID == STAGE_ID::END_BY_COUNT) { traceLog
+	switch (current_map.stageID) {
+	case STAGE_ID::END_BY_TIME: traceLog
+	case STAGE_ID::END_BY_COUNT: traceLog
 		current_map.time_preparing = NULL;
 
 		GUI::setTime(NULL);
@@ -86,20 +83,24 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 
 			//GUI::setWarning(event_result);
 		} traceLog
-	}
-	else {
+
+		break;
+	default: traceLog
 		if (!isTimeVisible) { traceLog
 			GUI::setTimerVisible(true);
 
 			isTimeVisible = true;
 		} traceLog
-	} traceLog
+
+		break;
+	}
 
 	Py_UNBLOCK_THREADS;
 
-	if (current_map.stageID == STAGE_ID::START ||
-		current_map.stageID == STAGE_ID::COMPETITION ||
-		current_map.stageID == STAGE_ID::STREAMER_MODE) { traceLog
+	switch (current_map.stageID) {
+	case STAGE_ID::START: traceLog
+	case STAGE_ID::COMPETITION: traceLog
+	case STAGE_ID::STREAMER_MODE: traceLog
 		if (isModelsAlreadyCreated && !isModelsAlreadyInited && current_map.minimap_count && current_map.modelsSects.size()) { traceLog
 			if (EVENT_START_TIMER->eventID == EVENT_ID::IN_BATTLE_GET_FULL) { traceLog
 				superExtendedDebugLog("sect count: %u\npos count: %u", current_map.modelsSects.size(), current_map.minimap_count);
@@ -206,8 +207,8 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 			} traceLog
 
 			return NULL;
-		} traceLog
-	} traceLog
+		}
+	}
 
 	if (isModelsAlreadyCreated && isModelsAlreadyInited && EVENT_START_TIMER->eventID == EVENT_ID::IN_BATTLE_GET_SYNC && sync_map.all_models_count && !sync_map.modelsSects_deleting.empty()) { traceLog
 		std::vector<ModelsSection>::iterator it_sect_sync;
