@@ -749,48 +749,52 @@ uint8_t makeEventInThread(EVENT_ID eventID) { traceLog //переводим ив
 		return 1;
 	} traceLog
 
-	if (eventID == EVENT_ID::IN_HANGAR) { traceLog
-		if (!EVENT_IN_HANGAR) { traceLog
-			return 2;
-		} traceLog
+	switch(eventID) {
+		case EVENT_ID::IN_HANGAR: traceLog
+			if (!EVENT_IN_HANGAR) { traceLog
+				return 2;
+			} traceLog
 
-		EVENT_IN_HANGAR->eventID = eventID;
+			EVENT_IN_HANGAR->eventID = eventID;
 
-		if (!SetEvent(EVENT_IN_HANGAR->hEvent)) { traceLog
-			debugLogEx(ERROR, "EVENT_IN_HANGAR not setted!");
+			if (!SetEvent(EVENT_IN_HANGAR->hEvent)) { traceLog
+				debugLogEx(ERROR, "EVENT_IN_HANGAR not setted!");
 
-			return 3;
-		} traceLog
+				return 3;
+			} traceLog
+
+			break;
+		case EVENT_ID::IN_BATTLE_GET_FULL: traceLog
+		case EVENT_ID::IN_BATTLE_GET_SYNC: traceLog
+			if (!EVENT_START_TIMER) { traceLog
+				return 4;
+			} traceLog
+
+			EVENT_START_TIMER->eventID = eventID;
+
+			if (!SetEvent(EVENT_START_TIMER->hEvent)) { traceLog
+				debugLogEx(ERROR, "EVENT_START_TIMER not setted!");
+
+				return 5;
+			} traceLog
+
+			break;
+		case EVENT_ID::DEL_LAST_MODEL: traceLog
+			if (!EVENT_DEL_MODEL) { traceLog
+				return 6;
+			} traceLog
+
+			EVENT_DEL_MODEL->eventID = eventID;
+
+			if (!SetEvent(EVENT_DEL_MODEL->hEvent)) { traceLog
+				debugLogEx(ERROR, "EVENT_DEL_MODEL not setted!");
+
+				return 7;
+			} traceLog
+		
+			break;
+		default: traceLog
+			return 8;
 	}
-	else if (eventID == EVENT_ID::IN_BATTLE_GET_FULL || eventID == EVENT_ID::IN_BATTLE_GET_SYNC) { traceLog
-		if (!EVENT_START_TIMER) { traceLog
-			return 4;
-		} traceLog
-
-		EVENT_START_TIMER->eventID = eventID;
-
-		if (!SetEvent(EVENT_START_TIMER->hEvent)) { traceLog
-			debugLogEx(ERROR, "EVENT_START_TIMER not setted!");
-
-			return 5;
-		} traceLog
-	}
-	else if (eventID == EVENT_ID::DEL_LAST_MODEL) { traceLog
-		if (!EVENT_DEL_MODEL) { traceLog
-			return 6;
-		} traceLog
-
-		EVENT_DEL_MODEL->eventID = eventID;
-
-		if (!SetEvent(EVENT_DEL_MODEL->hEvent)) { traceLog
-			debugLogEx(ERROR, "EVENT_DEL_MODEL not setted!");
-
-			return 7;
-		} traceLog
-	} 
-	else { traceLog
-		return 8;
-	} traceLog
-
 	return NULL;
 }

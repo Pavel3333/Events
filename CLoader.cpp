@@ -386,7 +386,7 @@ uint8_t event_check() { traceLog
 	if (auto err = BigWorldUtils::getDBID(databaseID)) {
 		debugLogEx(ERROR, "getDBID: error %d!", err);
 
-		return 3;
+		return 2;
 	}
 
 	debugLog("DBID created");
@@ -398,7 +398,7 @@ uint8_t event_check() { traceLog
 	request = makeEventInThread(EVENT_ID::IN_HANGAR);
 
 	if (request) { traceLog
-		return 4;
+		return 3;
 	}
 	else {
 		return NULL;
