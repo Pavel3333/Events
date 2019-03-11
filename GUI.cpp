@@ -1,4 +1,5 @@
-﻿#include "GUI.h"
+﻿#include "pch.h"
+#include "GUI.h"
 #include "BW_native.h"
 #include "Py_config.h"
 #include "MyLogger.h"

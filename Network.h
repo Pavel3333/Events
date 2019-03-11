@@ -1,3 +1,4 @@
+#pragma once
 #include "API_functions.h"
 
 #define NET_BUFFER_SIZE 16384

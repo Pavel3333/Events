@@ -69,6 +69,9 @@
     <ClCompile Include="Py_config.cpp">
       <Filter>Config</Filter>
     </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="API_functions.h">
@@ -118,6 +121,9 @@
     </ClInclude>
     <ClInclude Include="Py_config.h">
       <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

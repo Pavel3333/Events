@@ -1,11 +1,8 @@
-﻿#define CONSOLE_VER1
-
+﻿#include "pch.h"
 #include "CLoader.h"
-
 #include "Handlers.h"
 #include "Py_config.h"
 #include "Py_common.h"
-#include <cstdlib>
 #include "MyLogger.h"
 
 

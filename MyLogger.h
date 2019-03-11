@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include <sal.h>
 
 #define debug_log                true
 #define extended_debug_log       true
@@ -14,8 +13,8 @@
 	static char __log_buf_private[MAX_DBG_LINE_SIZE]
 
 void __my_log(const char*);
-void __my_log_fmt(char*, _Printf_format_string_ const char*, ...);
-void __my_log_fmt_with_pystdout(char*, _Printf_format_string_ const char*, ...);
+void __my_log_fmt(char*, const char*, ...);
+void __my_log_fmt_with_pystdout(char*, const char*, ...);
 
 void __my_log_write_data_to_file(char* name, char* data, size_t size);
 

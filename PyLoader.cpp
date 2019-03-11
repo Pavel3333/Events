@@ -1,10 +1,8 @@
+#include "pch.h"
 #include "PyLoader.h"
-
 #include "CLoader.h"
-
 #include "Handlers.h"
 #include "Py_config.h"
-#include <cstdlib>
 #include "MyLogger.h"
 
 
@@ -163,7 +161,7 @@ PyObject* PyLoader::keyHandler(PyObject *self, PyObject *args) { //traceLog
 	if (PyConfig::m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		auto isKeyGetted_tmp = PyObject_CallMethodObjArgs(PyConfig::m_g_gui, __get_key, keyDelLastModel, NULL);
+		PyObject* isKeyGetted_tmp = PyObject_CallMethodObjArgs(PyConfig::m_g_gui, __get_key, keyDelLastModel, NULL);
 
 		Py_DECREF(__get_key);
 

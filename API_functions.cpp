@@ -1,5 +1,5 @@
-﻿#include "API_functions.h"
-#include <cmath>
+﻿#include "pch.h"
+#include "API_functions.h"
 
 
 map      current_map;
@@ -94,4 +94,3 @@ void generate_random_bytes(unsigned char* out, size_t length)
 		out[i] = ret;
 	}
 }
-

@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "HangarMessages.h"
 #include "MyLogger.h"
 #include "Py_common.h"
