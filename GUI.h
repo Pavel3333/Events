@@ -1,6 +1,6 @@
 ﻿#pragma once
-
 #include "Py_config.h"
+
 
 class GUI {
 public:

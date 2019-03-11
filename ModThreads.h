@@ -1,6 +1,6 @@
 ﻿#pragma once
-
 #include "API_functions.h"
+
 
 typedef struct {
 	HANDLE hEvent = NULL;

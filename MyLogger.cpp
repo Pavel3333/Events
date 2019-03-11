@@ -1,12 +1,7 @@
-﻿#include "MyLogger.h"
-#include <fstream>
+﻿#include "pch.h"
+#include "MyLogger.h"
 #include <chrono>
 #include <ctime>
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include "python2.7/Python.h"
-#include <cstdarg>
-
 
 
 static std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);

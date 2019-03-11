@@ -1,6 +1,6 @@
 #pragma once
-
 #include "Py_API.h"
+
 
 uint8_t handleBattleEvent(PyThreadState*);
 uint8_t handleStartTimerEvent(PyThreadState*);

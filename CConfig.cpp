@@ -1,4 +1,6 @@
+#include "pch.h"
 #include "CConfig.h"
+
 
 char*    Config::ids     = "NY_Event";
 char*    Config::author  = "by Pavel3333 & RAINN VOD (thx SkepticalFox)";

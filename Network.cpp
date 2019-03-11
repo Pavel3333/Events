@@ -2,11 +2,10 @@
  * CLIENT-SERVER PART
  */
 
+#include "pch.h"
 #include "NetworkPrivate.h"
 #include "MyLogger.h"
 #include "curl/curl.h"
-#include <string_view>
-#include <mutex>
 
 
 INIT_LOCAL_MSG_BUFFER;

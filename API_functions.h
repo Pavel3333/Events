@@ -1,12 +1,5 @@
 ﻿#pragma once
 
-#pragma warning(disable: 5033)
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <vector>
-#include "python2.7/Python.h"
-
 
 // Код ошибки
 enum [[nodiscard]] MyErr : int {

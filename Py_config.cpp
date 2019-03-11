@@ -1,8 +1,9 @@
-﻿#include "Py_config.h"
+﻿#include "pch.h"
+#include "Py_config.h"
 #include "MyLogger.h"
 #include "CConfig.h"
-#include <fstream>
 #include "python2.7/structmember.h"
+#include <filesystem>
 
 
 static PyMemberDef config_members[9] = {

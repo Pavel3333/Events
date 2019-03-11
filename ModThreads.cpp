@@ -1,6 +1,6 @@
+#include "pch.h"
 #include "ModThreads.h"
 
-#include <thread>
 
 uint8_t getThreadCount()
 {
@@ -11,4 +11,3 @@ uint8_t getThreadCount()
 
 	return threadCount;
 }
-

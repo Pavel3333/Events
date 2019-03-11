@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 #define MOD_VERSION "v1.0.0.4 (" __TIMESTAMP__ ")"
 
 struct data_c {

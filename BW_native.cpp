@@ -1,4 +1,5 @@
-﻿#include "BW_native.h"
+﻿#include "pch.h"
+#include "BW_native.h"
 #include "MyLogger.h"
 #include "Py_common.h"
 

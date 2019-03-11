@@ -1,7 +1,7 @@
+#include "pch.h"
 #include "Py_API.h"
 #include "PyLoader.h"
 #include "MyLogger.h"
-#include <fstream>
 
 
 INIT_LOCAL_MSG_BUFFER;
