@@ -5,7 +5,6 @@
 
 #include <fstream>
 #include <mutex>
-#include <thread>
 
 #pragma warning(push)
 #pragma warning(disable: 5033)
