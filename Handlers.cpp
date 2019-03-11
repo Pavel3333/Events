@@ -220,7 +220,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 
 		it_sect_sync = sync_map.modelsSects_deleting.begin();
 
-		superExtendedDebugLog("SYNC - %d models sections to delete", sync_map.modelsSects_deleting.size());
+		superExtendedDebugLogEx(SYNC, "%d models sections to delete", sync_map.modelsSects_deleting.size());
 
 		Py_BLOCK_THREADS;
 
@@ -242,7 +242,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 					if (auto err = delModelPy(it_model->coords)) { traceLog //TODO: проверка не по координатам, а по ID модели
 						extendedDebugLogEx(WARNING, "handleBattleEvent - delModelPy - Error code %d", err);
 
-						//GUI_setError(EVENT_START_TIMER->request);
+						//GUI_setError(err);
 
 						it_model++;
 
