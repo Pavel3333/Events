@@ -225,20 +225,20 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 
 		while (it_sect_sync != sync_map.modelsSects_deleting.end()) { traceLog
 			if (it_sect_sync->isInitialised) {
-				superExtendedDebugLog("SYNC - %d models to delete in section %d", it_sect_sync->models.size(), it_sect_sync->ID);
+				superExtendedDebugLogEx(SYNC, "%d models to delete in section %d", it_sect_sync->models.size(), it_sect_sync->ID);
 
 				it_model = it_sect_sync->models.begin();
 
 				while (it_model != it_sect_sync->models.end()) { traceLog
 					if (it_model->coords == nullptr) { traceLog
-						extendedDebugLog("WARNING, handleBattleEvent - *it_model is NULL!%d");
+						extendedDebugLogEx(WARNING, "handleBattleEvent - *it_model is NULL");
 
 						it_model = it_sect_sync->models.erase(it_model);
 										
 						continue;
 					}
 
-					if (auto err = delModelPy(it_model->coords)) { traceLog
+					if (auto err = delModelPy(it_model->coords)) { traceLog //TODO: проверка не по координатам, а по ID модели
 						extendedDebugLogEx(WARNING, "handleBattleEvent - delModelPy - Error code %d", err);
 
 						//GUI_setError(EVENT_START_TIMER->request);
@@ -271,7 +271,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 				}
 			}
 							
-			superExtendedDebugLog("SYNC - %d models after deleting", sync_map.modelsSects_deleting.size());
+			superExtendedDebugLogEx(SYNC, "%d models after deleting", sync_map.modelsSects_deleting.size());
 
 			if (it_sect_sync->path != nullptr) {
 				delete[] it_sect_sync->path;

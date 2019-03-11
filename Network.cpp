@@ -162,13 +162,14 @@ uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID model
 
 uint8_t parse_event_safe(EVENT_ID eventID)
 {
+	uint8_t res;
+
 	g_parse_mutex.lock();
-	uint8_t res = parse_event(eventID);
+	if (res = parse_event(eventID)) {
+		writeDebugDataToFile(PARSING, response_buffer, response_size);
+	} 
 	g_parse_mutex.unlock();
 
-	if (res) {
-		writeDebugDataToFile(PARSING, response_buffer, response_size);
-	}
 	return res;
 }
 
