@@ -3,6 +3,7 @@
 #include "MyLogger.h"
 #include "CConfig.h"
 #include "python2.7/structmember.h"
+#include <filesystem>
 
 
 static PyMemberDef config_members[9] = {

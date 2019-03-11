@@ -1,5 +1,7 @@
 ﻿#include "pch.h"
 #include "MyLogger.h"
+#include <chrono>
+#include <ctime>
 
 
 static std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
