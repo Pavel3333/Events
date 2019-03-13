@@ -22,14 +22,14 @@ static size_t timedFmt(char* buf, const char* fmt, va_list args) {
 	return len;
 }
 
-void __my_log_write_data_to_file(char* name, char* data, size_t size) 
+void __my_log_write_data_to_file(char* mod_name, char* name, char* data, size_t size) 
 {
 	char time[64];
 	char filename[MAX_PATH];
 
 	getTime(time, "%F_%H_%M_%S", MAX_DBG_TIME_SIZE);
 	
-	sprintf_s(filename, MAX_PATH, "NY_Event_debug_data_%s_%s.txt", name, time);
+	sprintf_s(filename, MAX_PATH, "%s_debug_data_%s_%s.txt", mod_name, name, time);
 
 	std::ofstream dbg_file(filename, std::ios::binary);
 

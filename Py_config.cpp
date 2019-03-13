@@ -170,22 +170,14 @@ MyErr PyConfig::init()
 			return_err 5;
 		} traceLog
 
-		PyObject* old = g_self->data;
+		PyDict_Clear(g_self->data);
+		PyDict_Clear(g_self->i18n);
 
-		g_self->data = PyTuple_GET_ITEM(data_i18n, NULL);
+		Py_DECREF(g_self->data);
+		Py_DECREF(g_self->i18n);
 
-		PyDict_Clear(old);
-
-		Py_DECREF(old);
-
-		old = g_self->i18n;
-
+		g_self->data = PyTuple_GET_ITEM(data_i18n, 0);
 		g_self->i18n = PyTuple_GET_ITEM(data_i18n, 1);
-
-		PyDict_Clear(old);
-
-		Py_DECREF(old);
-		Py_DECREF(data_i18n);
 	}
 
 	inited = true;
@@ -341,15 +333,15 @@ bool PyConfig::read_data(bool isData)
 	
 	std::filesystem::path data_path;
 
-	PyObject* data_src = nullptr;
+	PyObject** data_src = nullptr;
 	
 	if (isData) { traceLog
 		data_path = "mods/configs/pavel3333/NY_Event/NY_Event.json";
-		data_src = g_self->data;
+		data_src = &(g_self->data);
 	}
 	else { traceLog
-		data_src = g_self->i18n;
 		data_path = "mods/configs/pavel3333/NY_Event/i18n/ru.json";
+		data_src = &(g_self->i18n);
 	} traceLog
 
 	if (!data_src) { traceLog
@@ -360,7 +352,7 @@ bool PyConfig::read_data(bool isData)
 
 	if (!data.is_open()) { traceLog
 		data.close();
-		if (!write_data(data_path, data_src)) { traceLog
+		if (!write_data(data_path, *data_src)) { traceLog
 			return false;
 		} traceLog
 	}
@@ -384,19 +376,17 @@ bool PyConfig::read_data(bool isData)
 		if (!data_json_s) { traceLog
 			PyErr_Clear();
 
-			if (!write_data(data_path, data_src)) { traceLog
+			if (!write_data(data_path, *data_src)) { traceLog
 				return false;
 			} traceLog
 
 			return true;
 		} traceLog
 
-		PyObject* old = data_src;
-		if (isData) g_self->data = data_json_s;
-		else g_self->i18n = data_json_s;
+		PyDict_Clear(*data_src);
+		Py_DECREF(*data_src);
 
-		PyDict_Clear(old);
-		Py_DECREF(old);
+		*data_src = data_json_s;
 	} traceLog
 
 	return true;
