@@ -2,6 +2,7 @@
 #include "PyLoader.h"
 #include "CLoader.h"
 #include "Handlers.h"
+#include "CConfig.h"
 #include "Py_config.h"
 #include "MyLogger.h"
 
@@ -217,6 +218,8 @@ PyMODINIT_FUNC initevent(void)
 	// почему это здесь?
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
 	
+	openDbgLog(Config::ids);
+
 	if (auto err = BigWorldUtils::init()) {
 		debugLogEx(ERROR, "initevent - init BigWorldUtils: error %d!", err);
 		goto freeBigWorldUtils;

@@ -2,8 +2,9 @@
 #include "MyLogger.h"
 #include <ctime>
 
+static bool opened = false;
 
-static std::ofstream dbg_log("NY_Event_debug_log.txt", std::ios::app);
+static std::ofstream dbg_log;
 
 static size_t getTime(char* buf, const char* fmt, uint16_t size) {
 	using namespace std::chrono;
@@ -20,6 +21,12 @@ static size_t timedFmt(char* buf, const char* fmt, va_list args) {
 	vsprintf_s(buf + len, MAX_DBG_LINE_SIZE - len, fmt, args);
 
 	return len;
+}
+
+void __my_log_open_dbg_log(char* filename) {
+	dbg_log.open(filename, std::ios::app);
+
+	opened = true;
 }
 
 void __my_log_write_data_to_file(char* mod_name, char* name, char* data, size_t size) 
@@ -41,7 +48,8 @@ void __my_log_write_data_to_file(char* mod_name, char* name, char* data, size_t 
 void __my_log(const char* str)
 {
 	OutputDebugStringA(str);
-	dbg_log << str << std::flush;
+	if(opened)
+		dbg_log << str << std::flush;
 }
 
 void __my_log_fmt(char* buf, const char* fmt, ...)

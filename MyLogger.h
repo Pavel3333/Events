@@ -4,7 +4,7 @@
 #define extended_debug_log       true
 #define super_extended_debug_log false
 
-#define trace_log false
+#define trace_log true
 
 #define MAX_DBG_LINE_SIZE 1024
 #define MAX_DBG_TIME_SIZE 64
@@ -12,12 +12,15 @@
 #define INIT_LOCAL_MSG_BUFFER \
 	static char __log_buf_private[MAX_DBG_LINE_SIZE]
 
+void __my_log_open_dbg_log(char*);
+
 void __my_log(const char*);
 void __my_log_fmt(char*, const char*, ...);
 void __my_log_fmt_with_pystdout(char*, const char*, ...);
 
 void __my_log_write_data_to_file(char*, char*, char*, size_t);
 
+#define openDbgLog(filename) __my_log_open_dbg_log(filename);
 
 #define debugLog(fmt, ...) debugLogEx(INFO, fmt, ##__VA_ARGS__)
 #define extendedDebugLog(fmt, ...) extendedDebugLogEx(INFO, fmt, ##__VA_ARGS__)
