@@ -174,14 +174,6 @@
     <ClCompile Include="CLoader.cpp" />
     <ClCompile Include="ThreadSync.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="libcurl.dll">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\libcurl.lib" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

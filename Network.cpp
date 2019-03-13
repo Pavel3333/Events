@@ -6,14 +6,12 @@
 #include "CConfig.h"
 #include "NetworkPrivate.h"
 #include "MyLogger.h"
-#include "curl/curl.h"
+#include <wininet.h>
 
 
 INIT_LOCAL_MSG_BUFFER;
 
 static std::mutex g_parse_mutex;
-
-static CURL* curl_handle = nullptr;
 
 static char response_buffer[NET_BUFFER_SIZE];
 static size_t response_size = 0;
@@ -21,6 +19,7 @@ static size_t response_size = 0;
 
 MyErr curl_init()
 {
+	/*
 	//инициализация curl
 
 	if (curl_global_init(CURL_GLOBAL_ALL)) {
@@ -33,31 +32,37 @@ MyErr curl_init()
 		return_err 2;
 	}
 
+	*/
 	return_ok;
 }
 
 
 void curl_fini()
 {
+	/*
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
 	curl_handle = nullptr;
+	*/
 }
 
 
 //writing response from server into array ptr and return size of response
 static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data)
 {
+	/*
 	if (data == NULL || response_size + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
 
 	memcpy(&data[response_size], ptr, size*nmemb);// appending data into the end
 	response_size += size * nmemb;  // changing position
 	return size * nmemb;
+	*/
 }
 
 
 static uint8_t send_to_server(std::string_view request)
 {
+	/*
 	if (!curl_handle) {
 		return 1;
 	}
@@ -101,6 +106,8 @@ static uint8_t send_to_server(std::string_view request)
 	}
 
 	return static_cast<uint8_t>(res);
+	*/
+	return 0;
 }
 
 uint8_t send_token(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del)

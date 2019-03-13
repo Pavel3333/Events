@@ -126,14 +126,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="libcurl.dll">
-      <Filter>dll</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\libcurl.lib">
-      <Filter>lib</Filter>
-    </Library>
-  </ItemGroup>
 </Project>
