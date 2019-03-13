@@ -7,11 +7,14 @@
 #include "NetworkPrivate.h"
 #include "MyLogger.h"
 #include <wininet.h>
+#pragma comment(lib, "wininet")
 
 
 INIT_LOCAL_MSG_BUFFER;
 
 static std::mutex g_parse_mutex;
+
+static HINTERNET hInternet = nullptr;
 
 static char response_buffer[NET_BUFFER_SIZE];
 static size_t response_size = 0;
@@ -19,49 +22,58 @@ static size_t response_size = 0;
 
 MyErr curl_init()
 {
-	/*
-	//инициализация curl
+	hInternet = InternetOpen(
+		TEXT("NY_Event"),
+		INTERNET_OPEN_TYPE_PRECONFIG,
+		NULL, NULL,
+		0);
 
-	if (curl_global_init(CURL_GLOBAL_ALL)) {
+	if (!hInternet) {
 		return_err 1;
 	}
 
-	curl_handle = curl_easy_init();
-
-	if (!curl_handle) {
-		return_err 2;
-	}
-
-	*/
 	return_ok;
 }
 
 
 void curl_fini()
 {
-	/*
-	curl_easy_cleanup(curl_handle);
-	curl_global_cleanup();
-	curl_handle = nullptr;
-	*/
+	InternetCloseHandle(hInternet);
 }
-
-
-//writing response from server into array ptr and return size of response
-static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data)
-{
-	/*
-	if (data == NULL || response_size + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
-
-	memcpy(&data[response_size], ptr, size*nmemb);// appending data into the end
-	response_size += size * nmemb;  // changing position
-	return size * nmemb;
-	*/
-}
-
 
 static uint8_t send_to_server(std::string_view request)
 {
+	HINTERNET hConnect = InternetConnect(
+			hInternet,
+			TEXT("http://api.pavel3333.ru/events/index.php"),
+			INTERNET_DEFAULT_HTTP_PORT,
+			NULL, NULL,
+			INTERNET_SERVICE_HTTP,
+			0,
+			1u);
+
+	if (hConnect == nullptr) {
+		return 1;
+	}
+
+	HINTERNET hRequest =
+		HttpOpenRequestA(
+			hConnect,
+			"POST",
+			"hm...",
+			NULL,
+			NULL,
+			0,
+			INTERNET_FLAG_KEEP_CONNECTION,
+			1);
+
+	if (hRequest == nullptr) {
+		InternetCloseHandle(hConnect);
+		return 2;
+	}
+
+	InternetCloseHandle(hRequest);
+	InternetCloseHandle(hConnect);
 	/*
 	if (!curl_handle) {
 		return 1;
