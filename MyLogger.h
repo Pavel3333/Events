@@ -12,7 +12,7 @@
 #define INIT_LOCAL_MSG_BUFFER \
 	static char __log_buf_private[MAX_DBG_LINE_SIZE]
 
-void __my_log_open_dbg_log(char*);
+void __my_log_open_dbg_log(const char*);
 
 void __my_log(const char*);
 void __my_log_fmt(char*, const char*, ...);

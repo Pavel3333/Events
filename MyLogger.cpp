@@ -23,7 +23,7 @@ static size_t timedFmt(char* buf, const char* fmt, va_list args) {
 	return len;
 }
 
-void __my_log_open_dbg_log(char* filename) {
+void __my_log_open_dbg_log(const char* filename) {
 	dbg_log.open(filename, std::ios::app);
 
 	opened = true;

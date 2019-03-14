@@ -14,6 +14,7 @@ struct i18n_c {
 class Config {
 public:
 	static char* ids;
+	static char* debugFile;
 	static char* author;
 	static char* version;
 	static char* patch;
