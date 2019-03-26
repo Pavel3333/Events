@@ -166,7 +166,7 @@ uint8_t parse_event_safe(EVENT_ID eventID)
 
 	g_parse_mutex.lock();
 	if (res = parse_event(eventID)) {
-		writeDebugDataToFile(Config::ids, PARSING, response_buffer, response_size);
+		writeDebugDataToFile(PARSING, response_buffer, response_size);
 	} 
 	g_parse_mutex.unlock();
 

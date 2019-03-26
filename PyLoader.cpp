@@ -217,8 +217,6 @@ PyMODINIT_FUNC initevent(void)
 {
 	// почему это здесь?
 	InitializeCriticalSection(&CS_NETWORK_NOT_USING);
-	
-	openDbgLog(Config::debugFile);
 
 	if (auto err = BigWorldUtils::init()) {
 		debugLogEx(ERROR, "initevent - init BigWorldUtils: error %d!", err);

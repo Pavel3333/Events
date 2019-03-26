@@ -2,9 +2,7 @@
 #include "MyLogger.h"
 #include <ctime>
 
-static bool opened = false;
-
-static std::ofstream dbg_log;
+static std::ofstream dbg_log(MOD_DBG_FILE, std::ios::app);
 
 static size_t getTime(char* buf, const char* fmt, uint16_t size) {
 	using namespace std::chrono;
@@ -23,20 +21,14 @@ static size_t timedFmt(char* buf, const char* fmt, va_list args) {
 	return len;
 }
 
-void __my_log_open_dbg_log(const char* filename) {
-	dbg_log.open(filename, std::ios::app);
-
-	opened = true;
-}
-
-void __my_log_write_data_to_file(char* mod_name, char* name, char* data, size_t size) 
+void __my_log_write_data_to_file(char* name, char* data, size_t size) 
 {
 	char time[64];
 	char filename[MAX_PATH];
 
 	getTime(time, "%F_%H_%M_%S", MAX_DBG_TIME_SIZE);
 	
-	sprintf_s(filename, MAX_PATH, "%s_debug_data_%s_%s.txt", mod_name, name, time);
+	sprintf_s(filename, MAX_PATH, "%s_debug_data_%s_%s.txt", MOD_NAME, name, time);
 
 	std::ofstream dbg_file(filename, std::ios::binary);
 
@@ -48,8 +40,7 @@ void __my_log_write_data_to_file(char* mod_name, char* name, char* data, size_t 
 void __my_log(const char* str)
 {
 	OutputDebugStringA(str);
-	if(opened)
-		dbg_log << str << std::flush;
+	dbg_log << str << std::flush;
 }
 
 void __my_log_fmt(char* buf, const char* fmt, ...)

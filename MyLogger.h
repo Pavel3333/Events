@@ -9,16 +9,16 @@
 #define MAX_DBG_LINE_SIZE 1024
 #define MAX_DBG_TIME_SIZE 64
 
+#define MOD_DBG_FILE MOD_NAME "_debug_log.txt"
+
 #define INIT_LOCAL_MSG_BUFFER \
 	static char __log_buf_private[MAX_DBG_LINE_SIZE]
-
-void __my_log_open_dbg_log(const char*);
 
 void __my_log(const char*);
 void __my_log_fmt(char*, const char*, ...);
 void __my_log_fmt_with_pystdout(char*, const char*, ...);
 
-void __my_log_write_data_to_file(char*, char*, char*, size_t);
+void __my_log_write_data_to_file(char*, char*, size_t);
 
 #define openDbgLog(filename) __my_log_open_dbg_log(filename);
 
@@ -29,13 +29,13 @@ void __my_log_write_data_to_file(char*, char*, char*, size_t);
 
 #if debug_log
 #define debugLogEx(level, fmt, ...) \
-	__my_log_fmt_with_pystdout(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt_with_pystdout(__log_buf_private, "[" MOD_NAME "][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #if extended_debug_log
 #define extendedDebugLogEx(level, fmt, ...) \
-	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
-#define writeDebugDataToFile(mod_name, name, data, size) __my_log_write_data_to_file(mod_name, #name, data, size)
+	__my_log_fmt(__log_buf_private, "[" MOD_NAME "][" #level "]: " fmt "\n", ##__VA_ARGS__)
+#define writeDebugDataToFile(name, data, size) __my_log_write_data_to_file(#name, data, size)
 
 #if super_extended_debug_log
 #define superExtendedDebugLogEx(level, fmt, ...) \
