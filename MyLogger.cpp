@@ -28,7 +28,7 @@ void __my_log_write_data_to_file(char* name, char* data, size_t size)
 
 	getTime(time, "%F_%H_%M_%S", MAX_DBG_TIME_SIZE);
 	
-	sprintf_s(filename, MAX_PATH, "%s_debug_data_%s_%s.txt", MOD_NAME, name, time);
+	sprintf_s(filename, MAX_PATH, MOD_NAME "_debug_data_%s_%s.txt", name, time);
 
 	std::ofstream dbg_file(filename, std::ios::binary);
 
@@ -63,6 +63,4 @@ void __my_log_fmt_with_pystdout(char* buf, const char* fmt, ...)
 	va_end(args);
 
 	__my_log(buf);
-
-	PySys_WriteStdout(buf + len);
 }

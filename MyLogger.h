@@ -20,8 +20,6 @@ void __my_log_fmt_with_pystdout(char*, const char*, ...);
 
 void __my_log_write_data_to_file(char*, char*, size_t);
 
-#define openDbgLog(filename) __my_log_open_dbg_log(filename);
-
 #define debugLog(fmt, ...) debugLogEx(INFO, fmt, ##__VA_ARGS__)
 #define extendedDebugLog(fmt, ...) extendedDebugLogEx(INFO, fmt, ##__VA_ARGS__)
 #define superExtendedDebugLog(fmt, ...) superExtendedDebugLogEx(INFO, fmt, ##__VA_ARGS__)
@@ -39,7 +37,7 @@ void __my_log_write_data_to_file(char*, char*, size_t);
 
 #if super_extended_debug_log
 #define superExtendedDebugLogEx(level, fmt, ...) \
-	__my_log_fmt(__log_buf_private, "[Events][" #level "]: " fmt "\n", ##__VA_ARGS__)
+	__my_log_fmt(__log_buf_private, "[" MOD_NAME "][" #level "]: " fmt "\n", ##__VA_ARGS__)
 
 
 #else
