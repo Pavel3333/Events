@@ -52,7 +52,7 @@ PyTypeObject Config_p {
 
 	/* Flags to define presence of optional/expanded features */
 	Py_TPFLAGS_DEFAULT,
-	"Config for NY_Event Mod", /* Documentation string */
+	"Config for " MOD_NAME " Mod", /* Documentation string */
 
 								/* Assigned meaning in release 2.0 */
 								/* call function for all accessible objects */
@@ -156,8 +156,8 @@ MyErr PyConfig::init()
 	if (!m_g_gui) {
 		CreateDirectoryA("mods/configs", NULL);
 		CreateDirectoryA("mods/configs/pavel3333", NULL);
-		CreateDirectoryA("mods/configs/pavel3333/NY_Event", NULL);
-		CreateDirectoryA("mods/configs/pavel3333/NY_Event/i18n", NULL);
+		CreateDirectoryA("mods/configs/pavel3333/" MOD_NAME, NULL);
+		CreateDirectoryA("mods/configs/pavel3333/" MOD_NAME "/i18n", NULL);
 
 		if (!read_data(true) || !read_data(false)) { traceLog
 			return_err 4;
@@ -226,13 +226,13 @@ PyObject* PyConfig::init_i18n() {
 
 	if (PyDict_SetItemString(i18n_py, "version", i18n_version)) goto end_init_i18n_2;
 
-	PyObject* UI_description = PyString_FromString("NY_Event Mod");
+	PyObject* UI_description = PyString_FromString(MOD_NAME " Mod");
 
 	PyObject* empty_tooltip  = PyString_FromStringAndSize("", NULL);
 
-	PyObject* UI_message_thx     = PyString_FromString("NY_Event: Successfully loaded.");
+	PyObject* UI_message_thx     = PyString_FromString(MOD_NAME ": Successfully loaded.");
 	PyObject* UI_message_thx_2   = PyString_FromString("Official site");
-	PyObject* UI_message_channel = PyString_FromString("Official channel RAINN VOD of NY_Event");
+	PyObject* UI_message_channel = PyString_FromString("Official channel RAINN VOD of " MOD_NAME);
 
 	PyObject* UI_err_2 = PyString_FromString("Error. Redownload mod");
 	PyObject* UI_err_3 = PyString_FromString("Error. Maybe network don't works?");
@@ -336,11 +336,11 @@ bool PyConfig::read_data(bool isData)
 	PyObject** data_src = nullptr;
 	
 	if (isData) { traceLog
-		data_path = "mods/configs/pavel3333/NY_Event/NY_Event.json";
+		data_path = "mods/configs/pavel3333/" MOD_NAME "/" MOD_NAME ".json";
 		data_src = &(g_self->data);
 	}
 	else { traceLog
-		data_path = "mods/configs/pavel3333/NY_Event/i18n/ru.json";
+		data_path = "mods/configs/pavel3333/" MOD_NAME "/i18n/ru.json";
 		data_src = &(g_self->i18n);
 	} traceLog
 
