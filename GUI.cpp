@@ -24,7 +24,7 @@ MyErr GUI::init()
 
 	debugLog("Mod_GUI module loading...");
 
-	PyObject* mGUI_module = PyImport_ImportModule("NY_Event.native.mGUI");
+	PyObject* mGUI_module = PyImport_ImportModule(MOD_NAME ".native.mGUI");
 
 	if (!mGUI_module)
 		return_err 1;

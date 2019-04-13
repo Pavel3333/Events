@@ -5,7 +5,7 @@
 char*    Config::ids       = MOD_NAME;
 char*    Config::author    = "by Pavel3333 & RAINN VOD (thx SkepticalFox)";
 char*    Config::version   = MOD_VERSION;
-char*    Config::patch     = "1.4.1.0";
+char*    Config::patch     = "1.4.1.1";
 
 uint16_t Config::version_id = 100;
 

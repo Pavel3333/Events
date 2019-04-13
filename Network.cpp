@@ -74,7 +74,7 @@ static uint8_t send_to_server(std::string_view request)
 		CURLFORM_END);
 
 	// setting user agent
-	const char* user_agent = "NY_Event";
+	const char* user_agent = MOD_NAME;
 	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, user_agent);
 
 	// setting url

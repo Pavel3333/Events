@@ -21,8 +21,6 @@ void __my_log_fmt_with_pystdout(char*, const char*, bool timed, ...);
 
 void __my_log_write_data_to_file(char*, char*, size_t);
 
-#define openDbgLog(filename) __my_log_open_dbg_log(filename);
-
 #define debugLog(fmt, ...) debugLogEx(INFO, fmt, ##__VA_ARGS__)
 #define debugLogRaw(fmt, ...) debugLogRawEx(fmt, ##__VA_ARGS__)
 #define extendedDebugLog(fmt, ...) extendedDebugLogEx(INFO, fmt, ##__VA_ARGS__)
