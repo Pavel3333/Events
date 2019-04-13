@@ -13,10 +13,15 @@ static size_t getTime(char* buf, const char* fmt, uint16_t size) {
 	return std::strftime(buf, size, fmt, &tm);
 }
 
-static size_t timedFmt(char* buf, const char* fmt, va_list args) {
-	size_t len = getTime(buf, "%H:%M:%S: ", MAX_DBG_LINE_SIZE);
+static size_t format(char* buf, const char* fmt, va_list args, bool timed) {
+	size_t len = NULL;
 
-	vsprintf_s(buf + len, MAX_DBG_LINE_SIZE - len, fmt, args);
+	if (timed) {
+		len = getTime(buf, "%H:%M:%S: ", MAX_DBG_LINE_SIZE);
+
+		vsprintf_s(buf + len, MAX_DBG_LINE_SIZE - len, fmt, args);
+	}
+	else vsprintf_s(buf, MAX_DBG_LINE_SIZE, fmt, args);
 
 	return len;
 }
@@ -43,26 +48,30 @@ void __my_log(const char* str)
 	dbg_log << str << std::flush;
 }
 
-void __my_log_fmt(char* buf, const char* fmt, ...)
+void __my_log_c(char c)
+{
+	const char str[] = { c, NULL };
+	__my_log(str);
+}
+
+void __my_log_fmt(char* buf, const char* fmt, bool timed, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	timedFmt(buf, fmt, args);
+	format(buf, fmt, args, timed);
 	va_end(args);
 
 	__my_log(buf);
 }
 
-void __my_log_fmt_with_pystdout(char* buf, const char* fmt, ...)
+void __my_log_fmt_with_pystdout(char* buf, const char* fmt, bool timed, ...)
 {
-	size_t len;
-
 	va_list args;
 	va_start(args, fmt);
-	len = timedFmt(buf, fmt, args);
+	format(buf, fmt, args, timed);
 	va_end(args);
 
 	__my_log(buf);
 
-	PySys_WriteStdout(buf + len);
+	PySys_WriteStdout(buf);
 }
