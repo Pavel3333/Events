@@ -15,7 +15,7 @@ static std::mutex g_parse_mutex;
 
 static CURL* curl_handle = nullptr;
 
-static char response_buffer[NET_BUFFER_SIZE];
+static char response_buffer[NET_BUFFER_SIZE + 1];
 static size_t response_size = 0;
 
 
@@ -55,34 +55,35 @@ static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data)
 	return size * nmemb;
 }
 
-
 static uint8_t send_to_server(std::string_view request)
 {
 	if (!curl_handle) {
 		return 1;
 	}
 
+	memset(response_buffer, NULL, NET_BUFFER_SIZE);
 	response_size = 0;
 
-	curl_httppost* formpost = nullptr;
-	curl_httppost* lastptr = nullptr;
+	// Build an HTTP form with a single field named "request"
+	curl_mime*     mime = curl_mime_init(curl_handle);
+	curl_mimepart* part = curl_mime_addpart(mime);
+	curl_mime_data(part, request.data(), request.size());
+	curl_mime_name(part, "request");
 
-	curl_formadd(&formpost, &lastptr,
-		CURLFORM_COPYNAME, "request",
-		CURLFORM_PTRCONTENTS, request.data(),
-		CURLFORM_CONTENTSLENGTH, request.length(),
-		CURLFORM_END);
-
-	// setting user agent
-	const char* user_agent = MOD_NAME;
-	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, user_agent);
+	// Post and send it. */
+	curl_easy_setopt(curl_handle, CURLOPT_MIMEPOST, mime);
 
 	// setting url
-	const char* url = "http://api.pavel3333.ru/events/index.php";
-	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+	curl_easy_setopt(curl_handle, CURLOPT_URL, "http://api.pavel3333.ru/events/index.php");
 
-	// setting POST form
-	curl_easy_setopt(curl_handle, CURLOPT_HTTPPOST, formpost);
+	// setting user agent
+	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, MOD_NAME);
+
+	// setting CA cert path
+	curl_easy_setopt(curl_handle, CURLOPT_CAPATH, "/");
+
+	// setting CA cert info
+	curl_easy_setopt(curl_handle, CURLOPT_CAINFO, "res_mods/mods/xfw_packages/" MOD_NAME "/native/cacert.pem");
 
 	// setting function for write data
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
@@ -90,15 +91,15 @@ static uint8_t send_to_server(std::string_view request)
 	// setting buffer
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, response_buffer);
 
-	// setting max buffer size
-	curl_easy_setopt(curl_handle, CURLOPT_BUFFERSIZE, NET_BUFFER_SIZE);
-
 	// requesting
 	CURLcode res = curl_easy_perform(curl_handle);
 
 	if (res != CURLcode::CURLE_OK) {
 		debugLogEx(ERROR, "curl error code: %d", res);
 	}
+
+	// always cleanup
+	curl_mime_free(mime);
 
 	return static_cast<uint8_t>(res);
 }
