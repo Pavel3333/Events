@@ -221,23 +221,12 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 		error_code = response_buffer[offset];
 
 		if (error_code < 10) {
-			if (error_code == 7) {
-				current_map.stageID = STAGE_ID::WAITING;
+			if      (error_code == 7) current_map.stageID = STAGE_ID::WAITING;
+			else if (error_code == 8) current_map.stageID = STAGE_ID::END_BY_TIME;
+			else if (error_code == 9) current_map.stageID = STAGE_ID::END_BY_COUNT;
+			else return response_buffer[offset];
 
-				return NULL;
-			}
-			else if (error_code == 8) {
-				current_map.stageID = STAGE_ID::END_BY_TIME;
-
-				return NULL;
-			}
-			else if (error_code == 9) {
-				current_map.stageID = STAGE_ID::END_BY_COUNT;
-
-				return NULL;
-			}
-
-			return response_buffer[offset];
+			return NULL;
 		}
 
 		return response_buffer[offset];
@@ -250,16 +239,13 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 		остальные четыре байта - оставшееся время
 		*/
 
-		if (response_buffer[offset] != 0) {
+		if (response_buffer[offset])
 			return 5;
-		}
 
 		current_map.stageID = (STAGE_ID)response_buffer[offset + 1];
 
-		if (current_map.stageID == STAGE_ID::COMPETITION)
-			isStreamer = false;
-		else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
-			isStreamer = true;
+		if      (current_map.stageID == STAGE_ID::COMPETITION)   isStreamer = false;
+		else if (current_map.stageID == STAGE_ID::STREAMER_MODE) isStreamer = true;
 
 		memcpy(&(current_map.time_preparing), response_buffer + offset + 2, 4);
 
@@ -270,9 +256,8 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 
 			offset++;
 
-			if (sections_count > SECTIONS_COUNT) {
+			if (sections_count > SECTIONS_COUNT)
 				return 6; //проверяем валидность числа секций
-			}
 
 			memcpy(&(current_map.minimap_count), response_buffer + offset, 2);
 
@@ -283,17 +268,15 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 
 				offset++;
 
-				if (model_type >= SECTIONS_COUNT) {
+				if (model_type >= SECTIONS_COUNT)
 					return 7;  //проверяем валидность типа модели
-				}
 
 				memcpy(&models_count_sect, response_buffer + offset, 2);
 
 				offset += 2;
 
-				if (!models_count_sect) {
+				if (!models_count_sect)
 					continue; //нет моделей, идем далее
-				}
 
 				char *path_buffer = new char[80];
 
@@ -302,7 +285,7 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 
 				//инициализация новой секции моделей
 
-				ModelsFullSection model_sect{
+				ModelsFullSection model_sect {
 					false,
 					(MODEL_ID)model_type,
 					path_buffer
@@ -352,15 +335,13 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 	std::vector<ModelsSyncSection>* sect = nullptr;
 
-	if (!response_size) {
+	if (!response_size)
 		return 9;
-	}
 
 	length = reinterpret_cast<uint16_t*>(response_buffer);
 
-	if (*length != response_size) {
+	if (*length != response_size)
 		return 10;
-	}
 
 	offset += 2;
 
@@ -368,23 +349,12 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 		error_code = response_buffer[offset];
 
 		if (error_code < 10) {
-			if (error_code == 7) {
-				current_map.stageID = STAGE_ID::WAITING;
+			if      (error_code == 7) current_map.stageID = STAGE_ID::WAITING;
+			else if (error_code == 8) current_map.stageID = STAGE_ID::END_BY_TIME;
+			else if (error_code == 9) current_map.stageID = STAGE_ID::END_BY_COUNT;
+			else return response_buffer[offset];
 
-				return NULL;
-			}
-			else if (error_code == 8) {
-				current_map.stageID = STAGE_ID::END_BY_TIME;
-
-				return NULL;
-			}
-			else if (error_code == 9) {
-				current_map.stageID = STAGE_ID::END_BY_COUNT;
-
-				return NULL;
-			}
-
-			return response_buffer[offset];
+			return NULL;
 		}
 
 		return response_buffer[offset];
@@ -410,16 +380,13 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 			  12б - координаты (3*float)
 		*/
 
-		if (response_buffer[offset] != 0) {
+		if (response_buffer[offset])
 			return 11;
-		}
 
 		current_map.stageID = (STAGE_ID)response_buffer[offset + 1];
 
-		if (current_map.stageID == STAGE_ID::COMPETITION)
-			isStreamer = false;
-		else if (current_map.stageID == STAGE_ID::STREAMER_MODE)
-			isStreamer = true;
+		if      (current_map.stageID == STAGE_ID::COMPETITION)   isStreamer = false;
+		else if (current_map.stageID == STAGE_ID::STREAMER_MODE) isStreamer = true;
 
 		memcpy(&(current_map.time_preparing), response_buffer + offset + 2, 4);
 
@@ -427,10 +394,10 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 		if (response_size > 8) { //парсинг координат
 			for (uint8_t modelSectionID = NULL; modelSectionID < 2; modelSectionID++) {
-				if (modelSectionID == 0 && response_buffer[offset] == 0) sect = &(sync_map.modelsSects_creating);
+				if      (modelSectionID == 0 && response_buffer[offset] == 0) sect = &(sync_map.modelsSects_creating);
 				else if (modelSectionID == 1 && response_buffer[offset] == 1) sect = &(sync_map.modelsSects_deleting);
 				else {
-					extendedDebugLog("Found unexpected section while synchronizing!\n");
+					extendedDebugLogEx(ERROR, "Found unexpected section while synchronizing!response_buffer");
 
 					break;
 				}
@@ -441,9 +408,8 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 				offset++;
 
-				if (sections_count > SECTIONS_COUNT) {
+				if (sections_count > SECTIONS_COUNT)
 					return 12; //проверяем валидность числа секций
-				}
 
 				memcpy(&(sync_map.all_models_count), response_buffer + offset, 2);
 
@@ -457,17 +423,15 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 					offset++;
 
-					if (model_type >= SECTIONS_COUNT) {
+					if (model_type >= SECTIONS_COUNT)
 						return 13;  //проверяем валидность типа модели
-					}
 
 					memcpy(&models_count_sect, response_buffer + offset, 2);
 
 					offset += 2;
 
-					if (!models_count_sect) {
+					if (!models_count_sect)
 						continue; //нет моделей, идем далее
-					}
 
 					char *path_buffer = new char[80];
 
@@ -508,8 +472,6 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 					//-----------------
 				}
 			}
-
-			return NULL;
 		}
 
 		return NULL;
@@ -551,7 +513,7 @@ uint8_t parse_event_DEL_LAST_MODEL()
 		RspMain* rsp = reinterpret_cast<RspMain*>(response_buffer + 2);
 
 		// Первый байт - ноль для проверки
-		if (rsp->zero_byte != 0)
+		if (rsp->zero_byte)
 			return 17;
 
 		// второй байт - 0/1 (СТАРТ / соревнование идет)
@@ -567,21 +529,13 @@ uint8_t parse_event_DEL_LAST_MODEL()
 	return 19;
 }
 
-uint8_t parse_event(EVENT_ID eventID)
+uint8_t parse_event(EVENT_ID eventID) //парсинг пакета с сервера
 {
-	//инициализация переменных для каждого события
-
-	//парсинг пакета с сервера
-
 	switch (eventID) {
-		case EVENT_ID::IN_HANGAR:          //запрос из ангара       
-			return parse_event_IN_HANGAR();
-		case EVENT_ID::IN_BATTLE_GET_FULL: // при входе в бой
-			return parse_event_IN_BATTLE_GET_FULL();
-		case EVENT_ID::IN_BATTLE_GET_SYNC: // синхронизация
-			return parse_event_IN_BATTLE_GET_SYNC();
-		case EVENT_ID::DEL_LAST_MODEL:     // удаление ближайшей модели
-			return parse_event_DEL_LAST_MODEL();
+		case EVENT_ID::IN_HANGAR:          return parse_event_IN_HANGAR();          //запрос из ангара       
+		case EVENT_ID::IN_BATTLE_GET_FULL: return parse_event_IN_BATTLE_GET_FULL(); // при входе в бой
+		case EVENT_ID::IN_BATTLE_GET_SYNC: return parse_event_IN_BATTLE_GET_SYNC(); // синхронизация
+		case EVENT_ID::DEL_LAST_MODEL:     return parse_event_DEL_LAST_MODEL();     // удаление ближайшей модели
 	}
 
 	return 21;
