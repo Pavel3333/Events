@@ -397,7 +397,7 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 				if      (modelSectionID == 0 && response_buffer[offset] == 0) sect = &(sync_map.modelsSects_creating);
 				else if (modelSectionID == 1 && response_buffer[offset] == 1) sect = &(sync_map.modelsSects_deleting);
 				else {
-					extendedDebugLogEx(ERROR, "Found unexpected section while synchronizing!response_buffer");
+					extendedDebugLogEx(ERROR, "Found unexpected section while synchronizing!");
 
 					break;
 				}
