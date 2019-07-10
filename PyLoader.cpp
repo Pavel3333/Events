@@ -129,9 +129,9 @@ PyObject* PyLoader::initCfg(PyObject *self, PyObject *args) { traceLog
 		return PyInt_FromSize_t(2);
 	} traceLog
 
-	PyObject* template_ = NULL;
-	PyObject* apply     = NULL;
-	PyObject* byteify   = NULL;
+	PyObject* template_ = nullptr;
+	PyObject* apply     = nullptr;
+	PyObject* byteify   = nullptr;
 
 	if (!PyArg_ParseTuple(args, "OOO", &template_, &apply, &byteify)) { traceLog
 		return PyInt_FromSize_t(2);
@@ -156,13 +156,13 @@ PyObject* PyLoader::keyHandler(PyObject *self, PyObject *args) { //traceLog
 		Py_RETURN_NONE;
 	} //traceLog
 
-	PyObject* event_ = PyTuple_GET_ITEM(args, NULL);
-	PyObject* isKeyGetted = NULL;
+	PyObject* event_      = PyTuple_GET_ITEM(args, 0);
+	PyObject* isKeyGetted = nullptr;
 
 	if (PyConfig::m_g_gui) { //traceLog
 		PyObject* __get_key = PyString_FromString("get_key");
 		
-		PyObject* isKeyGetted_tmp = PyObject_CallMethodObjArgs(PyConfig::m_g_gui, __get_key, keyDelLastModel, NULL);
+		PyObject* isKeyGetted_tmp = PyObject_CallMethodObjArgs(PyConfig::m_g_gui, __get_key, keyDelLastModel, nullptr);
 
 		Py_DECREF(__get_key);
 
@@ -177,7 +177,7 @@ PyObject* PyLoader::keyHandler(PyObject *self, PyObject *args) { //traceLog
 
 		PyObject* ____contains__ = PyString_FromString("__contains__");
 
-		auto isKeyGetted_tmp = PyObject_CallMethodObjArgs(keyDelLastModel, ____contains__, key, NULL);
+		auto isKeyGetted_tmp = PyObject_CallMethodObjArgs(keyDelLastModel, ____contains__, key, nullptr);
 
 		Py_DECREF(____contains__);
 
@@ -208,7 +208,7 @@ struct PyMethodDef PyLoader::event_methods[] =
 	{ "g",             PyLoader::initCfg,              METH_VARARGS, ":P" },
 	{ "event_handler", PyLoader::keyHandler,           METH_VARARGS, ":P" }, //keyHandler
 	{ "omc",           event_onModelCreated,           METH_VARARGS, ":P" }, //onModelCreated
-	{ NULL, NULL, 0, NULL }
+	{ NULL, NULL, NULL, NULL }
 };
 
 //точка входа в библиотеку
@@ -256,8 +256,8 @@ PyMODINIT_FUNC initevent(void)
 	if (hHandlerThread) { traceLog
 		WaitForSingleObject(hHandlerThread, INFINITE);
 
-		hHandlerThread = NULL;
-		handlerThreadID = NULL;
+		hHandlerThread  = nullptr;
+		handlerThreadID = 0;
 	} traceLog
 
 	//создаем второй поток

@@ -65,9 +65,9 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 	switch (current_map.stageID) {
 	case STAGE_ID::END_BY_TIME: traceLog
 	case STAGE_ID::END_BY_COUNT: traceLog
-		current_map.time_preparing = NULL;
+		current_map.time_preparing = 0;
 
-		GUI::setTime(NULL);
+		GUI::setTime(0);
 
 		if (current_map.stageID == STAGE_ID::END_BY_COUNT) { traceLog
 			GUI::setTimerVisible(false);
@@ -207,7 +207,7 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 				} traceLog
 			} traceLog
 
-			return NULL;
+			return 0;
 		}
 	}
 
@@ -293,10 +293,10 @@ uint8_t handleBattleEvent(PyThreadState *_save)
 		g_models_mutex.unlock();
 	}
 	else { traceLog
-		return NULL;
+		return 0;
 	} traceLog
 
-	return NULL;
+	return 0;
 }
 
 uint8_t handleStartTimerEvent(PyThreadState* _save)
@@ -325,17 +325,17 @@ uint8_t handleStartTimerEvent(PyThreadState* _save)
 
 	//инициализация таймера для получения полного списка моделей и синхронизации
 
-	hBattleTimer = CreateWaitableTimer(
+	hBattleTimer = CreateWaitableTimerA(
 		NULL,                   // Default security attributes
 		FALSE,                  // Create auto-reset timer
-		TEXT("NY_Event_BattleTimer"));   // Name of waitable timer
+		"NY_Event_BattleTimer");   // Name of waitable timer
 
 	if (hBattleTimer) { traceLog
 		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
 
 		// Copy the relative time into a LARGE_INTEGER.
-		liDueTime.LowPart = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
-		liDueTime.HighPart = (LONG)NULL;//(qwDueTime >> 32);
+		liDueTime.LowPart  = (DWORD)0; //(DWORD)(qwDueTime & 0xFFFFFFFF);
+		liDueTime.HighPart = (LONG)0;  //(qwDueTime >> 32);
 
 		bSuccess = SetWaitableTimer(
 			hBattleTimer,           // Handle to the timer object
@@ -399,7 +399,7 @@ uint8_t handleStartTimerEvent(PyThreadState* _save)
 
 		CloseHandle(hBattleTimer);
 		
-		hBattleTimer = NULL;
+		hBattleTimer = nullptr;
 	}
 	else extendedDebugLogEx(ERROR, "handleStartTimerEvent: CreateWaitableTimer: error %d", GetLastError());
 
@@ -425,17 +425,17 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 	//рабочая часть
 
-	hHangarTimer = CreateWaitableTimer(
+	hHangarTimer = CreateWaitableTimerA(
 		NULL,                   // Default security attributes
 		FALSE,                  // Create auto-reset timer
-		TEXT("NY_Event_HangarTimer"));   // Name of waitable timer
+		"NY_Event_HangarTimer");   // Name of waitable timer
 
 	if (hHangarTimer) { traceLog
 		qwDueTime = 0; // задержка перед созданием таймера - 0 секунд
 
 		// Copy the relative time into a LARGE_INTEGER.
-		liDueTime.LowPart  = (DWORD)NULL;//(DWORD)(qwDueTime & 0xFFFFFFFF);
-		liDueTime.HighPart = (LONG)NULL; //(qwDueTime >> 32);
+		liDueTime.LowPart  = (DWORD)0; //(DWORD)(qwDueTime & 0xFFFFFFFF);
+		liDueTime.HighPart = (LONG)0;  //(qwDueTime >> 32);
 
 		bSuccess = SetWaitableTimer(
 			hHangarTimer,     // Handle to the timer object
@@ -500,7 +500,7 @@ uint8_t handleInHangarEvent(PyThreadState* _save) {
 
 		CloseHandle(hHangarTimer);
 
-		hHangarTimer = NULL;
+		hHangarTimer = nullptr;
 	}
 	else extendedDebugLogEx(ERROR, "handleInHangarEvent: CreateWaitableTimer: error %d", GetLastError());
 
@@ -545,8 +545,8 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 
 			Py_XDECREF((*it_model)->model);
 
-			(*it_model)->model = NULL;
-			(*it_model)->coords = nullptr;
+			(*it_model)->model     = nullptr;
+			(*it_model)->coords    = nullptr;
 			(*it_model)->processed = false;
 
 			delete *it_model;
@@ -574,7 +574,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 
 				Py_XDECREF((*it_light)->model);
 
-				(*it_light)->model = NULL;
+				(*it_light)->model  = nullptr;
 				(*it_light)->coords = nullptr;
 
 				delete *it_light;
@@ -596,7 +596,7 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 
 	isModelsAlreadyCreated = false;
 
-	current_map.minimap_count = NULL;
+	current_map.minimap_count = 0;
 
 	superExtendedDebugLog("MODELS_NOT_USING");
 	g_models_mutex.unlock();
@@ -604,17 +604,17 @@ uint8_t handleBattleEndEvent(PyThreadState* _save)
 	Py_BLOCK_THREADS;
 
 	if (isTimeVisible) { traceLog
-		GUI::setTime(NULL);
+		GUI::setTime(0);
 		GUI::setTimerVisible(false);
 
 		isTimeVisible = false;
 
-		current_map.time_preparing = NULL;
+		current_map.time_preparing = 0;
 	} traceLog
 
 	extendedDebugLog("fini OK!");
 
-	return NULL;
+	return 0;
 };
 
 uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
@@ -741,7 +741,7 @@ uint8_t handleDelModelEvent(PyThreadState* _save) { traceLog
 
 	Py_UNBLOCK_THREADS;
 
-	return NULL;
+	return 0;
 }
 
 //заставить событие сигнализировать
@@ -798,5 +798,6 @@ uint8_t makeEventInThread(EVENT_ID eventID) { traceLog //переводим ив
 		default: traceLog
 			return 8;
 	}
-	return NULL;
+
+	return 0;
 }

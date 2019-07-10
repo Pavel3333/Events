@@ -48,7 +48,7 @@ void curl_fini()
 //writing response from server into array ptr and return size of response
 static size_t write_data(char *ptr, size_t size, size_t nmemb, char* data)
 {
-	if (data == NULL || response_size + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
+	if (data == nullptr || response_size + size * nmemb > NET_BUFFER_SIZE) return 0; // Error if out of buffer
 
 	memcpy(&data[response_size], ptr, size*nmemb);// appending data into the end
 	response_size += size * nmemb;  // changing position
@@ -61,7 +61,7 @@ static uint8_t send_to_server(std::string_view request)
 		return 1;
 	}
 
-	memset(response_buffer, NULL, NET_BUFFER_SIZE);
+	memset(response_buffer, 0, NET_BUFFER_SIZE);
 	response_size = 0;
 
 	// Build an HTTP form with a single field named "request"
@@ -197,23 +197,19 @@ uint8_t parse_event_IN_HANGAR()
 uint8_t parse_event_IN_BATTLE_GET_FULL()
 {
 	uint16_t* length = nullptr;
-	uint32_t  offset = NULL;
+	uint32_t  offset = 0;
 
 	uint8_t error_code;
 
 	uint8_t sections_count;
-	uint8_t model_type = NULL;
-	uint16_t models_count_sect = NULL;
+	uint8_t model_type         = 0;
+	uint16_t models_count_sect = 0;
 
-	if (!response_size) {
-		return 3;
-	}
+	if (!response_size) return 3;
 
 	length = reinterpret_cast<uint16_t*>(response_buffer);
 
-	if (*length != response_size) {
-		return 4;
-	}
+	if (*length != response_size) return 4;
 
 	offset += 2;
 
@@ -226,7 +222,7 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 			else if (error_code == 9) current_map.stageID = STAGE_ID::END_BY_COUNT;
 			else return response_buffer[offset];
 
-			return NULL;
+			return 0;
 		}
 
 		return response_buffer[offset];
@@ -263,7 +259,7 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 
 			offset += 2;
 
-			for (uint16_t i = NULL; i < sections_count; i++) {
+			for (uint16_t i = 0; i < sections_count; i++) {
 				model_type = response_buffer[offset];
 
 				offset++;
@@ -295,10 +291,10 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 
 				model_sect.models.resize(models_count_sect);
 
-				for (uint16_t j = NULL; j < models_count_sect; j++) {
+				for (uint16_t j = 0; j < models_count_sect; j++) {
 					float* coords = new float[3];
 
-					for (uint8_t k = NULL; k < 3; k++) {
+					for (uint8_t k = 0; k < 3; k++) {
 						memcpy(&coords[k], response_buffer + offset, 4);
 
 						offset += 4;
@@ -319,7 +315,7 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 			isModelsAlreadyCreated = true; //если парсинг пакета был удачен и это было событие полного создания моделей, то мы получили полный пакет моделей
 		}
 
-		return NULL;
+		return 0;
 	}
 
 	return 8;
@@ -329,7 +325,7 @@ uint8_t parse_event_IN_BATTLE_GET_FULL()
 uint8_t parse_event_IN_BATTLE_GET_SYNC()
 {
 	uint16_t* length = nullptr;
-	uint32_t offset = NULL;
+	uint32_t  offset = 0;
 
 	uint8_t error_code;
 
@@ -354,7 +350,7 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 			else if (error_code == 9) current_map.stageID = STAGE_ID::END_BY_COUNT;
 			else return response_buffer[offset];
 
-			return NULL;
+			return 0;
 		}
 
 		return response_buffer[offset];
@@ -393,7 +389,7 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 		offset += 6;
 
 		if (response_size > 8) { //парсинг координат
-			for (uint8_t modelSectionID = NULL; modelSectionID < 2; modelSectionID++) {
+			for (uint8_t modelSectionID = 0; modelSectionID < 2; modelSectionID++) {
 				if      (modelSectionID == 0 && response_buffer[offset] == 0) sect = &(sync_map.modelsSects_creating);
 				else if (modelSectionID == 1 && response_buffer[offset] == 1) sect = &(sync_map.modelsSects_deleting);
 				else {
@@ -415,10 +411,10 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 
 				offset += 2;
 
-				uint8_t model_type = NULL;
-				uint16_t models_count_sect = NULL;
+				uint8_t  model_type        = 0;
+				uint16_t models_count_sect = 0;
 
-				for (uint16_t i = NULL; i < sections_count; i++) {
+				for (uint16_t i = 0; i < sections_count; i++) {
 					model_type = response_buffer[offset];
 
 					offset++;
@@ -474,7 +470,7 @@ uint8_t parse_event_IN_BATTLE_GET_SYNC()
 			}
 		}
 
-		return NULL;
+		return 0;
 	}
 
 	return 14;

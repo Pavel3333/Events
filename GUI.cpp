@@ -31,7 +31,7 @@ MyErr GUI::init()
 
 	debugLog("Mod_GUI class loading...");
 
-	modGUI = PyObject_CallMethod(mGUI_module, "Mod_GUI", NULL);
+	modGUI = PyObject_CallMethod(mGUI_module, "Mod_GUI", nullptr);
 
 	Py_DECREF(mGUI_module);
 
@@ -170,7 +170,7 @@ MyErr GUI::setText(char* msg, float time_f) {
 
 		delLabelCBID_p = getAttr("delLabelCBID");
 
-		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = NULL;
+		if (!delLabelCBID_p || delLabelCBID_p == Py_None) delLabelCBID = 0;
 		else delLabelCBID = PyInt_AsLong(delLabelCBID_p);
 	}
 

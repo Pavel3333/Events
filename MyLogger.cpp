@@ -14,7 +14,7 @@ static size_t getTime(char* buf, const char* fmt, uint16_t size) {
 }
 
 static size_t format(char* buf, const char* fmt, va_list args, bool timed) {
-	size_t len = NULL;
+	size_t len = 0;
 
 	if (timed) {
 		len = getTime(buf, "%H:%M:%S: ", MAX_DBG_LINE_SIZE);

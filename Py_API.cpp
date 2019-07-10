@@ -7,13 +7,13 @@
 INIT_LOCAL_MSG_BUFFER;
 
 
-uint16_t allModelsCreated = NULL;
+uint16_t allModelsCreated = 0;
 
 uint8_t  first_check = 100;
 uint32_t request     = 100;
 
-uint8_t  mapID      = NULL;
-uint32_t databaseID = NULL;
+uint8_t  mapID      = 0;
+uint32_t databaseID = 0;
 
 bool isInited = false;
 
@@ -49,8 +49,8 @@ void clearModelsSections() { traceLog
 					continue;
 				}
 
-				for (uint8_t counter = NULL; counter < 3; counter++) {
-					(*it_model)[counter] = NULL;
+				for (uint8_t counter = 0; counter < 3; counter++) {
+					(*it_model)[counter] = 0.0f;
 				}
 
 				delete[] * it_model;
@@ -128,7 +128,7 @@ MyErr delModelPy(float* coords) { traceLog
 
 			Py_XDECREF((*it_model)->model);
 
-			(*it_model)->model = NULL;
+			(*it_model)->model  = nullptr;
 			(*it_model)->coords = nullptr;
 			(*it_model)->processed = false;
 
@@ -159,7 +159,7 @@ MyErr delModelPy(float* coords) { traceLog
 
 			/*PyObject* __delModel = PyString_FromString("delModel");
 
-			PyObject_CallMethodObjArgs_increfed(result, BW_Native->m_BigWorld, __delModel, (*it_model)->model, NULL);
+			PyObject_CallMethodObjArgs_increfed(result, BW_Native->m_BigWorld, __delModel, (*it_model)->model, nullptr);
 
 			Py_DECREF(__delModel);
 
@@ -168,7 +168,7 @@ MyErr delModelPy(float* coords) { traceLog
 
 				Py_XDECREF((*it_model)->model);
 
-				(*it_model)->model = NULL;
+				(*it_model)->model  = nullptr;
 				(*it_model)->coords = nullptr;
 				(*it_model)->processed = false;
 
@@ -177,7 +177,7 @@ MyErr delModelPy(float* coords) { traceLog
 
 				it_model = models.erase(it_model);
 
-				return NULL;
+				return_ok;
 			}*/
 		}
 
@@ -218,8 +218,8 @@ uint8_t delModelCoords(MODEL_ID ID, float* coords)
 						(*it_model)[1] == coords[1] &&
 						(*it_model)[2] == coords[2]
 						) { traceLog
-						for (uint8_t counter = NULL; counter < 3; counter++) {
-							(*it_model)[counter] = NULL;
+						for (uint8_t counter = 0; counter < 3; counter++) {
+							(*it_model)[counter] = 0.0f;
 						}
 
 						delete[] *it_model;
@@ -227,7 +227,7 @@ uint8_t delModelCoords(MODEL_ID ID, float* coords)
 
 						it_model = it_sect->models.erase(it_model);
 
-						return NULL;
+						return 0;
 					}
 
 					it_model++;
@@ -248,7 +248,7 @@ uint8_t delModelCoords(MODEL_ID ID, float* coords)
 
 PyObject* event_light(float coords[3]) {
 	if (!isInited || battleEnded) { traceLog
-		return NULL;
+		return nullptr;
 	}
 
 	superExtendedDebugLog("light creating...");
@@ -256,7 +256,7 @@ PyObject* event_light(float coords[3]) {
 	PyObject* Light = PyObject_CallMethod(BigWorldUtils::m_BigWorld, "PyOmniLight", nullptr);
 	if (!Light) { traceLog
 		superExtendedDebugLog("PyOmniLight creating FAILED");
-		return NULL;
+		return nullptr;
 	}
 
 	//---------inner radius---------
@@ -269,7 +269,7 @@ PyObject* event_light(float coords[3]) {
 		Py_DECREF(innerRadius);
 		Py_DECREF(Light);
 
-		return NULL;
+		return nullptr;
 	}
 
 	//---------outer radius---------
@@ -282,7 +282,7 @@ PyObject* event_light(float coords[3]) {
 		Py_DECREF(outerRadius);
 		Py_DECREF(Light);
 
-		return NULL;
+		return nullptr;
 	}
 
 	//----------multiplier----------
@@ -295,7 +295,7 @@ PyObject* event_light(float coords[3]) {
 		Py_DECREF(multiplier);
 		Py_DECREF(Light);
 
-		return NULL;
+		return nullptr;
 	}
 
 	//-----------position-----------
@@ -307,10 +307,10 @@ PyObject* event_light(float coords[3]) {
 
 		Py_DECREF(Light);
 
-		return NULL;
+		return nullptr;
 	}
 
-	for (uint8_t i = NULL; i < 3; i++) {
+	for (uint8_t i = 0; i < 3; i++) {
 		if (i == 1) {
 			PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords[i] + 0.5));
 		}
@@ -325,7 +325,7 @@ PyObject* event_light(float coords[3]) {
 		Py_DECREF(coords_p);
 		Py_DECREF(Light);
 
-		return NULL;
+		return nullptr;
 	}
 
 	//------------colour------------
@@ -337,7 +337,7 @@ PyObject* event_light(float coords[3]) {
 
 		Py_DECREF(Light);
 
-		return NULL;
+		return nullptr;
 	}
 
 	double* colour = new double[5];
@@ -347,7 +347,7 @@ PyObject* event_light(float coords[3]) {
 	colour[2] = 255.0;
 	colour[3] = 0.0;
 
-	for (uint8_t i = NULL; i < 4; i++) PyTuple_SET_ITEM(colour_p, i, PyFloat_FromDouble(colour[i]));
+	for (uint8_t i = 0; i < 4; i++) PyTuple_SET_ITEM(colour_p, i, PyFloat_FromDouble(colour[i]));
 
 	delete[] colour;
 
@@ -359,7 +359,7 @@ PyObject* event_light(float coords[3]) {
 		Py_DECREF(colour_p);
 		Py_DECREF(Light);
 
-		return NULL;
+		return nullptr;
 	}
 
 	superExtendedDebugLog("light creating OK!");
@@ -371,7 +371,7 @@ bool setModelPosition(PyObject* Model, const float coords_f[3])
 {
 	PyObject* coords_p = PyTuple_New(3);
 
-	for (uint8_t i = NULL; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords_f[i]));
+	for (uint8_t i = 0; i < 3; i++) PyTuple_SET_ITEM(coords_p, i, PyFloat_FromDouble(coords_f[i]));
 
 	if (PyObject_SetAttrString(Model, "position", coords_p)) { traceLog
 		Py_DECREF(coords_p);
@@ -386,9 +386,9 @@ bool setModelPosition(PyObject* Model, const float coords_f[3])
 PyObject* event_model(char* path, float coords[3], bool isAsync)
 {
 	if (!isInited || battleEnded) { traceLog
-		if (isAsync && allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+		if (isAsync && allModelsCreated > 0) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
-		return NULL;
+		return nullptr;
 	}
 
 	superExtendedDebugLog("model creating...");
@@ -397,37 +397,37 @@ PyObject* event_model(char* path, float coords[3], bool isAsync)
 		if (coords == nullptr) { traceLog
 			extendedDebugLogEx(WARNING, "event_model - coords is NULL!");
 
-			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+			if (allModelsCreated > 0) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
-			return NULL;
+			return nullptr;
 		}
 
 		PyObject* coords_p = PyLong_FromVoidPtr((void*)coords); //передаем указатель на 3 координаты
 
-		PyObject_CallFunctionObjArgs_increfed(partialized, BigWorldUtils::m_partial, PyLoader::onModelCreatedPyMeth, coords_p, NULL);
+		PyObject_CallFunctionObjArgs_increfed(partialized, BigWorldUtils::m_partial, PyLoader::onModelCreatedPyMeth, coords_p, nullptr);
 
 		if (!partialized) { traceLog
-			if (allModelsCreated > NULL) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
+			if (allModelsCreated > 0) allModelsCreated--; //создать модель невозможно, убавляем счетчик числа моделей, которые должны быть созданы
 
-			return NULL;
+			return nullptr;
 		}
 
-		PyObject_CallFunctionObjArgs_increfed(Model, BigWorldUtils::m_fetchModel, PyString_FromString(path), partialized, NULL); //запускаем асинхронное добавление модели
+		PyObject_CallFunctionObjArgs_increfed(Model, BigWorldUtils::m_fetchModel, PyString_FromString(path), partialized, nullptr); //запускаем асинхронное добавление модели
 
 		Py_XDECREF(Model);
 
-		return NULL;
+		return nullptr;
 	}
 
-	PyObject_CallFunctionObjArgs_increfed(Model, BigWorldUtils::m_Model, PyString_FromString(path), NULL);
+	PyObject_CallFunctionObjArgs_increfed(Model, BigWorldUtils::m_Model, PyString_FromString(path), nullptr);
 
 	if (!Model) { traceLog
-		return NULL;
+		return nullptr;
 	}
 
 	if (coords != nullptr) { traceLog
 		if (!setModelPosition(Model, coords)) { traceLog //ставим на нужную позицию
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -452,8 +452,8 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //пр
 
 	//рабочая часть
 
-	PyObject* coords_pointer = NULL;
-	PyObject* Model = NULL;
+	PyObject* coords_pointer = nullptr;
+	PyObject* Model          = nullptr;
 
 	if (!PyArg_ParseTuple(args, "OO", &coords_pointer, &Model)) { traceLog
 		Py_RETURN_NONE;
@@ -509,7 +509,7 @@ PyObject* event_onModelCreated(PyObject *self, PyObject *args) { traceLog //пр
 			Py_RETURN_NONE;
 		} traceLog
 
-		allModelsCreated = NULL;
+		allModelsCreated = 0;
 	} traceLog
 
 	Py_RETURN_NONE;
@@ -571,7 +571,7 @@ uint8_t create_models() { traceLog
 	superExtendedDebugLog("MODELS_NOT_USING");
 	g_models_mutex.unlock();
 
-	return NULL;
+	return 0;
 }
 
 uint8_t init_models()
@@ -585,7 +585,7 @@ uint8_t init_models()
 
 	extendedDebugLog("models adding...");
 
-	for (uint16_t i = NULL; i < models.size(); i++) {
+	for (uint16_t i = 0; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
 			extendedDebugLogEx(WARNING, "init_models - models[i] is NULL!");
 
@@ -595,7 +595,7 @@ uint8_t init_models()
 		if (models[i]->model == Py_None || !models[i]->model || models[i]->processed) { traceLog
 			Py_XDECREF(models[i]->model);
 
-			models[i]->model = NULL;
+			models[i]->model  = nullptr;
 			models[i]->coords = nullptr;
 			models[i]->processed = false;
 
@@ -605,7 +605,7 @@ uint8_t init_models()
 			continue;
 		}
 
-		PyObject_CallFunctionObjArgs_increfed(result, BigWorldUtils::m_addModel, models[i]->model, NULL);
+		PyObject_CallFunctionObjArgs_increfed(result, BigWorldUtils::m_addModel, models[i]->model, nullptr);
 
 		if (result) {
 			Py_DECREF(result);
@@ -619,7 +619,7 @@ uint8_t init_models()
 
 	extendedDebugLog("models adding OK!");
 
-	return NULL;
+	return 0;
 }
 
 uint8_t set_visible(bool isVisible) {
@@ -634,7 +634,7 @@ uint8_t set_visible(bool isVisible) {
 
 	extendedDebugLog("Models visiblity changing...");
 
-	for (uint16_t i = NULL; i < models.size(); i++) {
+	for (uint16_t i = 0; i < models.size(); i++) {
 		if (models[i] == nullptr) { traceLog
 			extendedDebugLogEx(WARNING, "set_visible - models[i] is NULL!");
 
@@ -644,7 +644,7 @@ uint8_t set_visible(bool isVisible) {
 		if (!models[i]->model || models[i]->model == Py_None || !models[i]->processed) { traceLog
 			Py_XDECREF(models[i]->model);
 
-			models[i]->model = NULL;
+			models[i]->model  = nullptr;
 			models[i]->coords = nullptr;
 			models[i]->processed = false;
 
@@ -665,7 +665,7 @@ uint8_t set_visible(bool isVisible) {
 
 	extendedDebugLog("Models visiblity changing OK!");
 
-	return NULL;
+	return 0;
 };
 
 uint8_t del_models()
@@ -693,7 +693,7 @@ uint8_t del_models()
 
 			Py_XDECREF((*it_model)->model);
 
-			(*it_model)->model = NULL;
+			(*it_model)->model  = nullptr;
 			(*it_model)->coords = nullptr;
 			(*it_model)->processed = false;
 
@@ -705,14 +705,14 @@ uint8_t del_models()
 			continue;
 		}
 
-		PyObject_CallFunctionObjArgs_increfed(result, BigWorldUtils::m_delModel, (*it_model)->model, NULL);
+		PyObject_CallFunctionObjArgs_increfed(result, BigWorldUtils::m_delModel, (*it_model)->model, nullptr);
 
 		if (result) {
 			Py_DECREF(result);
 
 			Py_XDECREF((*it_model)->model);
 
-			(*it_model)->model = NULL;
+			(*it_model)->model  = nullptr;
 			(*it_model)->coords = nullptr;
 			(*it_model)->processed = false;
 
@@ -743,7 +743,7 @@ uint8_t del_models()
 
 			Py_XDECREF((*it_light)->model);
 
-			(*it_light)->model = NULL;
+			(*it_light)->model  = nullptr;
 			(*it_light)->coords = nullptr;
 
 			delete *it_light;
@@ -759,7 +759,7 @@ uint8_t del_models()
 
 	extendedDebugLog("models deleting OK!");
 
-	return NULL;
+	return 0;
 };
 
 VOID CALLBACK TimerAPCProc(

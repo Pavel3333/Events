@@ -121,7 +121,7 @@ MyErr HangarMessages::showCheckMessage_p(PyObject* GameGreeting)
 	if (!text)
 		return_err 7;
 
-	PyObject_CallFunctionObjArgs_increfed(res, m_pushMessage, text, GameGreeting, NULL);
+	PyObject_CallFunctionObjArgs_increfed(res, m_pushMessage, text, GameGreeting, nullptr);
 
 	Py_DECREF(text);
 
@@ -145,7 +145,7 @@ MyErr HangarMessages::showYoutubeMessage_p(PyObject* GameGreeting)
 
 	if (!youtubeText) return_err 10;
 
-	PyObject_CallFunctionObjArgs_increfed(res, m_pushMessage, youtubeText, GameGreeting, NULL);
+	PyObject_CallFunctionObjArgs_increfed(res, m_pushMessage, youtubeText, GameGreeting, nullptr);
 
 	Py_DECREF(youtubeText);
 	Py_XDECREF(res);

@@ -71,7 +71,7 @@ DWORD timerThread() {
 
 	//------------------------------
 
-	return NULL;
+	return 0;
 }
 
 DWORD handlerThread() {
@@ -134,7 +134,7 @@ DWORD handlerThread() {
 		CancelWaitableTimer(hHangarTimer);
 		CloseHandle(hHangarTimer);
 
-		hHangarTimer = NULL;
+		hHangarTimer = nullptr;
 	} traceLog
 
 	//вывод сообщения в центр уведомлений
@@ -144,8 +144,8 @@ DWORD handlerThread() {
 	if (hBattleTimerThread) { traceLog
 		WaitForSingleObject(hBattleTimerThread, INFINITE);
 		
-		hBattleTimerThread  = NULL;
-		battleTimerThreadID = NULL;
+		hBattleTimerThread  = nullptr;
+		battleTimerThreadID = 0;
 	} traceLog
 
 	hBattleTimerThread = CreateThread(
@@ -169,7 +169,7 @@ DWORD handlerThread() {
 
 	PyObject* delLabelCBID_p;
 
-	uint8_t lastEventError = NULL;
+	uint8_t lastEventError = 0;
 
 	while (!first_check && !battleEnded && !lastEventError) { traceLog
 		superExtendedDebugLog("waiting EVENTS");
@@ -229,12 +229,12 @@ DWORD handlerThread() {
 
 				GUI::delLabelCBID = 0;
 
-			allModelsCreated = NULL;
+			allModelsCreated = 0;
 
 			GUI::setVisible(false);
 			GUI::clearText();
 
-			mapID   = NULL;
+			mapID   = 0;
 
 end_EVENT_BATTLE_ENDED:
 			Py_UNBLOCK_THREADS;
@@ -255,8 +255,8 @@ end_EVENT_BATTLE_ENDED:
 	if (hBattleTimerThread) { traceLog
 		WaitForSingleObject(hBattleTimerThread, INFINITE);
 		
-		hBattleTimerThread  = NULL;
-		battleTimerThreadID = NULL;
+		hBattleTimerThread  = nullptr;
+		battleTimerThreadID = 0;
 	}
 
 	//освобождаем ивенты
@@ -274,7 +274,7 @@ end_EVENT_BATTLE_ENDED:
 
 	PyGILState_Release(gstate);
 
-	return NULL;
+	return 0;
 }
 
 //threads
@@ -286,8 +286,8 @@ DWORD WINAPI TimerThread(LPVOID lpParam) {
 
 	DWORD result = timerThread();
 
-	hBattleTimerThread  = NULL;
-	battleTimerThreadID = NULL;
+	hBattleTimerThread  = nullptr;
+	battleTimerThreadID = 0;
 
 	//закрываем поток
 
@@ -301,7 +301,7 @@ DWORD WINAPI HandlerThread(LPVOID lpParam) {
 
 	INIT_LOCAL_MSG_BUFFER;
 
-	DWORD result = NULL;
+	DWORD result = 0;
 
 	while (!result) {
 		if (!createEventsAndMutexes()) { traceLog
@@ -319,8 +319,8 @@ DWORD WINAPI HandlerThread(LPVOID lpParam) {
 		}
 	}
 
-	hHandlerThread  = NULL;
-	handlerThreadID = NULL;
+	hHandlerThread  = nullptr;
+	handlerThreadID = 0;
 
 	//закрываем поток
 
@@ -368,7 +368,7 @@ uint8_t event_start() {
 		return 4;
 	} traceLog
 
-	return NULL;
+	return 0;
 }
 
 uint8_t event_check() { traceLog
@@ -388,7 +388,7 @@ uint8_t event_check() { traceLog
 
 	debugLog("DBID created");
 
-	mapID = NULL;
+	mapID = 0;
 
 	battleEnded = false;
 
@@ -396,10 +396,9 @@ uint8_t event_check() { traceLog
 
 	if (request) { traceLog
 		return 3;
-	}
-	else {
-		return NULL;
 	} traceLog
+
+	return 0;
 }
 
 uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { traceLog
@@ -431,5 +430,5 @@ uint8_t event_init(PyObject* template_, PyObject* apply, PyObject* byteify) { tr
 		} traceLog
 	} traceLog
 
-	return NULL;
+	return 0;
 }

@@ -5,33 +5,33 @@
 
 //WaitableTimer
 
-HANDLE hHangarTimer = NULL;
-HANDLE hBattleTimer = NULL;
+HANDLE hHangarTimer = nullptr;
+HANDLE hBattleTimer = nullptr;
 
 //Потоки и их ID
 
-HANDLE hBattleTimerThread  = NULL;
-DWORD  battleTimerThreadID = NULL;
+HANDLE hBattleTimerThread  = nullptr;
+DWORD  battleTimerThreadID = 0;
 
-HANDLE hHandlerThread  = NULL;
-DWORD  handlerThreadID = NULL;
+HANDLE hHandlerThread  = nullptr;
+DWORD  handlerThreadID = 0;
 
 //последние коды ошибок таймеров
 
-uint8_t hangarTimerLastError = NULL;
-uint8_t battleTimerLastError = NULL;
+uint8_t hangarTimerLastError = 0;
+uint8_t battleTimerLastError = 0;
 
 //Главные ивенты
 
-PEVENTDATA_1 EVENT_IN_HANGAR   = NULL;
-PEVENTDATA_1 EVENT_START_TIMER = NULL;
-PEVENTDATA_1 EVENT_DEL_MODEL   = NULL;
+PEVENTDATA_1 EVENT_IN_HANGAR   = nullptr;
+PEVENTDATA_1 EVENT_START_TIMER = nullptr;
+PEVENTDATA_1 EVENT_DEL_MODEL   = nullptr;
 
 //Второстепенные ивенты
 
-PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = NULL;
+PEVENTDATA_2 EVENT_ALL_MODELS_CREATED = nullptr;
 
-PEVENTDATA_2 EVENT_BATTLE_ENDED = NULL;
+PEVENTDATA_2 EVENT_BATTLE_ENDED = nullptr;
 
 //Мутексы
 
@@ -51,12 +51,12 @@ void closeEvent(PEVENTDATA_1* pEvent) {
 			traceLog
 			CloseHandle((*pEvent)->hEvent);
 
-			(*pEvent)->hEvent = NULL;
+			(*pEvent)->hEvent = nullptr;
 		} traceLog
 
 		HeapFree(GetProcessHeap(), NULL, *pEvent);
 
-		*pEvent = NULL;
+		*pEvent = nullptr;
 	} traceLog
 }
 
@@ -68,12 +68,12 @@ void closeEvent(PEVENTDATA_2* pEvent) {
 			traceLog
 			CloseHandle((*pEvent)->hEvent);
 
-			(*pEvent)->hEvent = NULL;
+			(*pEvent)->hEvent = nullptr;
 		} traceLog
 
 		HeapFree(GetProcessHeap(), NULL, *pEvent);
 
-		*pEvent = NULL;
+		*pEvent = nullptr;
 	} traceLog
 }
 
@@ -171,7 +171,7 @@ uint32_t parse_event_threadsafe(EVENT_ID eventID)
 
 
 uint32_t send_token_threadsafe(uint32_t id, uint8_t map_id, EVENT_ID eventID, MODEL_ID modelID, float* coords_del) {
-	uint32_t result = NULL;
+	uint32_t result = 0;
 
 	EnterCriticalSection(&CS_NETWORK_NOT_USING);
 

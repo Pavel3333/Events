@@ -98,7 +98,7 @@ INIT_LOCAL_MSG_BUFFER;
 PyObject* PyConfig::getMessagesList() {
 	PyObject* messagesList = PyList_New(MESSAGES_COUNT);
 
-	for (uint8_t i = NULL; i < MESSAGES_COUNT; i++) {
+	for (uint8_t i = 0; i < MESSAGES_COUNT; i++) {
 		PyList_SET_ITEM(messagesList, i, PyString_FromString(MESSAGES[i]));
 	}
 
@@ -120,7 +120,7 @@ MyErr PyConfig::init()
 
 	//загрузка конфига мода
 
-	g_config = PyObject_CallObject((PyObject*)(&Config_p), NULL);
+	g_config = PyObject_CallObject((PyObject*)(&Config_p), nullptr);
 
 	////Py_DECREF(&Config_p);
 
@@ -154,9 +154,9 @@ MyErr PyConfig::init()
 	}
 
 	if (!m_g_gui) {
-		CreateDirectoryA("mods/configs", NULL);
-		CreateDirectoryA("mods/configs/pavel3333", NULL);
-		CreateDirectoryA("mods/configs/pavel3333/" MOD_NAME, NULL);
+		CreateDirectoryA("mods/configs",                             NULL);
+		CreateDirectoryA("mods/configs/pavel3333",                   NULL);
+		CreateDirectoryA("mods/configs/pavel3333/" MOD_NAME,         NULL);
 		CreateDirectoryA("mods/configs/pavel3333/" MOD_NAME "/i18n", NULL);
 
 		if (!read_data(true) || !read_data(false)) { traceLog
@@ -212,7 +212,7 @@ PyObject* PyConfig::init_data() {
 		Py_DECREF(data_version);
 		Py_DECREF(data_py);
 	end_init_data_1:
-		return NULL;
+		return nullptr;
 	}
 
 	return data_py;
@@ -228,7 +228,7 @@ PyObject* PyConfig::init_i18n() {
 
 	PyObject* UI_description = PyString_FromString(MOD_NAME " Mod");
 
-	PyObject* empty_tooltip  = PyString_FromStringAndSize("", NULL);
+	PyObject* empty_tooltip = PyString_FromStringAndSize("", 0);
 
 	PyObject* UI_message_thx     = PyString_FromString(MOD_NAME ": Successfully loaded.");
 	PyObject* UI_message_thx_2   = PyString_FromString("Official site");
@@ -262,7 +262,7 @@ PyObject* PyConfig::init_i18n() {
 		Py_DECREF(i18n_version);
 		Py_DECREF(i18n_py);
 	end_init_i18n_1: traceLog
-		return NULL;
+		return nullptr;
 	} traceLog
 
 	return i18n_py;
@@ -418,7 +418,7 @@ PyObject* PyConfig::Config_new(PyTypeObject* type, PyObject* args, PyObject* kwd
 		end_Config_new_1: traceLog
 			Py_DECREF(g_self);
 
-			return NULL;
+			return nullptr;
 		}
 	}
 

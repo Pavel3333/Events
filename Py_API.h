@@ -7,15 +7,15 @@
 
 
 struct ModModel {
-	bool processed = false;
-	PyObject* model = NULL;
-	float* coords = nullptr;
+	bool processed  = false;
+	PyObject* model = nullptr;
+	float* coords   = nullptr;
 };
 
 
 struct ModLight {
-	PyObject* model = NULL;
-	float* coords = nullptr;
+	PyObject* model = nullptr;
+	float* coords   = nullptr;
 };
 
 extern uint16_t allModelsCreated;
