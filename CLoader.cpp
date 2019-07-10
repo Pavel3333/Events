@@ -261,12 +261,12 @@ end_EVENT_BATTLE_ENDED:
 
 	//освобождаем ивенты
 
-	closeEvent1(&EVENT_START_TIMER);
-	closeEvent1(&EVENT_IN_HANGAR);
-	closeEvent1(&EVENT_DEL_MODEL);
+	closeEvent(&EVENT_START_TIMER);
+	closeEvent(&EVENT_IN_HANGAR);
+	closeEvent(&EVENT_DEL_MODEL);
 
-	closeEvent2(&EVENT_ALL_MODELS_CREATED);
-	closeEvent2(&EVENT_BATTLE_ENDED);
+	closeEvent(&EVENT_ALL_MODELS_CREATED);
+	closeEvent(&EVENT_BATTLE_ENDED);
 
 	Py_BLOCK_THREADS;
 

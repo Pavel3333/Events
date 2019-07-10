@@ -43,7 +43,7 @@ CRITICAL_SECTION CS_NETWORK_NOT_USING;
 
 //---------------------
 
-void closeEvent1(PEVENTDATA_1* pEvent) {
+void closeEvent(PEVENTDATA_1* pEvent) {
 	traceLog
 	if (*pEvent) {
 		traceLog //если уже была инициализирована структура - удаляем
@@ -60,7 +60,7 @@ void closeEvent1(PEVENTDATA_1* pEvent) {
 	} traceLog
 }
 
-void closeEvent2(PEVENTDATA_2* pEvent) {
+void closeEvent(PEVENTDATA_2* pEvent) {
 	traceLog
 	if (*pEvent) {
 		traceLog //если уже была инициализирована структура - удаляем
@@ -77,12 +77,12 @@ void closeEvent2(PEVENTDATA_2* pEvent) {
 	} traceLog
 }
 
-bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID)
+bool createEvent(PEVENTDATA_1* pEvent, uint8_t eventID)
 {
 	INIT_LOCAL_MSG_BUFFER;
 
 	traceLog
-	closeEvent1(pEvent); //закрываем ивент, если существует
+	closeEvent(pEvent); //закрываем ивент, если существует
 
 	*pEvent = (PEVENTDATA_1)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_1));
@@ -111,9 +111,9 @@ bool createEvent1(PEVENTDATA_1* pEvent, uint8_t eventID)
 	return true;
 }
 
-bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
+bool createEvent(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 	traceLog
-	closeEvent2(pEvent); //закрываем ивент, если существует
+	closeEvent(pEvent); //закрываем ивент, если существует
 
 	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_2));
@@ -146,20 +146,20 @@ bool createEvent2(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
 bool createEventsAndMutexes() { traceLog
 	INIT_LOCAL_MSG_BUFFER;
 	
-	if (!createEvent1(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog
+	if (!createEvent(&EVENT_IN_HANGAR,   EVENT_ID::IN_HANGAR)) { traceLog
 		return false;
 	} traceLog
-	if (!createEvent1(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) { traceLog
+	if (!createEvent(&EVENT_START_TIMER, EVENT_ID::IN_BATTLE_GET_FULL)) { traceLog
 		return false;
 	} traceLog
-	if (!createEvent1(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog
+	if (!createEvent(&EVENT_DEL_MODEL,   EVENT_ID::DEL_LAST_MODEL)) { traceLog
 		return false;
 	} traceLog
 
-	if (!createEvent2(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog
+	if (!createEvent(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog
 		return false;
 	} traceLog
-	if (!createEvent2(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog
+	if (!createEvent(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog
 		return false;
 	} traceLog
 

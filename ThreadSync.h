@@ -43,12 +43,12 @@ extern CRITICAL_SECTION CS_NETWORK_NOT_USING;
 
 //---------------------
 
-void closeEvent1(PEVENTDATA_1*);
+void closeEvent(PEVENTDATA_1*);
 
-void closeEvent2(PEVENTDATA_2*);
+void closeEvent(PEVENTDATA_2*);
 
-bool createEvent1(PEVENTDATA_1*, uint8_t);
-bool createEvent2(PEVENTDATA_2*, LPCWSTR, BOOL isSignaling = FALSE);
+bool createEvent(PEVENTDATA_1*, uint8_t);
+bool createEvent(PEVENTDATA_2*, LPCWSTR, BOOL isSignaling = FALSE);
 
 bool createEventsAndMutexes();
 
