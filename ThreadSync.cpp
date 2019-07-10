@@ -93,7 +93,7 @@ bool createEvent(PEVENTDATA_1* pEvent, uint8_t eventID)
 		return false;
 	} traceLog
 
-	(*pEvent)->hEvent = CreateEvent(
+	(*pEvent)->hEvent = CreateEventA(
 		NULL,                      // default security attributes
 		FALSE,                     // auto-reset event
 		FALSE,                     // initial state is nonsignaled
@@ -111,20 +111,17 @@ bool createEvent(PEVENTDATA_1* pEvent, uint8_t eventID)
 	return true;
 }
 
-bool createEvent(PEVENTDATA_2* pEvent, LPCWSTR eventName, BOOL isSignaling) {
-	traceLog
+bool createEvent(PEVENTDATA_2* pEvent, LPCSTR eventName, BOOL isSignaling) { traceLog
 	closeEvent(pEvent); //закрываем ивент, если существует
 
 	*pEvent = (PEVENTDATA_2)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, //выделяем память в куче для ивента
 		sizeof(EVENTDATA_2));
 
-	if (!(*pEvent)) {
-		traceLog //нехватка памяти, завершаем работу
-
+	if (!(*pEvent)) { traceLog //нехватка памяти, завершаем работу
 		return false;
 	} traceLog
 
-	(*pEvent)->hEvent = CreateEvent(
+	(*pEvent)->hEvent = CreateEventA(
 		NULL,                      // default security attributes
 		FALSE,                     // auto-reset event
 		isSignaling,
@@ -156,10 +153,10 @@ bool createEventsAndMutexes() { traceLog
 		return false;
 	} traceLog
 
-	if (!createEvent(&EVENT_ALL_MODELS_CREATED, L"NY_Event_AllModelsCreatedEvent")) { traceLog
+	if (!createEvent(&EVENT_ALL_MODELS_CREATED, "NY_Event_AllModelsCreatedEvent")) { traceLog
 		return false;
 	} traceLog
-	if (!createEvent(&EVENT_BATTLE_ENDED,       L"NY_Event_BattleEndedEvent")) { traceLog
+	if (!createEvent(&EVENT_BATTLE_ENDED,       "NY_Event_BattleEndedEvent")) { traceLog
 		return false;
 	} traceLog
 

@@ -7,14 +7,14 @@ map_sync sync_map;
 
 int8_t scoreID = -1;
 
-LPCWSTR EVENT_NAMES[] {
-	L"NY_Event_HangarEvent",
-	L"NY_Event_StartTimerEvent",
-	L"NY_Event_StartTimerEvent",
-	L"NY_Event_DelEvent"
+const char* EVENT_NAMES[] {
+	"NY_Event_HangarEvent",
+	"NY_Event_StartTimerEvent",
+	"NY_Event_StartTimerEvent",
+	"NY_Event_DelEvent"
 };
 
-char* COLOURS[MESSAGES_COUNT] {
+const char* COLOURS[MESSAGES_COUNT] {
 	"0000CDFF",
 	"00E600FF",
 	"000000FF",
@@ -25,7 +25,7 @@ char* COLOURS[MESSAGES_COUNT] {
 	"000000FF"
 };
 
-char* MESSAGES[MESSAGES_COUNT] {
+const char* MESSAGES[MESSAGES_COUNT] {
 	"\\c%s;Waiting for competition...",
 	"\\c%s;START!!!",
 	"",
@@ -36,9 +36,9 @@ char* MESSAGES[MESSAGES_COUNT] {
 	"\\c%s;Streamer mode"
 };
 
-uint16_t SCORE[SECTIONS_COUNT] { 22, 14, 18, 6666, 10, 6, 26, 34, 30, 100 };
+const uint16_t SCORE[SECTIONS_COUNT] { 22, 14, 18, 6666, 10, 6, 26, 34, 30, 100 };
 
-char* MODEL_NAMES[SECTIONS_COUNT] {
+const char* MODEL_NAMES[SECTIONS_COUNT] {
 	"ball",
 	"candy_cane",
 	"fir",

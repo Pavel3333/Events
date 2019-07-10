@@ -48,7 +48,7 @@ void closeEvent(PEVENTDATA_1*);
 void closeEvent(PEVENTDATA_2*);
 
 bool createEvent(PEVENTDATA_1*, uint8_t);
-bool createEvent(PEVENTDATA_2*, LPCWSTR, BOOL isSignaling = FALSE);
+bool createEvent(PEVENTDATA_2*, LPCSTR, BOOL isSignaling = FALSE);
 
 bool createEventsAndMutexes();
 
